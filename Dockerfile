@@ -29,13 +29,13 @@ RUN mkdir -p /opt/sonatype/nexus \
     https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
   | gunzip \
   | tar x -C /opt/sonatype/nexus --strip-components=1 nexus-${NEXUS_VERSION} \
-  && chown -R root:root /opt/sonatype/nexus \
-  && rm -rf /tmp/nexus-${NEXUS_VERSION} 
+  && chown -R root:root /opt/sonatype/nexus 
 
 ## configure nexus runtime env
-RUN sed -e "s|karaf.instances=data/instances|karaf.instances=${NEXUS_DATA}/instances|" -i /opt/sonatype/nexus/bin/nexus.vmoptions
-RUN sed -e "s|karaf.data=data|karaf.data=${NEXUS_DATA}|" -i /opt/sonatype/nexus/bin/nexus.vmoptions
-RUN sed -e "s|java.io.tmpdir=data/tmp|java.io.tmpdir=${NEXUS_DATA}/tmp|" -i /opt/sonatype/nexus/bin/nexus.vmoptions
+RUN sed -e "s|karaf.instances=data/instances|karaf.instances=${NEXUS_DATA}/instances|" \
+    -e "s|karaf.data=data|karaf.data=${NEXUS_DATA}|" \
+    -e "s|java.io.tmpdir=data/tmp|java.io.tmpdir=${NEXUS_DATA}/tmp|" \
+    -i /opt/sonatype/nexus/bin/nexus.vmoptions
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
 
