@@ -11,7 +11,7 @@ $ docker run -d -p 8081:8081 --name nexus sonatype/nexus3
 To test:
 
 ```
-$ curl -u admin:admin123 http://localhost:8081/internal/ping
+$ curl -u admin:admin123 http://localhost:8081/service/metrics/ping
 ```
 
 To (re)build the image:
