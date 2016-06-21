@@ -7,8 +7,8 @@ ENV NEXUS_VERSION 3.0.0-03
 
 ENV JAVA_HOME /opt/java
 ENV JAVA_VERSION_MAJOR 8
-ENV JAVA_VERSION_MINOR 77
-ENV JAVA_VERSION_BUILD 03
+ENV JAVA_VERSION_MINOR 91
+ENV JAVA_VERSION_BUILD 14
 
 RUN yum install -y \
   curl tar \
@@ -30,6 +30,12 @@ RUN mkdir -p /opt/sonatype/nexus \
   | gunzip \
   | tar x -C /opt/sonatype/nexus --strip-components=1 nexus-${NEXUS_VERSION} \
   && chown -R root:root /opt/sonatype/nexus 
+
+# Patch nexus
+# https://support.sonatype.com/hc/en-us/articles/218729178-Nexus-Repository-Manager-3-0-0-03-Docker-Rollup-Patch
+RUN curl --fail --silent --retry 3 \
+    https://support.sonatype.com/hc/en-us/article_attachments/208186848/nexus-repository-docker-3.0.0-03-patch2.jar \
+    -o /opt/sonatype/nexus/system/com/sonatype/nexus/plugins/nexus-repository-docker/3.0.0-03/nexus-repository-docker-3.0.0-03.jar
 
 ## configure nexus runtime env
 RUN sed \
