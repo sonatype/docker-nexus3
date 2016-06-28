@@ -42,9 +42,9 @@ process, which runs as UID 200.
 
 * Three environment variables can be used to control the JVM arguments
 
-  * `JAVA_MAX_HEAP`, passed as -Xmx.  Defaults to `1200m`.
+  * `JAVA_MAX_MEM`, passed as -Xmx.  Defaults to `1200m`.
 
-  * `JAVA_MIN_HEAP`, passed as -Xms.  Defaults to `1200m`.
+  * `JAVA_MIN_MEM`, passed as -Xms.  Defaults to `1200m`.
 
   * `EXTRA_JAVA_OPTS`.  Additional options can be passed to the JVM via
   this variable.
