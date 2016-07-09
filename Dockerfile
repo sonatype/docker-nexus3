@@ -3,7 +3,7 @@ MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
 ENV NEXUS_DATA /nexus-data
 
-ENV NEXUS_VERSION 3.0.0-03
+ENV NEXUS_VERSION 3.0.1-01
 
 ENV JAVA_HOME /opt/java
 ENV JAVA_VERSION_MAJOR 8
