@@ -1,6 +1,6 @@
 # sonatype/nexus3
 
-A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
+A Dockerfile for Sonatype Nexus Repository Manager 3, based on Alpine Linux.  Credits to [Anapsix Excellent alpine-java project](https://github.com/anapsix/docker-alpine-java "Anapsix Excellent alpine-java project").
 
 To run, binding the exposed port 8081 to the host.
 
