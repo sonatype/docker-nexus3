@@ -1,20 +1,15 @@
 FROM       centos:centos7
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
-ENV NEXUS_DATA /nexus-data
-
-ENV NEXUS_VERSION 3.0.1-01
-
-ENV JAVA_HOME /opt/java
-ENV JAVA_VERSION_MAJOR 8
-ENV JAVA_VERSION_MINOR 102
-ENV JAVA_VERSION_BUILD 14
-
 RUN yum install -y \
   curl tar \
   && yum clean all
 
 # install Oracle JRE
+ENV JAVA_HOME /opt/java
+ENV JAVA_VERSION_MAJOR 8
+ENV JAVA_VERSION_MINOR 102
+ENV JAVA_VERSION_BUILD 14
 RUN mkdir -p /opt \
   && curl --fail --silent --location --retry 3 \
   --header "Cookie: oraclelicense=accept-securebackup-cookie; " \
@@ -24,6 +19,7 @@ RUN mkdir -p /opt \
   && ln -s /opt/jdk1.${JAVA_VERSION_MAJOR}.0_${JAVA_VERSION_MINOR} ${JAVA_HOME}
 
 # install nexus
+ENV NEXUS_VERSION 3.0.1-01
 RUN mkdir -p /opt/sonatype/nexus \
   && curl --fail --silent --location --retry 3 \
     https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
@@ -32,6 +28,7 @@ RUN mkdir -p /opt/sonatype/nexus \
   && chown -R root:root /opt/sonatype/nexus 
 
 ## configure nexus runtime env
+ENV NEXUS_DATA /nexus-data
 RUN sed \
     -e "s|karaf.home=.|karaf.home=/opt/sonatype/nexus|g" \
     -e "s|karaf.base=.|karaf.base=/opt/sonatype/nexus|g" \
