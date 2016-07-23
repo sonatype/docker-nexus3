@@ -42,7 +42,7 @@ RUN sed \
     -e "s|java.io.tmpdir=data/tmp|java.io.tmpdir=${NEXUS_DATA}/tmp|g" \
     -i /opt/sonatype/nexus/bin/nexus.vmoptions \
   && sed \
-    -e "s|nexus-context-path=/|nexus-context-path=/nexus" \
+    -e "s|nexus-context-path=/|nexus-context-path=/nexus|g" \
     -i /opt/sonatype/nexus/etc/org.sonatype.nexus.cfg
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
