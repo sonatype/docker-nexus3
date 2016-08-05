@@ -1,35 +1,15 @@
-FROM       centos:centos7
+FROM       java:8-jre-alpine
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
 ENV NEXUS_DATA /nexus-data
-
 ENV NEXUS_VERSION 3.0.1-01
 
-ENV JAVA_HOME /opt/java
-ENV JAVA_VERSION_MAJOR 8
-ENV JAVA_VERSION_MINOR 102
-ENV JAVA_VERSION_BUILD 14
-
-RUN yum install -y \
-  curl tar \
-  && yum clean all
-
-# install Oracle JRE
-RUN mkdir -p /opt \
-  && curl --fail --silent --location --retry 3 \
-  --header "Cookie: oraclelicense=accept-securebackup-cookie; " \
-  http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/server-jre-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz \
-  | gunzip \
-  | tar -x -C /opt \
-  && ln -s /opt/jdk1.${JAVA_VERSION_MAJOR}.0_${JAVA_VERSION_MINOR} ${JAVA_HOME}
-
 # install nexus
-RUN mkdir -p /opt/sonatype/nexus \
-  && curl --fail --silent --location --retry 3 \
-    https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
-  | gunzip \
-  | tar x -C /opt/sonatype/nexus --strip-components=1 nexus-${NEXUS_VERSION} \
-  && chown -R root:root /opt/sonatype/nexus 
+RUN apk update && apk add openssl && rm -fr /var/cache/apk/*
+RUN mkdir -p /opt/sonatype/ \
+  && wget https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz -O - \
+  | tar zx -C /opt/sonatype/ \
+  && mv /opt/sonatype/nexus-${NEXUS_VERSION} /opt/sonatype/nexus
 
 ## configure nexus runtime env
 RUN sed \
@@ -41,16 +21,23 @@ RUN sed \
     -e "s|java.io.tmpdir=data/tmp|java.io.tmpdir=${NEXUS_DATA}/tmp|g" \
     -i /opt/sonatype/nexus/bin/nexus.vmoptions
 
-RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
+## create nexus user
+RUN echo "nexus:x:200:200:nexus role account:${NEXUS_DATA}:/bin/false" >> /etc/passwd
+RUN echo "nexus:x:200:" >> /etc/group
+RUN echo "nexus:!::0:::::" >> /etc/shadow
+
+## prevent warning: /opt/sonatype/nexus/etc/org.apache.karaf.command.acl.config.cfg (Permission denied)
+RUN chown nexus:nexus /opt/sonatype/nexus/etc/
+
+COPY entrypoint.sh /
 
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
-USER nexus
 WORKDIR /opt/sonatype/nexus
 
 ENV JAVA_MAX_MEM 1200m
 ENV JAVA_MIN_MEM 1200m
 ENV EXTRA_JAVA_OPTS ""
 
-CMD bin/nexus run
+ENTRYPOINT ["/entrypoint.sh"]
