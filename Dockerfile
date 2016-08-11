@@ -53,4 +53,4 @@ ENV JAVA_MAX_MEM 1200m
 ENV JAVA_MIN_MEM 1200m
 ENV EXTRA_JAVA_OPTS ""
 
-CMD bin/nexus run
+CMD ["bin/nexus", "run"]
