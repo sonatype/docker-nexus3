@@ -1,0 +1,25 @@
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Maven
+target/
+*.ser
+*.ec
+.mvn/timing.properties
+
+# Intellij
+*.ipr
+*.iml
+*.iws
+.idea/
+
+# Other
+.DS_Store
+.clover
+*.log
+/*.rc
+atlassian-ide-plugin.xml
+dependency-reduced-pom.xml
+out
