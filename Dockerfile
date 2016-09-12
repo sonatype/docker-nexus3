@@ -28,7 +28,7 @@ RUN mkdir -p /opt/sonatype/nexus \
   && curl --fail --silent --location --retry 3 \
     https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
   | gunzip \
-  | tar -x -C /opt/sonatype/nexus --strip-components=1 nexus-${NEXUS_VERSION} \
+  | tar x -C /opt/sonatype/nexus --strip-components=1 nexus-${NEXUS_VERSION} \
   && chown -R root:root /opt/sonatype/nexus 
 
 ## configure nexus runtime env
