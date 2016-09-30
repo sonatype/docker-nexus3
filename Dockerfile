@@ -1,8 +1,8 @@
 FROM       centos:centos7
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
 LABEL vendor=Sonatype \
-  license="APLv2" \
-  name="Nexus Repository Manager base image"
+  com.sonatype.license="APLv2" \
+  com.sonatype.name="Nexus Repository Manager base image"
 
 ENV NEXUS_DATA /nexus-data
 
