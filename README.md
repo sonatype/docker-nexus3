@@ -62,8 +62,8 @@ There are two general approaches to handling persistent storage requirements
 with Docker. See [Managing Data in Containers](https://docs.docker.com/userguide/dockervolumes/)
 for additional information.
 
-  1. *Use a data volume container*.  Since data volumes are persistent
-  until no containers use them, a container can created specifically for 
+  1. *Use a data volume*.  Since data volumes are persistent
+  until no containers use them, a volume can be created specifically for 
   this purpose.  This is the recommended approach.  
 
   ```
