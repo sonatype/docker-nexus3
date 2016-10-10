@@ -20,7 +20,7 @@ LABEL vendor=Sonatype \
   com.sonatype.license="Apache License, Version 2.0" \
   com.sonatype.name="Nexus Repository Manager base image"
 
-ENV NEXUS_VERSION="3.0.1-01" \
+ENV NEXUS_VERSION="3.0.2-02" \
     NEXUS_DATA="/nexus-data" \
     JAVA_MIN_MEM="1200M" \
     JAVA_MAX_MEM="1200M" \
