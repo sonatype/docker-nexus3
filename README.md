@@ -1,4 +1,4 @@
-# sonatype/nexus3
+# sonatype/docker-nexus3
 
 A Dockerfile for Sonatype Nexus Repository Manager 3, based on Alpine.
 
