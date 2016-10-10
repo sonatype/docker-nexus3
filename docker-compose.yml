@@ -2,11 +2,12 @@ version: "2"
 
 services:
   nexus:
-    image: sonatype/nexus3
+    image: sonatype/docker-nexus3
     volumes:
       - "nexus-data:/nexus-data"
     ports:
       - "8081:8081"
+      - "8443:8443"
   
 volumes:
   nexus-data: {}

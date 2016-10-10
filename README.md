@@ -1,11 +1,11 @@
-# sonatype/nexus3
+# sonatype/docker-nexus3
 
-A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
+A Dockerfile for Sonatype Nexus Repository Manager 3, based on Alpine.
 
 To run, binding the exposed port 8081 to the host.
 
 ```
-$ docker run -d -p 8081:8081 --name nexus sonatype/nexus3
+$ docker run -d -p 8081:8081 --name nexus sonatype/docker-nexus3
 ```
 
 To test:
@@ -19,7 +19,7 @@ To (re)build the image:
 Copy the Dockerfile and do the build-
 
 ```
-$ docker build --rm=true --tag=sonatype/nexus3 .
+$ docker build --rm=true --tag=sonatype/docker-nexus3 .
 ```
 
 
@@ -34,26 +34,34 @@ new container.  You can tail the log to determine once Nexus is ready:
 $ docker logs -f nexus
 ```
 
-* Installation of Nexus is to `/opt/sonatype/nexus`.  
+* Installation of Nexus is to `/opt/nexus-3.0.2.02`.  
 
 * A persistent directory, `/nexus-data`, is used for configuration,
-logs, and storage. This directory needs to be writable by the Nexus
-process, which runs as UID 200.
+logs, and storage.
 
-* Three environment variables can be used to control the JVM arguments
+* Two environment variables can be used to control the JVM arguments
 
   * `JAVA_MAX_MEM`, passed as -Xmx.  Defaults to `1200m`.
 
   * `JAVA_MIN_MEM`, passed as -Xms.  Defaults to `1200m`.
 
-  * `EXTRA_JAVA_OPTS`.  Additional options can be passed to the JVM via
-  this variable.
-
   These can be used supplied at runtime to control the JVM:
 
   ```
-  $ docker run -d -p 8081:8081 --name nexus -e JAVA_MAX_HEAP=768m sonatype/nexus3
+  $ docker run -d -p 8081:8081 --name nexus -e JAVA_MAX_MEM=768m sonatype/docker-nexus3
   ```
+  
+### SSL
+
+If you want to run Nexus in SSL, you need to create a Java keystore file with your certificate. See the [Jetty documentation](http://www.eclipse.org/jetty/documentation/current/configuring-ssl.html) for help.
+
+You will need to mount your keystore to the appropriate directory and pass in the keystore password as well.
+
+```
+$ docker run -d -p 8443:8443 --name nexus -v /path/to/your-keystore.jks:/nexus-data/keystore.jks -e JKS_PASSWORD="changeit" sonatype/docker-nexus3
+```
+
+Nexus will now serve its UI on HTTPS on port 8443 and redirect HTTP requests to HTTPS.
 
 
 ### Persistent Data
@@ -68,15 +76,12 @@ for additional information.
 
   ```
   $ docker volume create --name nexus-data
-  $ docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
+  $ docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/docker-nexus3
   ```
 
-  2. *Mount a host directory as the volume*.  This is not portable, as it
-  relies on the directory existing with correct permissions on the host.
-  However it can be useful in certain situations where this volume needs
-  to be assigned to certain specific underlying storage.  
+  2. *Mount a host directory as the volume*. [su-exec](https://github.com/ncopa/su-exec) takes care of setting the correct permissions.  
 
   ```
   $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
-  $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
+  $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/docker-nexus3
   ```
