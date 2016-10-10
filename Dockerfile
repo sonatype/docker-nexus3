@@ -12,62 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM       centos:centos7
+FROM alpine:3.4
+
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
+
 LABEL vendor=Sonatype \
   com.sonatype.license="Apache License, Version 2.0" \
   com.sonatype.name="Nexus Repository Manager base image"
 
-ENV NEXUS_DATA /nexus-data
+ENV NEXUS_VERSION="3.0.1-01" \
+    NEXUS_DATA="/nexus-data" \
+    JAVA_MIN_MEM="1200M" \
+    JAVA_MAX_MEM="1200M" \
+    JKS_PASSWORD="changeit"
 
-ENV NEXUS_VERSION 3.0.2-02
+RUN set -x \
+    && apk --no-cache add \
+        openjdk8-jre-base \
+        openssl \
+        su-exec \
+    && mkdir "/opt" \
+    && wget -qO - "https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz" \
+    | tar -zxC "/opt" \
+    && adduser -S -h ${NEXUS_DATA} nexus
 
-ENV JAVA_HOME /opt/java
-ENV JAVA_VERSION_MAJOR 8
-ENV JAVA_VERSION_MINOR 102
-ENV JAVA_VERSION_BUILD 14
+EXPOSE 8081 8443
 
-RUN yum install -y \
-  curl tar \
-  && yum clean all
-
-# install Oracle JRE
-RUN mkdir -p /opt \
-  && curl --fail --silent --location --retry 3 \
-  --header "Cookie: oraclelicense=accept-securebackup-cookie; " \
-  http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/server-jre-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz \
-  | gunzip \
-  | tar -x -C /opt \
-  && ln -s /opt/jdk1.${JAVA_VERSION_MAJOR}.0_${JAVA_VERSION_MINOR} ${JAVA_HOME}
-
-# install nexus
-RUN mkdir -p /opt/sonatype/nexus \
-  && curl --fail --silent --location --retry 3 \
-    https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
-  | gunzip \
-  | tar x -C /opt/sonatype/nexus --strip-components=1 nexus-${NEXUS_VERSION} \
-  && chown -R root:root /opt/sonatype/nexus 
-
-## configure nexus runtime env
-RUN sed \
-    -e "s|karaf.home=.|karaf.home=/opt/sonatype/nexus|g" \
-    -e "s|karaf.base=.|karaf.base=/opt/sonatype/nexus|g" \
-    -e "s|karaf.etc=etc|karaf.etc=/opt/sonatype/nexus/etc|g" \
-    -e "s|java.util.logging.config.file=etc|java.util.logging.config.file=/opt/sonatype/nexus/etc|g" \
-    -e "s|karaf.data=data|karaf.data=${NEXUS_DATA}|g" \
-    -e "s|java.io.tmpdir=data/tmp|java.io.tmpdir=${NEXUS_DATA}/tmp|g" \
-    -i /opt/sonatype/nexus/bin/nexus.vmoptions
-
-RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
+WORKDIR "/opt/nexus-${NEXUS_VERSION}"
 
 VOLUME ${NEXUS_DATA}
 
-EXPOSE 8081
-USER nexus
-WORKDIR /opt/sonatype/nexus
-
-ENV JAVA_MAX_MEM 1200m
-ENV JAVA_MIN_MEM 1200m
-ENV EXTRA_JAVA_OPTS ""
+COPY docker-entrypoint.sh /
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 CMD ["bin/nexus", "run"]
