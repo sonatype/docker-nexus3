@@ -62,13 +62,13 @@ There are two general approaches to handling persistent storage requirements
 with Docker. See [Managing Data in Containers](https://docs.docker.com/userguide/dockervolumes/)
 for additional information.
 
-  1. *Use a data volume container*.  Since data volumes are persistent
-  until no containers use them, a container can created specifically for 
+  1. *Use a data volume*.  Since data volumes are persistent
+  until no containers use them, a volume can be created specifically for 
   this purpose.  This is the recommended approach.  
 
   ```
-  $ docker run -d --name nexus-data sonatype/nexus3 echo "data-only container for Nexus"
-  $ docker run -d -p 8081:8081 --name nexus --volumes-from nexus-data sonatype/nexus3
+  $ docker volume create --name nexus-data
+  $ docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
   ```
 
   2. *Mount a host directory as the volume*.  This is not portable, as it
