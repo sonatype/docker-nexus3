@@ -57,7 +57,7 @@ process, which runs as UID 200.
 
 * Another environment variable can be used to control the Nexus Context Path
 
-  * `NEXUS_CONTEXT`, defaults to \
+  * `NEXUS_CONTEXT`, defaults to /
 
   This can be supplied at runtime:
 
