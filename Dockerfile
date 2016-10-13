@@ -49,6 +49,7 @@ RUN mkdir -p /opt/sonatype/nexus \
   && chown -R root:root /opt/sonatype/nexus 
 
 ## configure nexus runtime env
+ENV NEXUS_CONTEXT ''
 RUN sed \
     -e "s|karaf.home=.|karaf.home=/opt/sonatype/nexus|g" \
     -e "s|karaf.base=.|karaf.base=/opt/sonatype/nexus|g" \
@@ -56,7 +57,10 @@ RUN sed \
     -e "s|java.util.logging.config.file=etc|java.util.logging.config.file=/opt/sonatype/nexus/etc|g" \
     -e "s|karaf.data=data|karaf.data=${NEXUS_DATA}|g" \
     -e "s|java.io.tmpdir=data/tmp|java.io.tmpdir=${NEXUS_DATA}/tmp|g" \
-    -i /opt/sonatype/nexus/bin/nexus.vmoptions
+    -i /opt/sonatype/nexus/bin/nexus.vmoptions \
+  && sed \
+    -e "s|nexus-context-path=/|nexus-context-path=/\${NEXUS_CONTEXT}|g" \
+    -i /opt/sonatype/nexus/etc/org.sonatype.nexus.cfg
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
 
