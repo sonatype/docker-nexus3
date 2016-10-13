@@ -55,6 +55,15 @@ process, which runs as UID 200.
   $ docker run -d -p 8081:8081 --name nexus -e JAVA_MAX_HEAP=768m sonatype/docker-nexus3
   ```
 
+* Another environment variable can be used to control the Nexus Context Path
+
+  * `NEXUS_CONTEXT`, defaults to \
+
+  This can be supplied at runtime:
+
+  ```
+  $ docker run -d -p 8081:8081 --name nexus -e NEXUS_CONTEXT=nexus sonatype/docker-nexus3
+  ```
 
 ### Persistent Data
 
