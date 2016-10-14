@@ -1,11 +1,11 @@
-# sonatype/nexus3
+# sonatype/docker-nexus3
 
 A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 
 To run, binding the exposed port 8081 to the host.
 
 ```
-$ docker run -d -p 8081:8081 --name nexus sonatype/nexus3
+$ docker run -d -p 8081:8081 --name nexus sonatype/docker-nexus3
 ```
 
 To test:
@@ -19,7 +19,7 @@ To (re)build the image:
 Copy the Dockerfile and do the build-
 
 ```
-$ docker build --rm=true --tag=sonatype/nexus3 .
+$ docker build --rm=true --tag=sonatype/docker-nexus3 .
 ```
 
 
@@ -52,9 +52,18 @@ process, which runs as UID 200.
   These can be used supplied at runtime to control the JVM:
 
   ```
-  $ docker run -d -p 8081:8081 --name nexus -e JAVA_MAX_HEAP=768m sonatype/nexus3
+  $ docker run -d -p 8081:8081 --name nexus -e JAVA_MAX_HEAP=768m sonatype/docker-nexus3
   ```
 
+* Another environment variable can be used to control the Nexus Context Path
+
+  * `NEXUS_CONTEXT`, defaults to /
+
+  This can be supplied at runtime:
+
+  ```
+  $ docker run -d -p 8081:8081 --name nexus -e NEXUS_CONTEXT=nexus sonatype/docker-nexus3
+  ```
 
 ### Persistent Data
 
@@ -62,13 +71,13 @@ There are two general approaches to handling persistent storage requirements
 with Docker. See [Managing Data in Containers](https://docs.docker.com/userguide/dockervolumes/)
 for additional information.
 
-  1. *Use a data volume container*.  Since data volumes are persistent
-  until no containers use them, a container can created specifically for 
+  1. *Use a data volume*.  Since data volumes are persistent
+  until no containers use them, a volume can be created specifically for 
   this purpose.  This is the recommended approach.  
 
   ```
-  $ docker run -d --name nexus-data sonatype/nexus3 echo "data-only container for Nexus"
-  $ docker run -d -p 8081:8081 --name nexus --volumes-from nexus-data sonatype/nexus3
+  $ docker volume create --name nexus-data
+  $ docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/docker-nexus3
   ```
 
   2. *Mount a host directory as the volume*.  This is not portable, as it
@@ -78,5 +87,5 @@ for additional information.
 
   ```
   $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
-  $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
+  $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/docker-nexus3
   ```
