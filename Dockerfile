@@ -13,25 +13,23 @@
 # limitations under the License.
 
 FROM       centos:centos7
+
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
+
 LABEL vendor=Sonatype \
   com.sonatype.license="Apache License, Version 2.0" \
   com.sonatype.name="Nexus Repository Manager base image"
-
-ENV NEXUS_DATA /nexus-data
-
-ENV NEXUS_VERSION 3.0.2-02
-
-ENV JAVA_HOME /opt/java
-ENV JAVA_VERSION_MAJOR 8
-ENV JAVA_VERSION_MINOR 102
-ENV JAVA_VERSION_BUILD 14
 
 RUN yum install -y \
   curl tar \
   && yum clean all
 
 # install Oracle JRE
+ENV JAVA_HOME=/opt/java \
+  JAVA_VERSION_MAJOR=8 \
+  JAVA_VERSION_MINOR=102 \
+  JAVA_VERSION_BUILD=14
+
 RUN mkdir -p /opt \
   && curl --fail --silent --location --retry 3 \
   --header "Cookie: oraclelicense=accept-securebackup-cookie; " \
@@ -41,6 +39,7 @@ RUN mkdir -p /opt \
   && ln -s /opt/jdk1.${JAVA_VERSION_MAJOR}.0_${JAVA_VERSION_MINOR} ${JAVA_HOME}
 
 # install nexus
+ENV NEXUS_VERSION=3.0.2-02
 RUN mkdir -p /opt/sonatype/nexus \
   && curl --fail --silent --location --retry 3 \
     https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
@@ -49,7 +48,8 @@ RUN mkdir -p /opt/sonatype/nexus \
   && chown -R root:root /opt/sonatype/nexus 
 
 ## configure nexus runtime env
-ENV NEXUS_CONTEXT ''
+ENV NEXUS_CONTEXT='' \
+  NEXUS_DATA=/nexus-data
 RUN sed \
     -e "s|karaf.home=.|karaf.home=/opt/sonatype/nexus|g" \
     -e "s|karaf.base=.|karaf.base=/opt/sonatype/nexus|g" \
@@ -70,8 +70,8 @@ EXPOSE 8081
 USER nexus
 WORKDIR /opt/sonatype/nexus
 
-ENV JAVA_MAX_MEM 1200m
-ENV JAVA_MIN_MEM 1200m
-ENV EXTRA_JAVA_OPTS ""
+ENV JAVA_MAX_MEM=1200m \
+  JAVA_MIN_MEM=1200m \
+  EXTRA_JAVA_OPTS=""
 
 CMD ["bin/nexus", "run"]
