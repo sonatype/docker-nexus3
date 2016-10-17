@@ -52,7 +52,7 @@ process, which runs as UID 200.
   These can be used supplied at runtime to control the JVM:
 
   ```
-  $ docker run -d -p 8081:8081 --name nexus -e JAVA_MAX_HEAP=768m sonatype/docker-nexus3
+  $ docker run -d -p 8081:8081 --name nexus -e JAVA_MAX_MEM=768m sonatype/docker-nexus3
   ```
 
 * Another environment variable can be used to control the Nexus Context Path
