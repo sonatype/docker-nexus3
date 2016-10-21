@@ -93,7 +93,7 @@ for additional information.
   $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/docker-nexus3
   ```
 
-## Getting help
+## Getting Help
 
 Looking to contribute to our Docker image but need some help? There's a few ways to get information or our attention:
 
