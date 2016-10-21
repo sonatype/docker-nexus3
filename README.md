@@ -3,7 +3,7 @@
 A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 
 * [Notes](#notes)
-* [Persistent Data](#persistent-data)
+  * [Persistent Data](#persistent-data)
 * [Getting Help](#getting-help)
 
 To run, binding the exposed port 8081 to the host.
