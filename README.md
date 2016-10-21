@@ -2,6 +2,10 @@
 
 A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 
+* [Notes](#notes)
+  * [Persistent Data](#persistent-data)
+* [Getting Help](#getting-help)
+
 To run, binding the exposed port 8081 to the host.
 
 ```
@@ -21,7 +25,6 @@ Copy the Dockerfile and do the build-
 ```
 $ docker build --rm=true --tag=sonatype/docker-nexus3 .
 ```
-
 
 ## Notes
 
@@ -89,3 +92,12 @@ for additional information.
   $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
   $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/docker-nexus3
   ```
+
+## Getting Help
+
+Looking to contribute to our Docker image but need some help? There's a few ways to get information or our attention:
+
+* File a public issue [here on GitHub](https://github.com/sonatype/docker-nexus3/issues)
+* Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
+* Pop into [our public HipChat room](https://www.hipchat.com/gW26B2y2Z) and ask us some questions
+* Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
