@@ -31,7 +31,7 @@ ENV JAVA_HOME=/opt/java \
   JAVA_VERSION_BUILD=14
 
 # configure nexus runtime
-ENV NEXUS_VERSION=3.1.0-02 \
+ENV NEXUS_VERSION=3.1.0-04 \
   NEXUS_HOME=/opt/sonatype/nexus \
   NEXUS_DATA=/nexus-data \
   NEXUS_CONTEXT=''
