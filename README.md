@@ -28,7 +28,8 @@ $ docker build --rm=true --tag=sonatype/docker-nexus3 .
 
 ## Notes
 
-* Default credentials are: `admin` / `admin123`
+* Default credentials are: `admin` / `admin123` (Can be changed using 
+the environment variables `NEXUS_DEFAULT_PASSWORD` and `NEXUS_PASSWORD`.)
 
 * It can take some time (2-3 minutes) for the service to launch in a
 new container.  You can tail the log to determine once Nexus is ready:
@@ -67,6 +68,31 @@ process, which runs as UID 200.
   ```
   $ docker run -d -p 8081:8081 --name nexus -e NEXUS_CONTEXT=nexus sonatype/docker-nexus3
   ```
+
+### Docker Registry
+To configure a Docker Registry from start on, use the environment variables 
+`DOCKER_REPOSITORY_NAME` and `DOCKER_REPOSITORY_PORT`. A startup script located at 
+`/usr/local/bin/config.sh` makes use of the api to postprocessing your config.
+
+### Docker compose 
+For your convenience use docker compose to start nexus as shown below:
+
+```
+ nexus:
+    build: .
+    network_mode: "bridge"
+    environment:
+      - DOCKER_REPOSITORY_NAME=default
+      - DOCKER_REPOSITORY_PORT=5000
+      - NEXUS_DEFAULT_PASSWORD=admin123
+      - NEXUS_PASSWORD=changeme
+    ports:
+      - 5000:5000
+      - 8081:8081
+    volumes:
+      - /data/nexus:/nexus-data
+    restart: always
+```
 
 ### Persistent Data
 

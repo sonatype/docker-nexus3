@@ -12,66 +12,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM       centos:centos7
+FROM alpine:latest
 
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
 LABEL vendor=Sonatype \
-  com.sonatype.license="Apache License, Version 2.0" \
-  com.sonatype.name="Nexus Repository Manager base image"
+      com.sonatype.license="Apache License, Version 2.0" \
+      com.sonatype.name="Nexus Repository Manager base image"
 
-RUN yum install -y \
-  curl tar \
-  && yum clean all
+ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk/jre
+ENV NEXUS_CONTEXT ""
+ENV NEXUS_DATA /nexus-data
+ENV NEXUS_VERSION 3.0.2-02
 
-# install Oracle JRE
-ENV JAVA_HOME=/opt/java \
-  JAVA_VERSION_MAJOR=8 \
-  JAVA_VERSION_MINOR=102 \
-  JAVA_VERSION_BUILD=14
+# Add local files and according directories to image
+ADD files /
 
-RUN mkdir -p /opt \
-  && curl --fail --silent --location --retry 3 \
-  --header "Cookie: oraclelicense=accept-securebackup-cookie; " \
-  http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/server-jre-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz \
-  | gunzip \
-  | tar -x -C /opt \
-  && ln -s /opt/jdk1.${JAVA_VERSION_MAJOR}.0_${JAVA_VERSION_MINOR} ${JAVA_HOME}
+# Packages
+RUN apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main && \
+    apk add --no-cache --repository  http://dl-cdn.alpinelinux.org/alpine/edge/community && \
+    apk update && \
+    apk upgrade && \
+    apk add ca-certificates supervisor openjdk8 bash curl tar && \
+    rm -rf /var/cache/apk/*
 
-# install nexus
-ENV NEXUS_VERSION=3.0.2-02
-RUN mkdir -p /opt/sonatype/nexus \
-  && curl --fail --silent --location --retry 3 \
-    https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
-  | gunzip \
-  | tar x -C /opt/sonatype/nexus --strip-components=1 nexus-${NEXUS_VERSION} \
-  && chown -R root:root /opt/sonatype/nexus 
-
-## configure nexus runtime env
-ENV NEXUS_CONTEXT='' \
-  NEXUS_DATA=/nexus-data
-RUN sed \
+# Nexus
+RUN echo "Installing Nexus ${NEXUS_VERSION} ..." && \
+    mkdir -p /opt/sonatype/nexus && \
+    curl -sSL --retry 3 https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz | tar -C /opt/sonatype/nexus -xvz --strip-components=1 nexus-${NEXUS_VERSION} && \
+    addgroup -S nexus && \
+    adduser -G nexus -h ${NEXUS_DATA} -SD nexus && \
+    chmod -R +x /usr/local/bin && \
+    chown -R nexus:nexus /opt/sonatype/nexus && \
+    sed \
     -e "s|karaf.home=.|karaf.home=/opt/sonatype/nexus|g" \
     -e "s|karaf.base=.|karaf.base=/opt/sonatype/nexus|g" \
     -e "s|karaf.etc=etc|karaf.etc=/opt/sonatype/nexus/etc|g" \
     -e "s|java.util.logging.config.file=etc|java.util.logging.config.file=/opt/sonatype/nexus/etc|g" \
     -e "s|karaf.data=data|karaf.data=${NEXUS_DATA}|g" \
     -e "s|java.io.tmpdir=data/tmp|java.io.tmpdir=${NEXUS_DATA}/tmp|g" \
-    -i /opt/sonatype/nexus/bin/nexus.vmoptions \
-  && sed \
+    -i /opt/sonatype/nexus/bin/nexus.vmoptions && \
+    sed \
     -e "s|nexus-context-path=/|nexus-context-path=/\${NEXUS_CONTEXT}|g" \
     -i /opt/sonatype/nexus/etc/org.sonatype.nexus.cfg
 
-RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
+EXPOSE 8081 5000
+
+USER nexus
 
 VOLUME ${NEXUS_DATA}
 
-EXPOSE 8081
-USER nexus
 WORKDIR /opt/sonatype/nexus
 
-ENV JAVA_MAX_MEM=1200m \
-  JAVA_MIN_MEM=1200m \
-  EXTRA_JAVA_OPTS=""
+ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
-CMD ["bin/nexus", "run"]
