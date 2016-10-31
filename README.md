@@ -99,5 +99,4 @@ Looking to contribute to our Docker image but need some help? There's a few ways
 
 * File a public issue [here on GitHub](https://github.com/sonatype/docker-nexus3/issues)
 * Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
-* Pop into [our public HipChat room](https://www.hipchat.com/gW26B2y2Z) and ask us some questions
 * Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
