@@ -63,11 +63,10 @@ RUN sed \
     -e "s|java.io.tmpdir=.*|java.io.tmpdir=${NEXUS_DATA}/tmp|g" \
     -e "s|LogFile=.*|LogFile=${NEXUS_DATA}/log/jvm.log|g" \
     -i ${NEXUS_HOME}/bin/nexus.vmoptions \
-  && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp \
-  && cp ${NEXUS_HOME}/etc/nexus-default.properties ${NEXUS_DATA}/etc/nexus.properties \
   && sed \
     -e "s|nexus-context-path=/|nexus-context-path=/\${NEXUS_CONTEXT}|g" \
-    -i ${NEXUS_DATA}/etc/nexus.properties
+    -i ${NEXUS_HOME}/etc/nexus-default.properties \
+  && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
   && chown -R nexus:nexus ${NEXUS_DATA}
