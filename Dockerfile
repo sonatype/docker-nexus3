@@ -27,14 +27,16 @@ RUN yum install -y \
 # configure java runtime
 ENV JAVA_HOME=/opt/java \
   JAVA_VERSION_MAJOR=8 \
-  JAVA_VERSION_MINOR=102 \
-  JAVA_VERSION_BUILD=14
+  JAVA_VERSION_MINOR=112 \
+  JAVA_VERSION_BUILD=15
 
 # configure nexus runtime
+ENV SONATYPE_DIR=/opt/sonatype
 ENV NEXUS_VERSION=3.1.0-04 \
-  NEXUS_HOME=/opt/sonatype/nexus \
+  NEXUS_HOME=${SONATYPE_DIR}/nexus \
   NEXUS_DATA=/nexus-data \
-  NEXUS_CONTEXT=''
+  NEXUS_CONTEXT='' \
+  SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
 
 # install Oracle JRE
 RUN mkdir -p /opt \
@@ -55,20 +57,12 @@ RUN mkdir -p ${NEXUS_HOME} \
 
 # configure nexus
 RUN sed \
-    -e "s|karaf.home=.|karaf.home=${NEXUS_HOME}|g" \
-    -e "s|karaf.base=.|karaf.base=${NEXUS_HOME}|g" \
-    -e "s|karaf.etc=etc|karaf.etc=${NEXUS_HOME}/etc|g" \
-    -e "s|java.util.logging.config.file=etc|java.util.logging.config.file=${NEXUS_HOME}/etc|g" \
-    -e "s|karaf.data=.*|karaf.data=${NEXUS_DATA}|g" \
-    -e "s|java.io.tmpdir=.*|java.io.tmpdir=${NEXUS_DATA}/tmp|g" \
-    -e "s|LogFile=.*|LogFile=${NEXUS_DATA}/log/jvm.log|g" \
-    -i ${NEXUS_HOME}/bin/nexus.vmoptions \
-  && sed \
-    -e "s|nexus-context-path=/|nexus-context-path=/\${NEXUS_CONTEXT}|g" \
-    -i ${NEXUS_HOME}/etc/nexus-default.properties \
-  && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp
+    -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' \
+    -i ${NEXUS_HOME}/etc/nexus-default.properties
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
+  && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp ${SONATYPE_WORK} \
+  && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
   && chown -R nexus:nexus ${NEXUS_DATA}
 
 VOLUME ${NEXUS_DATA}
