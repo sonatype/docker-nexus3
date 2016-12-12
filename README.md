@@ -4,7 +4,7 @@ A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
-  * [Build Args](#build-ars)
+  * [Build Args](#build-args)
 * [Getting Help](#getting-help)
 
 To run, binding the exposed port 8081 to the host.
@@ -76,7 +76,7 @@ with Docker. See [Managing Data in Containers](https://docs.docker.com/engine/tu
 for additional information.
 
   1. *Use a data volume*.  Since data volumes are persistent
-  until no containers use them, a volume can be created specifically for 
+  until no containers use them, a volume can be created specifically for
   this purpose.  This is the recommended approach.  
 
   ```
