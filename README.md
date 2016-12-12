@@ -4,6 +4,7 @@ A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
+  * [Build Args](#build-args)
 * [Getting Help](#getting-help)
 
 To run, binding the exposed port 8081 to the host.
@@ -75,7 +76,7 @@ with Docker. See [Managing Data in Containers](https://docs.docker.com/engine/tu
 for additional information.
 
   1. *Use a data volume*.  Since data volumes are persistent
-  until no containers use them, a volume can be created specifically for 
+  until no containers use them, a volume can be created specifically for
   this purpose.  This is the recommended approach.  
 
   ```
@@ -92,6 +93,16 @@ for additional information.
   $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
   $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
   ```
+
+### Build Args
+
+The Dockerfile contains two build arguments (`NEXUS_VERSION` & `NEXUS_DOWNLOAD_URL`) that can be used to customize what
+version of, and from where, Nexus Repository Manager is downloaded. This is useful mostly for testing purposes as the
+Dockerfile may be dependent on a very specific version of Nexus Repository Manager.
+
+```
+docker build --rm --tag nexus-custom --build-arg NEXUS_VERSION=3.x.y --build-arg NEXUS_DOWNLOAD_URL=http://.../nexus-3.x.y-unix.tar.gz .
+```
 
 ## Getting Help
 

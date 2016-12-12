@@ -20,6 +20,9 @@ LABEL vendor=Sonatype \
   com.sonatype.license="Apache License, Version 2.0" \
   com.sonatype.name="Nexus Repository Manager base image"
 
+ARG NEXUS_VERSION=3.1.0-04
+ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
+
 RUN yum install -y \
   curl tar \
   && yum clean all
@@ -32,8 +35,7 @@ ENV JAVA_HOME=/opt/java \
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
-ENV NEXUS_VERSION=3.1.0-04 \
-  NEXUS_HOME=${SONATYPE_DIR}/nexus \
+ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
   NEXUS_DATA=/nexus-data \
   NEXUS_CONTEXT='' \
   SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
@@ -50,7 +52,7 @@ RUN mkdir -p /opt \
 # install nexus
 RUN mkdir -p ${NEXUS_HOME} \
   && curl --fail --silent --location --retry 3 \
-    https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz \
+    ${NEXUS_DOWNLOAD_URL} \
   | gunzip \
   | tar x -C ${NEXUS_HOME} --strip-components=1 nexus-${NEXUS_VERSION} \
   && chown -R root:root ${NEXUS_HOME}
