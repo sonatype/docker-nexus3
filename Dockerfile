@@ -31,7 +31,9 @@ RUN yum install -y \
 ENV JAVA_HOME=/opt/java \
   JAVA_VERSION_MAJOR=8 \
   JAVA_VERSION_MINOR=112 \
-  JAVA_VERSION_BUILD=15
+  JAVA_VERSION_BUILD=15 \
+  JAVA_MIN_MEM=1200m \
+  JAVA_MAX_MEM=1200m
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -62,6 +64,13 @@ RUN sed \
     -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' \
     -i ${NEXUS_HOME}/etc/nexus-default.properties
 
+## configure nexus runtime env
+RUN sed \
+    -e "s|Xms.*|Xms${JAVA_MIN_MEM}|g" \
+    -e "s|Xmx.*|Xmx${JAVA_MAX_MEM}|g" \
+    -i ${NEXUS_HOME}/bin/nexus.vmoptions \
+ && chown 200:200 ${NEXUS_HOME}/bin/nexus.vmoptions
+ 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
   && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp ${SONATYPE_WORK} \
   && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
@@ -72,9 +81,5 @@ VOLUME ${NEXUS_DATA}
 EXPOSE 8081
 USER nexus
 WORKDIR ${NEXUS_HOME}
-
-ENV JAVA_MAX_MEM=1200m \
-  JAVA_MIN_MEM=1200m \
-  EXTRA_JAVA_OPTS=""
 
 CMD ["bin/nexus", "run"]
