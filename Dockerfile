@@ -62,6 +62,9 @@ RUN sed \
     -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' \
     -i ${NEXUS_HOME}/etc/nexus-default.properties
 
+## fix owner for nexus.vmoptions file
+RUN chown 200:200 ${NEXUS_HOME}/bin/nexus.vmoptions
+ 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
   && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp ${SONATYPE_WORK} \
   && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
@@ -73,8 +76,6 @@ EXPOSE 8081
 USER nexus
 WORKDIR ${NEXUS_HOME}
 
-ENV JAVA_MAX_MEM=1200m \
-  JAVA_MIN_MEM=1200m \
-  EXTRA_JAVA_OPTS=""
-
+COPY nexus-entrypoint.sh /usr/local/bin/nexus-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/nexus-entrypoint.sh"]
 CMD ["bin/nexus", "run"]
