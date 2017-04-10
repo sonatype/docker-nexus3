@@ -60,7 +60,11 @@ RUN mkdir -p ${NEXUS_HOME} \
 # configure nexus
 RUN sed \
     -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' \
-    -i ${NEXUS_HOME}/etc/nexus-default.properties
+    -i ${NEXUS_HOME}/etc/nexus-default.properties \
+  && sed \
+    -e '/^-Xms/d' \
+    -e '/^-Xmx/d' \
+    -i ${NEXUS_HOME}/bin/nexus.vmoptions
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
   && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp ${SONATYPE_WORK} \
@@ -73,8 +77,6 @@ EXPOSE 8081
 USER nexus
 WORKDIR ${NEXUS_HOME}
 
-ENV JAVA_MAX_MEM=1200m \
-  JAVA_MIN_MEM=1200m \
-  EXTRA_JAVA_OPTS=""
+ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m"
 
 CMD ["bin/nexus", "run"]
