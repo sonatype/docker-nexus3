@@ -22,10 +22,19 @@
 
 A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 
+* [Contribution Guidlines](#contribution-guidelines)
+* [Running and Building](#running-and-building)
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
   * [Build Args](#build-args)
 * [Getting Help](#getting-help)
+
+## Contribution Guidelines
+
+Go read [our contribution guidelines](/.github/CONTRIBUTING.md) to get a bit more familiar with how
+we would like things to flow.
+
+## Running And Building
 
 To run, binding the exposed port 8081 to the host.
 
