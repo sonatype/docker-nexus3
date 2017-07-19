@@ -30,9 +30,9 @@ RUN yum install -y \
 # configure java runtime
 ENV JAVA_HOME=/opt/java \
   JAVA_VERSION_MAJOR=8 \
-  JAVA_VERSION_MINOR=131 \
-  JAVA_VERSION_BUILD=11 \
-  JAVA_DOWNLOAD_HASH=d54c1d3a095b4ff2b6607d096fa80163
+  JAVA_VERSION_MINOR=141 \
+  JAVA_VERSION_BUILD=15 \
+  JAVA_DOWNLOAD_HASH=336fa29ff2bb4ef291e347e091f7f4a7
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
