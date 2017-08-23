@@ -20,7 +20,7 @@ LABEL vendor=Sonatype \
   com.sonatype.license="Apache License, Version 2.0" \
   com.sonatype.name="Nexus Repository Manager base image"
 
-ARG NEXUS_VERSION=3.5.0-02
+ARG NEXUS_VERSION=3.5.1-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
 
 RUN yum install -y \
