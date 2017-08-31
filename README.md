@@ -75,12 +75,12 @@ process, which runs as UID 200.
 
 * There is an environment variable that can used to pass JVM arguments to the startup script
 
-  * `INSTALL4J_ADD_VM_PARAMS`, passed to the Install4J startup script. Defaults to `-Xms1200m -Xmx1200m`.
+  * `INSTALL4J_ADD_VM_PARAMS`, passed to the Install4J startup script. Defaults to `-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g`.
 
   This can be supplied at runtime:
 
   ```
-  $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2g -Xmx2g" sonatype/nexus3
+  $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2g -Xmx2g -XX:MaxDirectMemorySize=3g" sonatype/nexus3
   ```
 
 * Another environment variable can be used to control the Nexus Context Path
