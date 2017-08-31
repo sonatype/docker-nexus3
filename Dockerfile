@@ -65,6 +65,7 @@ RUN sed \
   && sed \
     -e '/^-Xms/d' \
     -e '/^-Xmx/d' \
+    -e '/^-XX:MaxDirectMemorySize/d' \
     -i ${NEXUS_HOME}/bin/nexus.vmoptions
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
@@ -78,6 +79,6 @@ EXPOSE 8081
 USER nexus
 WORKDIR ${NEXUS_HOME}
 
-ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m"
+ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2G"
 
 CMD ["bin/nexus", "run"]
