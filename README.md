@@ -83,6 +83,9 @@ process, which runs as UID 200.
   $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2g -Xmx2g -XX:MaxDirectMemorySize=3g  -Djava.util.prefs.userRoot=/some-other-dir" sonatype/nexus3
   ```
 
+  Of particular note, `-Djava.util.prefs.userRoot=/some-other-dir` can be set to a persistent path, which will maintain
+  the installed Nexus Repository License if the container is restarted.
+
 * Another environment variable can be used to control the Nexus Context Path
 
   * `NEXUS_CONTEXT`, defaults to /
