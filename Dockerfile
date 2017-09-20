@@ -23,9 +23,9 @@ LABEL vendor=Sonatype \
 ADD solo.json /var/chef/solo.json
 
 RUN curl -L https://www.getchef.com/chef/install.sh | bash
-RUN chef-solo --recipe-url https://s3.amazonaws.com/jcava-int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json
+RUN chef-solo --recipe-url https://s3.amazonaws.com/int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json
 
 EXPOSE 8081
 USER nexus
 
-CMD ["/opt/nexus3/start-nexus3.sh"]
+CMD ["/opt/sonatype/start-nexus3.sh"]
