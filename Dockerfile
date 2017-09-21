@@ -43,6 +43,16 @@ RUN sed -e "\
 RUN curl -L https://www.getchef.com/chef/install.sh | bash
 RUN chef-solo --recipe-url https://s3.amazonaws.com/int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json
 
+# configure nexus
+RUN sed \
+    -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' \
+    -i ${NEXUS_HOME}/etc/nexus-default.properties \
+  && sed \
+    -e '/^-Xms/d' \
+    -e '/^-Xmx/d' \
+    -e '/^-XX:MaxDirectMemorySize/d' \
+    -i ${NEXUS_HOME}/bin/nexus.vmoptions
+
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
