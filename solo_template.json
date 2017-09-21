@@ -6,5 +6,12 @@
     "oracle": {
       "accept_oracle_download_terms": true
     }
+  },
+  "nexus3": {
+    "sonatype_dir": "SONATYPE_DIR",
+    "nexus_home": "SONATYPE_DIR/nexus",
+    "nexus_data": "NEXUS_DATA",
+    "nexus_context": "NEXUS_CONTEXT",
+    "sonatype_work": "SONATYPE_DIR/sonatype-work"
   }
 }

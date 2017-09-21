@@ -20,12 +20,30 @@ LABEL vendor=Sonatype \
   com.sonatype.license="Apache License, Version 2.0" \
   com.sonatype.name="Nexus Repository Manager base image"
 
-ADD solo.json /var/chef/solo.json
+# configure nexus runtime
+ENV SONATYPE_DIR=/opt/sonatype
+ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
+  NEXUS_DATA=/nexus-data \
+  NEXUS_CONTEXT='' \
+  SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
+
+ADD solo_template.json /var/chef/solo_template.json
+
+RUN sed -e "\
+    s|SONATYPE_DIR|${SONATYPE_DIR}|g; \
+    s|NEXUS_DATA|${NEXUS_DATA}|g; \
+    s|NEXUS_CONTEXT|${NEXUS_CONTEXT}|g" \
+    /var/chef/solo_template.json > /var/chef/solo.json
 
 RUN curl -L https://www.getchef.com/chef/install.sh | bash
-RUN chef-solo --recipe-url https://s3.amazonaws.com/int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json
+RUN chef-solo --recipe-url https://s3.amazonaws.com/jcava-int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json
+
+VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
 USER nexus
+WORKDIR ${NEXUS_HOME}
 
-CMD ["/opt/sonatype/start-nexus3.sh"]
+ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
+
+CMD ["bin/nexus", "run"]
