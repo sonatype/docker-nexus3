@@ -8,6 +8,8 @@
     }
   },
   "nexus3": {
+    "version": "NEXUS_VERSION",
+    "checksum": "NEXUS_CHECKSUM",
     "sonatype_dir": "SONATYPE_DIR",
     "nexus_home": "SONATYPE_DIR/nexus",
     "nexus_data": "NEXUS_DATA",
