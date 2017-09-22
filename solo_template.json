@@ -1,7 +1,7 @@
 {
-  "run_list": ["recipe[java]", "recipe[nexus3::download]", "recipe[nexus3::configure]"],
+  "run_list": ["recipe[java]", "recipe[nexus3::download]"],
   "java": {
-    "jdk_version": 8,
+    "jdk_version": JDK_VERSION,
     "install_flavor": "oracle",
     "oracle": {
       "accept_oracle_download_terms": true

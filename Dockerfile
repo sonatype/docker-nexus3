@@ -23,6 +23,8 @@ LABEL vendor=Sonatype \
 ARG NEXUS_VERSION=3.5.2-01
 ARG NEXUS_CHECKSUM=477969da1ea3a532247be628e5ca2b466c9653e88ba51d51a1609eacb0a45b4b
 
+ENV JDK_VERSION=8
+
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
 ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
@@ -33,6 +35,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 ADD solo_template.json /var/chef/solo_template.json
 
 RUN sed -e "\
+    s|JDK_VERSION|${JDK_VERSION}|g; \
     s|NEXUS_VERSION|${NEXUS_VERSION}|g; \
     s|NEXUS_CHECKSUM|${NEXUS_CHECKSUM}|g; \
     s|SONATYPE_DIR|${SONATYPE_DIR}|g; \
