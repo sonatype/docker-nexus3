@@ -1,0 +1,30 @@
+<%=
+require 'json'
+{
+  :run_list => [ 'recipe[nexus-repository-manager::docker]' ],
+  :java => {
+    :jdk_version => ENV['JAVA_VERSION'],
+    :install_flavor => 'oracle',
+    :oracle => {
+      :accept_oracle_download_terms => true
+    },
+    :jdk => {
+      '8' => {
+        :x86_64 => {
+          :url => ENV['JAVA_URL'],
+          :checksum => ENV['JAVA_DOWNLOAD_HASH']
+        }.compact
+      }
+    }
+  },
+  'nexus-repository-manager': {
+    :version => ENV['NEXUS_VERSION'],
+    :checksum => ENV['NEXUS_CHECKSUM'],
+    :sonatype_dir => ENV['SONATYPE_DIR'],
+    :nexus_home => ENV['SONATYPE_DIR'] + '/nexus',
+    :nexus_data => ENV['NEXUS_DATA'],
+    :nexus_context => ENV['NEXUS_CONTEXT'],
+    :sonatype_work => ENV['SONATYPE_DIR'] + '/sonatype-work'
+  }.compact
+}.to_json
+%>

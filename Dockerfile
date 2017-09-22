@@ -20,10 +20,14 @@ LABEL vendor=Sonatype \
   com.sonatype.license="Apache License, Version 2.0" \
   com.sonatype.name="Nexus Repository Manager base image"
 
-ARG NEXUS_VERSION=3.5.2-01
-ARG NEXUS_CHECKSUM=477969da1ea3a532247be628e5ca2b466c9653e88ba51d51a1609eacb0a45b4b
+ENV NEXUS_VERSION=3.5.2-01
+ENV NEXUS_CHECKSUM=477969da1ea3a532247be628e5ca2b466c9653e88ba51d51a1609eacb0a45b4b
 
-ENV JDK_VERSION=8
+ENV JAVA_VERSION=8
+
+# uncomment to customize
+# ENV JAVA_URL=""
+# ENV JAVA_DOWNLOAD_HASH=""
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -32,19 +36,12 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
   NEXUS_CONTEXT='' \
   SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
 
-ADD solo_template.json /var/chef/solo_template.json
+ADD solo.json.erb /var/chef/solo.json.erb
 
-RUN sed -e "\
-    s|JDK_VERSION|${JDK_VERSION}|g; \
-    s|NEXUS_VERSION|${NEXUS_VERSION}|g; \
-    s|NEXUS_CHECKSUM|${NEXUS_CHECKSUM}|g; \
-    s|SONATYPE_DIR|${SONATYPE_DIR}|g; \
-    s|NEXUS_DATA|${NEXUS_DATA}|g; \
-    s|NEXUS_CONTEXT|${NEXUS_CONTEXT}|g" \
-    /var/chef/solo_template.json > /var/chef/solo.json
-
-RUN curl -L https://www.getchef.com/chef/install.sh | bash
-RUN chef-solo --recipe-url https://s3.amazonaws.com/int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json
+# Install using chef-solo
+RUN curl -L https://www.getchef.com/chef/install.sh | bash && \
+    /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json && \
+    chef-solo --recipe-url https://s3.amazonaws.com/int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json
 
 # configure nexus
 RUN sed \
