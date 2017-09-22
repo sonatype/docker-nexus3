@@ -4,6 +4,7 @@ require 'json'
   :run_list => [ 'recipe[nexus-repository-manager::docker]' ],
   :java => {
     :jdk_version => ENV['JAVA_VERSION'],
+    :java_home => ENV['JAVA_HOME'],
     :install_flavor => 'oracle',
     :oracle => {
       :accept_oracle_download_terms => true
@@ -19,7 +20,8 @@ require 'json'
   },
   'nexus-repository-manager': {
     :version => ENV['NEXUS_VERSION'],
-    :checksum => ENV['NEXUS_CHECKSUM'],
+    :nexus_download_url => ENV['NEXUS_DOWNLOAD_URL'],
+    :checksum => ENV['NEXUS_DOWNLOAD_SHA256_HASH'],
     :sonatype_dir => ENV['SONATYPE_DIR'],
     :nexus_home => ENV['SONATYPE_DIR'] + '/nexus',
     :nexus_data => ENV['NEXUS_DATA'],
