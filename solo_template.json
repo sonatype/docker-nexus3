@@ -1,5 +1,5 @@
 {
-  "run_list": ["recipe[java]", "recipe[nexus3::download]"],
+  "run_list": ["recipe[java]", "recipe[nexus-repository-manager::download]"],
   "java": {
     "jdk_version": JDK_VERSION,
     "install_flavor": "oracle",
@@ -7,7 +7,7 @@
       "accept_oracle_download_terms": true
     }
   },
-  "nexus3": {
+  "nexus-repository-manager": {
     "version": "NEXUS_VERSION",
     "checksum": "NEXUS_CHECKSUM",
     "sonatype_dir": "SONATYPE_DIR",
