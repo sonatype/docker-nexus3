@@ -41,6 +41,10 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
   NEXUS_CONTEXT='' \
   SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
 
+# configure the user id to be used with 
+# volume storage.
+ENV USERID=200
+
 # install Oracle JRE
 RUN mkdir -p /opt \
   && curl --fail --silent --location --retry 3 \
@@ -68,7 +72,7 @@ RUN sed \
     -e '/^-XX:MaxDirectMemorySize/d' \
     -i ${NEXUS_HOME}/bin/nexus.vmoptions
 
-RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
+RUN useradd -r -u ${USERID} -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus \
   && mkdir -p ${NEXUS_DATA}/etc ${NEXUS_DATA}/log ${NEXUS_DATA}/tmp ${SONATYPE_WORK} \
   && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
   && chown -R nexus:nexus ${NEXUS_DATA}
