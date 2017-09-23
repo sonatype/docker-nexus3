@@ -121,6 +121,14 @@ for additional information.
   $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
   ```
 
+  A simpler solution is to use the environment USERID of the docker image which looks like this:
+
+  ```
+  $ docker run -d -p 8081:8081 --env USERID=`id -u` --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
+  ```
+
+  The `id -u` will give back the user id number only. You can of course give the id literally.
+
 ### Build Args
 
 The Dockerfile contains two build arguments (`NEXUS_VERSION` & `NEXUS_DOWNLOAD_URL`) that can be used to customize what
