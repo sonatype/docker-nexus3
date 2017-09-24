@@ -23,7 +23,7 @@
 much shaming throughout the land. If you use an editor besides Eclipse or IntelliJ, adapt the codestyle and submit a PR
 there :)
 * Fill out a CLA for us, so we can sort out all the legal parts of contributing. You can get all the information for
-this [here](https://books.sonatype.com/nexus-book/reference/contrib.html). You may go, this is for your book, is it
+this [here](https://help.sonatype.com/display/NXRM3/Bundle+Development#BundleDevelopment-ContributingBundles). You may go, this is for your book, is it
 applicable for this repo? Yes, absolutely. Follow the CLA process and email in your form. We are working on a way to
 make this simpler, as well.
 * Make sure to fill out an issue for your PR, so that we have traceability as to what you are trying to fix,
