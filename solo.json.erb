@@ -3,7 +3,7 @@ require 'json'
 {
   :run_list => [ 'recipe[nexus-repository-manager::docker]' ],
   :java => {
-    :jdk_version => ENV['JAVA_VERSION'],
+    :jdk_version => ENV['JAVA_VERSION_MAJOR'],
     :java_home => ENV['JAVA_HOME'],
     :install_flavor => 'oracle',
     :oracle => {
@@ -13,7 +13,7 @@ require 'json'
       '8' => {
         :x86_64 => {
           :url => ENV['JAVA_URL'],
-          :checksum => ENV['JAVA_DOWNLOAD_HASH']
+          :checksum => ENV['JAVA_DOWNLOAD_SHA256_HASH']
         }.compact
       }
     }
