@@ -46,11 +46,15 @@ ADD solo.json.erb /var/chef/solo.json.erb
 RUN curl -L https://www.getchef.com/chef/install.sh | bash && \
     /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json && \
     chef-solo --recipe-url https://s3.amazonaws.com/int-public/nxrm-cookbook.tar.gz --json-attributes /var/chef/solo.json && \
-    rpm -qa *chefdk* && \
+    rpm -qa *chef* | xargs rpm -e && \
     yum remove -y chef && \
     rm -rf /var/chef && \
     rm -rf /opt/chefdk && \
-    rm -rf /etc/chef
+    rm -rf /etc/chef && \
+    yum clean all && \
+    rm -rf /var/cache/yum && \
+    cd /var/lib && \
+    rpm --rebuilddb
 
 # configure nexus
 RUN sed \
