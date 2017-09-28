@@ -14,7 +14,7 @@ require 'json'
         :x86_64 => {
           :url => ENV['JAVA_URL'],
           :checksum => ENV['JAVA_DOWNLOAD_SHA256_HASH']
-        }.compact
+        }
       }
     }
   },
@@ -22,10 +22,22 @@ require 'json'
     :version => ENV['NEXUS_VERSION'],
     :nexus_download_url => ENV['NEXUS_DOWNLOAD_URL'],
     :checksum => ENV['NEXUS_DOWNLOAD_SHA256_HASH'],
-    :sonatype_dir => ENV['SONATYPE_DIR'],
-    :nexus_home => ENV['SONATYPE_DIR'] + '/nexus',
-    :nexus_data => ENV['NEXUS_DATA'],
-    :sonatype_work => ENV['SONATYPE_DIR'] + '/sonatype-work'
-  }.compact
+    :sonatype => {
+      :dir => ENV['SONATYPE_DIR']
+    },
+    :nexus => {
+      :home => {
+        :dir => ENV['SONATYPE_DIR'] + '/nexus'
+      },
+      :data => {
+        :dir => ENV['NEXUS_DATA']
+      }
+    },
+    :sonatype => {
+      :work => {
+        :dir => ENV['SONATYPE_DIR'] + '/sonatype-work'
+      }
+    }
+  }
 }.to_json
 %>
