@@ -23,19 +23,17 @@ require 'json'
     :nexus_download_url => ENV['NEXUS_DOWNLOAD_URL'],
     :checksum => ENV['NEXUS_DOWNLOAD_SHA256_HASH'],
     :sonatype => {
-      :dir => ENV['SONATYPE_DIR']
+      :path => ENV['SONATYPE_DIR'],
+      :sonatype_work => {
+        :path => ENV['SONATYPE_DIR'] + '/sonatype-work'
+      }
     },
     :nexus => {
       :home => {
-        :dir => ENV['SONATYPE_DIR'] + '/nexus'
+        :path => ENV['SONATYPE_DIR'] + '/nexus'
       },
       :data => {
-        :dir => ENV['NEXUS_DATA']
-      }
-    },
-    :sonatype => {
-      :work => {
-        :dir => ENV['SONATYPE_DIR'] + '/sonatype-work'
+        :path => ENV['NEXUS_DATA']
       }
     }
   }
