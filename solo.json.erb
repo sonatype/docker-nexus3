@@ -37,7 +37,7 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
       }
     }
   },
-  'nexus-repository-manager': {
+  'nexus-repository-manager' => {
     :version => ENV['NEXUS_VERSION'],
     :nexus_download_url => ENV['NEXUS_DOWNLOAD_URL'],
     :checksum => ENV['NEXUS_DOWNLOAD_SHA256_HASH'],
