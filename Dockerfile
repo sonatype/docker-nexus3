@@ -12,46 +12,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM       centos:centos7
+FROM centos:centos7
 
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
 LABEL vendor=Sonatype \
-  com.sonatype.license="Apache License, Version 2.0" \
-  com.sonatype.name="Nexus Repository Manager base image"
+      com.sonatype.license="Apache License, Version 2.0" \
+      com.sonatype.name="Nexus Repository Manager base image"
 
 ARG NEXUS_VERSION=3.6.0-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
 ARG NEXUS_DOWNLOAD_SHA256_HASH=40b95b097b43cc8941a9700d24baf25ef94867286e43eaffa37cf188726bb2a7
 
 ENV JAVA_HOME=/opt/java \
-  JAVA_VERSION_MAJOR=8 \
-  JAVA_VERSION_MINOR=144 \
-  JAVA_VERSION_BUILD=01 \
-  JAVA_DOWNLOAD_HASH=090f390dda5b47b9b721c7dfaa008135
+    JAVA_VERSION_MAJOR=8 \
+    JAVA_VERSION_MINOR=144 \
+    JAVA_VERSION_BUILD=01 \
+    JAVA_DOWNLOAD_HASH=090f390dda5b47b9b721c7dfaa008135
 
 ENV JAVA_URL=http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/${JAVA_DOWNLOAD_HASH}/server-jre-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz \
-  JAVA_DOWNLOAD_SHA256_HASH=e8a341ce566f32c3d06f6d0f0eeea9a0f434f538d22af949ae58bc86f2eeaae4
+    JAVA_DOWNLOAD_SHA256_HASH=e8a341ce566f32c3d06f6d0f0eeea9a0f434f538d22af949ae58bc86f2eeaae4
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
 ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
-  NEXUS_DATA=/nexus-data \
-  NEXUS_CONTEXT='' \
-  SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
+    NEXUS_DATA=/nexus-data \
+    NEXUS_CONTEXT='' \
+    SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
 
 ADD solo.json.erb /var/chef/solo.json.erb
 
 # Install using chef-solo
-RUN curl -L https://www.getchef.com/chef/install.sh | bash && \
-    /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json && \
-    chef-solo --recipe-url https://s3.amazonaws.com/int-public/nexus-repository-manager-cookbook.tar.gz --json-attributes /var/chef/solo.json && \
-    rpm -qa *chef* | xargs rpm -e && \
-    rpm --rebuilddb && \
-    rm -rf /etc/chef && \
-    rm -rf /opt/chefdk && \
-    rm -rf /var/cache/yum && \
-    rm -rf /var/chef
+RUN curl -L https://www.getchef.com/chef/install.sh | bash \
+    && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
+    && chef-solo --recipe-url https://s3.amazonaws.com/int-public/nexus-repository-manager-cookbook.tar.gz --json-attributes /var/chef/solo.json \
+    && rpm -qa *chef* | xargs rpm -e \
+    && rpm --rebuilddb \
+    && rm -rf /etc/chef \
+    && rm -rf /opt/chefdk \
+    && rm -rf /var/cache/yum \
+    && rm -rf /var/chef
 
 # configure nexus
 RUN sed \
