@@ -47,7 +47,9 @@ ADD solo.json.erb /var/chef/solo.json.erb
 # Install using chef-solo
 RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
-    && chef-solo --recipe-url https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz --json-attributes /var/chef/solo.json \
+    && chef-solo \
+       --recipe-url https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz \
+       --json-attributes /var/chef/solo.json \
     && rpm -qa *chef* | xargs rpm -e \
     && rpm --rebuilddb \
     && rm -rf /etc/chef \
