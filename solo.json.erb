@@ -20,7 +20,7 @@ raise RuntimeError, 'environment variable NEXUS_HOME is required' if ENV['NEXUS_
 raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_DATA'].nil? || ENV['NEXUS_DATA'].empty?
 
 {
-  :run_list => [ 'recipe[nexus-repository-manager::docker]' ],
+  :run_list => [ 'recipe[nexus_repository_manager::docker]' ],
   :java => {
     :jdk_version => ENV['JAVA_VERSION_MAJOR'],
     :java_home => ENV['JAVA_HOME'],
@@ -37,7 +37,7 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
       }
     }
   },
-  'nexus-repository-manager' => {
+  :nexus_repository_manager => {
     :version => ENV['NEXUS_VERSION'],
     :nexus_download_url => ENV['NEXUS_DOWNLOAD_URL'],
     :checksum => ENV['NEXUS_DOWNLOAD_SHA256_HASH'],
