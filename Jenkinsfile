@@ -55,8 +55,10 @@ node('ubuntu-zion') {
       }
     }
     stage('Archive') {
-      OsTools.runSafe(this, "docker save sonatype/nexus3 | gzip > sonatype-nexus3.tar.gz")
-      archiveArtifacts artifacts: 'sonatype-nexus3.tar.gz', onlyIfSuccessful: true
+      dir('build/target') {
+        OsTools.runSafe(this, "docker save sonatype/nexus3 | gzip > sonatype-nexus3.tar.gz")
+        archiveArtifacts artifacts: 'sonatype-nexus3.tar.gz', onlyIfSuccessful: true
+      }
     }
     if (currentBuild.result == 'FAILURE') {
       return
