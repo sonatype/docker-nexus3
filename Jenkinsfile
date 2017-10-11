@@ -36,8 +36,8 @@ node('ubuntu-zion') {
       }
       gitHub = new GitHub(this, "${gitHubUsername}/${gitHubRepository}", apiToken)
     }
-    stage('Test') {
-      gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
+    stage('Build') {
+      gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
       withEnv(["PATH+GEMS=/home/jenkins/.gem/ruby/2.3.0/bin"]) {
         OsTools.runSafe(this, "docker system prune -a -f")
@@ -48,24 +48,15 @@ node('ubuntu-zion') {
       }
 
       if (currentBuild.result == 'FAILURE') {
-        gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
-        return
-      } else {
-        gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
-      }
-    }
-    stage('Build') {
-      // If we can archive the image from the rspec build, we do not need this build section
-      gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
-
-      docker.build(imageName)
-
-      if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
         return
       } else {
         gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
       }
+    }
+    stage('Archive') {
+      OsTools.runSafe(this, "docker save sonatype/nexus3 | gzip > sonatype-nexus3.tar.gz")
+      archiveArtifacts artifacts: 'sonatype-nexus3.tar.gz', onlyIfSuccessful: true
     }
     if (currentBuild.result == 'FAILURE') {
       return

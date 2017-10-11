@@ -19,6 +19,7 @@ describe 'Dockerfile' do
   before(:all) do
     Docker.options[:read_timeout] = 900
     @image = Docker::Image.build_from_dir('.')
+    @image.tag('repo' => 'sonatype/nexus3', 'force' => true)
 
     set :os, family: :redhat
     set :backend, :docker
