@@ -40,7 +40,7 @@ node('ubuntu-zion') {
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      def rubyVersion = '2.3.0'
+      def rubyVersion = getRubyVersion()
       withEnv(["PATH+GEMS=/home/jenkins/.gem/ruby/${rubyVersion}/bin"]) {
         OsTools.runSafe(this, "docker system prune -a -f")
         OsTools.runSafe(this, "gem install --user-install rspec")
@@ -90,4 +90,8 @@ def readVersion() {
     }
   }
   error 'Could not determine version.'
+}
+def getRubyVersion() {
+  def versionDescription = OsTools.runSafe(this, "ruby -v")
+  return versionDescription.split(' ')[1].split('p')[0]
 }
