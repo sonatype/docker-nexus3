@@ -94,7 +94,7 @@ def readVersion() {
 def getGemInstallDirectory() {
   def content = OsTools.runSafe(this, "gem env")
   for (line in content.split('\n')) {
-    if (line.trim().startsWith('  - USER INSTALLATION DIRECTORY: ')) {
+    if (line.startsWith('  - USER INSTALLATION DIRECTORY: ')) {
       return line.substring(33)
     }
   }
