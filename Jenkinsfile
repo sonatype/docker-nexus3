@@ -40,7 +40,7 @@ node('ubuntu-zion') {
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      def rubyVersion = OsTools.runSafe(this, 'ls /home/jenkins/.gem/ruby/')
+      def rubyVersion = '2.3.0'
       withEnv(["PATH+GEMS=/home/jenkins/.gem/ruby/${rubyVersion}/bin"]) {
         OsTools.runSafe(this, "docker system prune -a -f")
         OsTools.runSafe(this, "gem install --user-install rspec")
