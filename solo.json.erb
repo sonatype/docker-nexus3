@@ -29,7 +29,7 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
       :accept_oracle_download_terms => true
     },
     :jdk => {
-      '8' => {
+      :'8' => {
         :x86_64 => {
           :url => ENV['JAVA_URL'],
           :checksum => ENV['JAVA_DOWNLOAD_SHA256_HASH']
