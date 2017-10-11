@@ -59,7 +59,7 @@ node('ubuntu-zion') {
     stage('Archive') {
       dir('build/target') {
         OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
-        archiveArtifacts artifacts: "${imageName}.tar.gz', onlyIfSuccessful: true
+        archiveArtifacts artifacts: "${imageName}.tar.gz", onlyIfSuccessful: true
       }
     }
     if (currentBuild.result == 'FAILURE') {
