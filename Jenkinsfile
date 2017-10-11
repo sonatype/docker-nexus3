@@ -55,6 +55,7 @@ node('ubuntu-zion') {
       }
     }
     stage('Build') {
+      // If we can archive the image from the rspec build, we do not need this build section
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
       docker.build(imageName)
