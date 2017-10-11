@@ -40,8 +40,8 @@ node('ubuntu-zion') {
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      def rubyVersion = getRubyVersion()
-      withEnv(["PATH+GEMS=/home/jenkins/.gem/ruby/${rubyVersion}/bin"]) {
+      def gemInstallDirectory = getGemInstallDirectory()
+      withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
         OsTools.runSafe(this, "docker system prune -a -f")
         OsTools.runSafe(this, "gem install --user-install rspec")
         OsTools.runSafe(this, "gem install --user-install serverspec")
@@ -91,7 +91,12 @@ def readVersion() {
   }
   error 'Could not determine version.'
 }
-def getRubyVersion() {
-  def versionDescription = OsTools.runSafe(this, "ruby -v")
-  return versionDescription.split(' ')[1].split('p')[0]
+def getGemInstallDirectory() {
+  def content = OsTools.runSafe(this, "gem env")
+  for (line in content.split('\n')) {
+    if (line.trim().startsWith('  - USER INSTALLATION DIRECTORY: ')) {
+      return line.substring(33)
+    }
+  }
+  error 'Could not determine user gem install directory.'
 }
