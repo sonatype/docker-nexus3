@@ -38,6 +38,7 @@ describe 'Dockerfile' do
   end
 
   it 'should have a nexus process running' do
-    expect(process('nexus')).to be_running
+    expect(process('java')).to be_running
+    expect(process('java')).to have_attributes(:user => 'nexus')
   end
 end
