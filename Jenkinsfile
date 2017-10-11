@@ -14,7 +14,7 @@ node('ubuntu-zion') {
   try {
     stage('Preparation') {
       gitHubUsername = 'sonatype'
-      gitHugRepository = 'docker-nexus3'
+      gitHubRepository = 'docker-nexus3'
       credentialsId = 'integrations-github-api'
       imageName = 'sonatype/nexus3'
 
