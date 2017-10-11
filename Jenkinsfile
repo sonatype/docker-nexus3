@@ -8,7 +8,7 @@ import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, gitHubUsername, gitHubRepository, credentialsId, imageName
+  def commitId, commitDate, version, gitHubUsername, gitHubRepository, credentialsId, imageName, archiveName
   GitHub gitHub
 
   try {
@@ -17,6 +17,7 @@ node('ubuntu-zion') {
       gitHubRepository = 'docker-nexus3'
       credentialsId = 'integrations-github-api'
       imageName = 'sonatype/nexus3'
+      archiveName = 'sonatype-nexus3'
 
       deleteDir()
 
@@ -39,7 +40,8 @@ node('ubuntu-zion') {
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      withEnv(["PATH+GEMS=/home/jenkins/.gem/ruby/2.3.0/bin"]) {
+      def rubyVersion = OsTools.runSafe(this, 'ls /home/jenkins/.gem/ruby/')
+      withEnv(["PATH+GEMS=/home/jenkins/.gem/ruby/${rubyVersion}/bin"]) {
         OsTools.runSafe(this, "docker system prune -a -f")
         OsTools.runSafe(this, "gem install --user-install rspec")
         OsTools.runSafe(this, "gem install --user-install serverspec")
@@ -56,8 +58,8 @@ node('ubuntu-zion') {
     }
     stage('Archive') {
       dir('build/target') {
-        OsTools.runSafe(this, "docker save sonatype/nexus3 | gzip > sonatype-nexus3.tar.gz")
-        archiveArtifacts artifacts: 'sonatype-nexus3.tar.gz', onlyIfSuccessful: true
+        OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
+        archiveArtifacts artifacts: "${imageName}.tar.gz', onlyIfSuccessful: true
       }
     }
     if (currentBuild.result == 'FAILURE') {
