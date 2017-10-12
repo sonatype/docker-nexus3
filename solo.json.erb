@@ -43,17 +43,18 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
     :checksum => ENV['NEXUS_DOWNLOAD_SHA256_HASH'],
     :sonatype => {
       :path => ENV['SONATYPE_DIR'],
-      :sonatype_work => {
-        :path => ENV['SONATYPE_DIR'] + '/sonatype-work'
-      }
     },
-    :nexus => {
-      :home => {
-        :path => ENV['SONATYPE_DIR'] + '/nexus'
-      },
-      :data => {
-        :path => ENV['NEXUS_DATA']
-      }
+    :sonatype_work => {
+      :path => ENV['SONATYPE_DIR'] + '/sonatype-work'
+    },
+    :nexus_home => {
+      :path => ENV['SONATYPE_DIR'] + '/nexus'
+    },
+    :nexus_data => {
+      :path => ENV['NEXUS_DATA']
+    },
+    :properties => {
+      :context_path => ENV['NEXUS_CONTEXT']
     }
   }
 }.to_json
