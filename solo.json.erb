@@ -54,7 +54,7 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
       :path => ENV['NEXUS_DATA']
     },
     :properties => {
-      :context_path => ENV['NEXUS_CONTEXT']
+      :context_path => ENV['NEXUS_CONTEXT'] != '' ? ENV['NEXUS_CONTEXT'] : nil
     }
   }
 }.to_json

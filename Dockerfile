@@ -57,13 +57,6 @@ RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && rm -rf /var/cache/yum \
     && rm -rf /var/chef
 
-# configure nexus
-RUN sed \
-    -e '/^-Xms/d' \
-    -e '/^-Xmx/d' \
-    -e '/^-XX:MaxDirectMemorySize/d' \
-    -i ${NEXUS_HOME}/bin/nexus.vmoptions
-
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
