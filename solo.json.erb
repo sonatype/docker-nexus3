@@ -54,6 +54,8 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
       :path => ENV['NEXUS_DATA']
     },
     :properties => {
+      # Set the context_path to the NEXUS_CONTEXT environment variable
+      # that may be passed into the docker run command.
       :context_path => "/${NEXUS_CONTEXT}"
     }
   }
