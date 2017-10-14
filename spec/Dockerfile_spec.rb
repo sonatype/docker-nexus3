@@ -18,7 +18,7 @@ require "docker"
 describe 'Dockerfile' do
   before(:all) do
     Docker.options[:read_timeout] = 900
-    @image = Docker::Image.get(ENV['IMAGE_ID'])
+    @image = Docker::Image.get('sonatype/nexus3')
 
     set :os, family: :redhat
     set :backend, :docker

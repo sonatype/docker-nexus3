@@ -8,7 +8,7 @@ import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, image
+  def commitId, commitDate, version
   def gitHubOrganization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
       credentialsId = 'integrations-github-api',
@@ -38,7 +38,7 @@ node('ubuntu-zion') {
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      image = docker.build(imageName)
+      docker.build(imageName)
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
@@ -55,7 +55,7 @@ node('ubuntu-zion') {
         OsTools.runSafe(this, "gem install --user-install rspec")
         OsTools.runSafe(this, "gem install --user-install serverspec")
         OsTools.runSafe(this, "gem install --user-install docker-api")
-        OsTools.runSafe(this, "IMAGE_ID=${image.id} rspec --backtrace spec/Dockerfile_spec.rb")
+        OsTools.runSafe(this, "rspec --backtrace spec/Dockerfile_spec.rb")
       }
 
       if (currentBuild.result == 'FAILURE') {
