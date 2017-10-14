@@ -39,7 +39,6 @@ node('ubuntu-zion') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
       image = docker.build(imageName)
-      echo "Image.Id = ${image.id}"
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
