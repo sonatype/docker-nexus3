@@ -19,6 +19,7 @@ node('ubuntu-zion') {
   try {
     stage('Preparation') {
       deleteDir()
+      OsTools.runSafe(this, "docker system prune -a -f")
 
       checkout scm
 
@@ -38,7 +39,6 @@ node('ubuntu-zion') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
       image = docker.build(imageName)
-
       echo "Image.Id = ${image.id}"
 
       if (currentBuild.result == 'FAILURE') {
@@ -53,7 +53,6 @@ node('ubuntu-zion') {
 
       def gemInstallDirectory = getGemInstallDirectory()
       withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
-        OsTools.runSafe(this, "docker system prune -a -f")
         OsTools.runSafe(this, "gem install --user-install rspec")
         OsTools.runSafe(this, "gem install --user-install serverspec")
         OsTools.runSafe(this, "gem install --user-install docker-api")
