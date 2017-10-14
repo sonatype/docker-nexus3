@@ -8,25 +8,22 @@ import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, gitHubUsername, gitHubRepository, credentialsId, imageName, archiveName
+  def commitId, commitDate, version
+  def gitHubOrganization = 'sonatype',
+      gitHubRepository = 'docker-nexus3',
+      credentialsId = 'integrations-github-api',
+      imageName = 'sonatype/nexus3',
+      archiveName = 'sonatype-nexus3'
   GitHub gitHub
 
   try {
     stage('Preparation') {
-      gitHubUsername = 'sonatype'
-      gitHubRepository = 'docker-nexus3'
-      credentialsId = 'integrations-github-api'
-      imageName = 'sonatype/nexus3'
-      archiveName = 'sonatype-nexus3'
-
       deleteDir()
 
       checkout scm
 
       commitId = OsTools.runSafe(this, 'git rev-parse HEAD')
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
-
-      buildType = scm.branches[0].name != '*/master' ? 'snapshot' : 'release'
 
       version = readVersion()
 
@@ -35,7 +32,7 @@ node('ubuntu-zion') {
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
         apiToken = env.GITHUB_API_PASSWORD
       }
-      gitHub = new GitHub(this, "${gitHubUsername}/${gitHubRepository}", apiToken)
+      gitHub = new GitHub(this, "${gitHubOrganization}/${gitHubRepository}", apiToken)
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
@@ -56,14 +53,14 @@ node('ubuntu-zion') {
         gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
       }
     }
+    if (currentBuild.result == 'FAILURE') {
+      return
+    }
     stage('Archive') {
       dir('build/target') {
         OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
-    }
-    if (currentBuild.result == 'FAILURE') {
-      return
     }
     if (scm.branches[0].name != '*/master') {
       return
@@ -74,7 +71,7 @@ node('ubuntu-zion') {
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
         OsTools.runSafe(this, "git tag ${version}")
         OsTools.runSafe(this,
-            "git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${gitHubUsername}/${gitHubRepository}.git ${version}")
+            "git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${gitHubOrganization}/${gitHubRepository}.git ${version}")
       }
       OsTools.runSafe(this, "git tag -d ${version}")
     }
