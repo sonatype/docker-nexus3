@@ -8,12 +8,12 @@ import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, image
+  def commitId, commitDate, version, imageId
   def organization = 'sonatype',
       repository = 'docker-nexus3',
       credentialsId = 'integrations-github-api',
       imageName = 'sonatype/nexus3',
-      archiveName = 'sonatype-nexus3'
+      archiveName = 'docker-nexus3'
   GitHub gitHub
 
   try {
@@ -38,7 +38,8 @@ node('ubuntu-zion') {
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      image = docker.build(imageName)
+      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
+      imageId = hash.split(':')[1]
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
@@ -55,7 +56,7 @@ node('ubuntu-zion') {
         OsTools.runSafe(this, "gem install --user-install rspec")
         OsTools.runSafe(this, "gem install --user-install serverspec")
         OsTools.runSafe(this, "gem install --user-install docker-api")
-        OsTools.runSafe(this, "rspec --backtrace spec/Dockerfile_spec.rb")
+        OsTools.runSafe(this, "IMAGE_ID=${imageId} rspec --backtrace spec/Dockerfile_spec.rb")
       }
 
       if (currentBuild.result == 'FAILURE') {
@@ -91,6 +92,10 @@ node('ubuntu-zion') {
       def dockerhubApiToken
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
           usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
+        OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:${version}")
+        OsTools.runSafe(this, "docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}")
+        OsTools.runSafe(this, "docker push ${organization}/${repository}")
+
         response = OsTools.runSafe this,
             """
               curl -X POST https://hub.docker.com/v2/users/login/ \
@@ -99,21 +104,19 @@ node('ubuntu-zion') {
             """
         token = readJSON text: response
         dockerhubApiToken = token.token
-      }
-      readme = readFile file: 'README.md', encoding: 'UTF-8'
-      readme = readme.replaceAll("(?s)<!--.*?-->", "")
-      readme = readme.replace("\"", "\\\"")
-      readme = readme.replace("\n", "\\n")
-      response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
-          acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
-          requestBody: "{ \"full_description\": \"${readme}\" }",
-          url: "https://hub.docker.com/v2/repositories/${organization}/${repository}/"
-      docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-          image.push("${env.BUILD_NUMBER}")
-          image.push("latest")
+
+        def readme = readFile file: 'README.md', encoding: 'UTF-8'
+        readme = readme.replaceAll("(?s)<!--.*?-->", "")
+        readme = readme.replace("\"", "\\\"")
+        readme = readme.replace("\n", "\\n")
+        response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
+            acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
+            requestBody: "{ \"full_description\": \"${readme}\" }",
+            url: "https://hub.docker.com/v2/repositories/${organization}/${repository}/"
       }
     }
   } finally {
+    OsTools.runSafe(this, "docker system prune -a -f")
     OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
   }
 }
