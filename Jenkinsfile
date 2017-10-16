@@ -8,9 +8,9 @@ import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version
-  def gitHubOrganization = 'sonatype',
-      gitHubRepository = 'docker-nexus3',
+  def commitId, commitDate, version, image
+  def organization = 'sonatype',
+      repository = 'docker-nexus3',
       credentialsId = 'integrations-github-api',
       imageName = 'sonatype/nexus3',
       archiveName = 'sonatype-nexus3'
@@ -33,12 +33,12 @@ node('ubuntu-zion') {
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
         apiToken = env.GITHUB_API_PASSWORD
       }
-      gitHub = new GitHub(this, "${gitHubOrganization}/${gitHubRepository}", apiToken)
+      gitHub = new GitHub(this, "${organization}/${repository}", apiToken)
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      docker.build(imageName)
+      image = docker.build(imageName)
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
@@ -77,15 +77,41 @@ node('ubuntu-zion') {
     if (scm.branches[0].name != '*/master') {
       return
     }
-    input 'Push tags?'
+    input 'Push tags and image?'
     stage('Push tags') {
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
         OsTools.runSafe(this, "git tag ${version}")
         OsTools.runSafe(this,
-            "git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${gitHubOrganization}/${gitHubRepository}.git ${version}")
+            "git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${repository}.git ${version}")
       }
       OsTools.runSafe(this, "git tag -d ${version}")
+    }
+    stage('Push image') {
+      def dockerhubApiToken
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
+          usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
+        response = OsTools.runSafe this,
+            """
+              curl -X POST https://hub.docker.com/v2/users/login/ \
+                -H 'cache-control: no-cache' -H 'content-type: application/json' \
+                -d '{ "username": "${env.DOCKERHUB_API_USERNAME}", "password": "${env.DOCKERHUB_API_PASSWORD}" }'
+            """
+        token = readJSON text: response
+        dockerhubApiToken = token.token
+      }
+      readme = readFile file: 'README.md', encoding: 'UTF-8'
+      readme = readme.replaceAll("(?s)<!--.*?-->", "")
+      readme = readme.replace("\"", "\\\"")
+      readme = readme.replace("\n", "\\n")
+      response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
+          acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
+          requestBody: "{ \"full_description\": \"${readme}\" }",
+          url: "https://hub.docker.com/v2/repositories/${organization}/${repository}/"
+      docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+          image.push("${env.BUILD_NUMBER}")
+          image.push("latest")
+      }
     }
   } finally {
     OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
