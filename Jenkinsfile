@@ -93,7 +93,7 @@ node('ubuntu-zion') {
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
           usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:${version}")
-        OsTools.runSafe(this, "docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}")
+        OsTools.runSafe(this, "echo ${env.DOCKERHUB_API_PASSWORD} | docker login --username ${env.DOCKERHUB_API_USERNAME} --password-stdin")
         OsTools.runSafe(this, "docker push ${organization}/${repository}")
 
         response = OsTools.runSafe this,
@@ -116,6 +116,7 @@ node('ubuntu-zion') {
       }
     }
   } finally {
+    OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
     OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
   }
