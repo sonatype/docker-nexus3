@@ -93,6 +93,7 @@ node('ubuntu-zion') {
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
           usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:${version}")
+        OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:latest")
         OsTools.runSafe(this, "echo ${env.DOCKERHUB_API_PASSWORD} | docker login --username ${env.DOCKERHUB_API_USERNAME} --password-stdin")
         OsTools.runSafe(this, "docker push ${organization}/${repository}")
 
