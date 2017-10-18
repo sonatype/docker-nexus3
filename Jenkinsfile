@@ -79,18 +79,6 @@ node('ubuntu-zion') {
       return
     }
     input 'Push tags and image?'
-    stage('Push tags') {
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-        OsTools.runSafe(this, "git tag ${version}")
-        OsTools.runSafe(this, """
-          git push \
-          https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${repository}.git \
-            ${version}
-        """)
-      }
-      OsTools.runSafe(this, "git tag -d ${version}")
-    }
     stage('Push image') {
       def dockerhubApiToken
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
@@ -98,8 +86,7 @@ node('ubuntu-zion') {
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:${version}")
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:latest")
         OsTools.runSafe(this, """
-          echo ${env.DOCKERHUB_API_PASSWORD} | docker login --username ${env.DOCKERHUB_API_USERNAME} \
-            --password-stdin
+          docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
         """)
         OsTools.runSafe(this, "docker push ${organization}/${repository}")
 
@@ -120,6 +107,18 @@ node('ubuntu-zion') {
             requestBody: "{ \"full_description\": \"${readme}\" }",
             url: "https://hub.docker.com/v2/repositories/${organization}/${repository}/"
       }
+    }
+    stage('Push tags') {
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
+                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+        OsTools.runSafe(this, "git tag ${version}")
+        OsTools.runSafe(this, """
+          git push \
+          https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${repository}.git \
+            ${version}
+        """)
+      }
+      OsTools.runSafe(this, "git tag -d ${version}")
     }
   } finally {
     OsTools.runSafe(this, "docker logout")
