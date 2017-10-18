@@ -78,7 +78,7 @@ node('ubuntu-zion') {
     if (scm.branches[0].name != '*/master') {
       return
     }
-    input 'Push tags and image?'
+    input 'Push image and tags?'
     stage('Push image') {
       def dockerhubApiToken
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
