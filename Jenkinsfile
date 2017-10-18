@@ -9,10 +9,10 @@ import com.sonatype.jenkins.pipeline.OsTools
 
 node('ubuntu-zion') {
   def commitId, commitDate, version, imageId
-  def organization = 'sonatype',
+  def organization = 'bigspotteddog',
       repository = 'docker-nexus3',
-      credentialsId = 'integrations-github-api',
-      imageName = 'sonatype/nexus3',
+      credentialsId = 'jcava-github-api',
+      imageName = 'bigspotteddog/nexus3',
       archiveName = 'docker-nexus3'
   GitHub gitHub
 
@@ -81,7 +81,7 @@ node('ubuntu-zion') {
     input 'Push image and tags?'
     stage('Push image') {
       def dockerhubApiToken
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jcava-docker-hub-credentials',
           usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:${version}")
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:latest")
