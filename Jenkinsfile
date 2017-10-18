@@ -83,8 +83,11 @@ node('ubuntu-zion') {
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
         OsTools.runSafe(this, "git tag ${version}")
-        OsTools.runSafe(this,
-            "git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${repository}.git ${version}")
+        OsTools.runSafe(this, """
+          git push \
+          https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${repository}.git \
+            ${version}
+        """)
       }
       OsTools.runSafe(this, "git tag -d ${version}")
     }
@@ -94,15 +97,17 @@ node('ubuntu-zion') {
           usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:${version}")
         OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:latest")
-        OsTools.runSafe(this, "echo ${env.DOCKERHUB_API_PASSWORD} | docker login --username ${env.DOCKERHUB_API_USERNAME} --password-stdin")
+        OsTools.runSafe(this, """
+          echo ${env.DOCKERHUB_API_PASSWORD} | docker login --username ${env.DOCKERHUB_API_USERNAME} \
+            --password-stdin
+        """)
         OsTools.runSafe(this, "docker push ${organization}/${repository}")
 
-        response = OsTools.runSafe this,
-            """
-              curl -X POST https://hub.docker.com/v2/users/login/ \
-                -H 'cache-control: no-cache' -H 'content-type: application/json' \
-                -d '{ "username": "${env.DOCKERHUB_API_USERNAME}", "password": "${env.DOCKERHUB_API_PASSWORD}" }'
-            """
+        response = OsTools.runSafe(this, """
+          curl -X POST https://hub.docker.com/v2/users/login/ \
+            -H 'cache-control: no-cache' -H 'content-type: application/json' \
+            -d '{ "username": "${env.DOCKERHUB_API_USERNAME}", "password": "${env.DOCKERHUB_API_PASSWORD}" }'
+        """)
         token = readJSON text: response
         dockerhubApiToken = token.token
 
