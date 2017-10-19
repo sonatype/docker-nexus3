@@ -73,8 +73,6 @@ RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false 
   && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
   && chown -R nexus:nexus ${NEXUS_DATA}
 
-VOLUME ${NEXUS_DATA}
-
 EXPOSE 8081
 USER nexus
 WORKDIR ${NEXUS_HOME}
