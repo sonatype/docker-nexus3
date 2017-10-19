@@ -40,7 +40,8 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
 
-ENV NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.3.0-01"
+ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.3.0-01"
+ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
 
@@ -48,7 +49,7 @@ ADD solo.json.erb /var/chef/solo.json.erb
 RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
-       --recipe-url https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz \
+       --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
        --json-attributes /var/chef/solo.json \
     && rpm -qa *chef* | xargs rpm -e \
     && rpm --rebuilddb \
