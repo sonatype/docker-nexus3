@@ -123,12 +123,10 @@ for additional information.
 
 ### Build Args
 
-The Dockerfile contains two build arguments (`NEXUS_VERSION` & `NEXUS_DOWNLOAD_URL`) that can be used to customize what
-version of, and from where, Nexus Repository Manager is downloaded. This is useful mostly for testing purposes as the
-Dockerfile may be dependent on a very specific version of Nexus Repository Manager.
+The Dockerfile contains three build arguments (`NEXUS_VERSION`, `NEXUS_DOWNLOAD_URL` & `NEXUS_DOWNLOAD_SHA256_HASH`) that can be used to customize what version of, and from where, Nexus Repository Manager is downloaded. This is useful mostly for testing purposes as the Dockerfile may be dependent on a very specific version of Nexus Repository Manager.
 
 ```
-docker build --rm --tag nexus-custom --build-arg NEXUS_VERSION=3.x.y --build-arg NEXUS_DOWNLOAD_URL=http://.../nexus-3.x.y-unix.tar.gz .
+docker build --rm --tag nexus-custom --build-arg NEXUS_VERSION=3.x.y --build-arg NEXUS_DOWNLOAD_URL=http://.../nexus-3.x.y-unix.tar.gz --build-arg NEXUS_DOWNLOAD_SHA256_HASH=abcde... .
 ```
 
 ## Getting Help
