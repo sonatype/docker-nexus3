@@ -18,7 +18,7 @@ require "docker"
 describe 'Dockerfile' do
   before(:all) do
     Docker.options[:read_timeout] = 900
-    @image = Docker::Image.build_from_dir('.')
+    @image = Docker::Image.get(ENV['IMAGE_ID'])
 
     set :os, family: :redhat
     set :backend, :docker
@@ -38,6 +38,7 @@ describe 'Dockerfile' do
   end
 
   it 'should have a nexus process running' do
-    expect(process('nexus')).to be_running
+    expect(process('java')).to be_running
+    expect(process('java')).to have_attributes(:user => 'nexus')
   end
 end
