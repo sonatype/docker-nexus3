@@ -58,8 +58,6 @@ RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && rm -rf /var/cache/yum \
     && rm -rf /var/chef
 
-VOLUME ${NEXUS_DATA}
-
 EXPOSE 8081
 USER nexus
 
