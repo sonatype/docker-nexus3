@@ -73,7 +73,7 @@ on GitHub at [sonatype/chef-nexus-repository-manager](https://github.com/sonatyp
 
 ## Testing the Dockerfile
 
-We are using `rspec` as test framework. `serverspec` provides a docker backend (see the method `set` in the test code)
+We are using `rspec` as the test framework. `serverspec` provides a docker backend (see the method `set` in the test code)
  to run the tests inside the docker container, and abstracts away the difference between distributions in the tests
  (e.g. yum, apt,...).
 
