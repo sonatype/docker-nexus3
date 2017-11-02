@@ -23,7 +23,10 @@
 A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 
 * [Contribution Guidlines](#contribution-guidelines)
-* [Running and Building](#running-and-building)
+* [Running](#running)
+* [Building the Nexus Repository Manager image](#building-the-nexus-repository-manager-image)
+* [Chef Solo for Runtime and Application](#chef-solo-for-runtime-and-application)
+* [Testing the Dockerfile](#testing-the-dockerfile)
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
   * [Build Args](#build-args)
@@ -34,7 +37,7 @@ A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 Go read [our contribution guidelines](/.github/CONTRIBUTING.md) to get a bit more familiar with how
 we would like things to flow.
 
-## Running And Building
+## Running
 
 To run, binding the exposed port 8081 to the host.
 
@@ -48,13 +51,33 @@ To test:
 $ curl -u admin:admin123 http://localhost:8081/service/metrics/ping
 ```
 
-To (re)build the image:
+## Building the Nexus Repository Manager image
 
-Copy the Dockerfile and do the build-
+To build a docker image from the Docker file you can use this command:
 
 ```
 $ docker build --rm=true --tag=sonatype/nexus3 .
 ```
+
+The following optional variables can be used when building the image:
+
+- NEXUS_VERSION: Version of the Nexus Repository Manager
+- NEXUS_DOWNLOAD_URL: Download URL for Nexus Repository, alternative to using `NEXUS_VERSION` to download from Sonatype
+- NEXUS_DOWNLOAD_SHA256_HASH: Sha256 checksum for the downloaded Nexus Repository Manager archive. Required if `NEXUS_VERSION`
+ or `NEXUS_DOWNLOAD_URL` is provided
+
+## Chef Solo for Runtime and Application
+
+Chef Solo is used to build out the runtime and application layers of the Docker image. The Chef cookbook being used is available
+on GitHub at [sonatype/chef-nexus-repository-manager](https://github.com/sonatype/chef-nexus-repository-manager).
+
+## Testing the Dockerfile
+
+We are using `rspec` as the test framework. `serverspec` provides a docker backend (see the method `set` in the test code)
+ to run the tests inside the docker container, and abstracts away the difference between distributions in the tests
+ (e.g. yum, apt,...).
+
+    rspec [--backtrace] spec/Dockerfile_spec.rb
 
 ## Notes
 
@@ -73,11 +96,11 @@ $ docker logs -f nexus
 logs, and storage. This directory needs to be writable by the Nexus
 process, which runs as UID 200.
 
-* There is an environment variable that can used to pass JVM arguments to the startup script
+* There is an environment variable that is being used to pass JVM arguments to the startup script
 
   * `INSTALL4J_ADD_VM_PARAMS`, passed to the Install4J startup script. Defaults to `-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs`.
 
-  This can be supplied at runtime:
+  This can be adjusted at runtime:
 
   ```
   $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2g -Xmx2g -XX:MaxDirectMemorySize=3g  -Djava.util.prefs.userRoot=/some-other-dir" sonatype/nexus3
@@ -120,14 +143,6 @@ for additional information.
   $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
   $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
   ```
-
-### Build Args
-
-The Dockerfile contains three build arguments (`NEXUS_VERSION`, `NEXUS_DOWNLOAD_URL` & `NEXUS_DOWNLOAD_SHA256_HASH`) that can be used to customize what version of, and from where, Nexus Repository Manager is downloaded. This is useful mostly for testing purposes as the Dockerfile may be dependent on a very specific version of Nexus Repository Manager.
-
-```
-docker build --rm --tag nexus-custom --build-arg NEXUS_VERSION=3.x.y --build-arg NEXUS_DOWNLOAD_URL=http://.../nexus-3.x.y-unix.tar.gz --build-arg NEXUS_DOWNLOAD_SHA256_HASH=abcde... .
-```
 
 ## Getting Help
 
