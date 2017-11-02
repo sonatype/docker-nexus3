@@ -29,7 +29,6 @@ A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 * [Testing the Dockerfile](#testing-the-dockerfile)
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
-  * [Build Args](#build-args)
 * [Getting Help](#getting-help)
 
 ## Contribution Guidelines
