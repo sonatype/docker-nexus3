@@ -13,7 +13,8 @@ node('ubuntu-zion') {
       repository = 'docker-nexus3',
       credentialsId = 'integrations-github-api',
       imageName = 'sonatype/nexus3',
-      archiveName = 'docker-nexus3'
+      archiveName = 'docker-nexus3',
+      dockerHubRepository = 'nexus3'
   GitHub gitHub
 
   try {
@@ -83,12 +84,12 @@ node('ubuntu-zion') {
       def dockerhubApiToken
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
           usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-        OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:${version}")
-        OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${repository}:latest")
+        OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
+        OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
         OsTools.runSafe(this, """
           docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
         """)
-        OsTools.runSafe(this, "docker push ${organization}/${repository}")
+        OsTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}")
 
         response = OsTools.runSafe(this, """
           curl -X POST https://hub.docker.com/v2/users/login/ \
@@ -105,7 +106,7 @@ node('ubuntu-zion') {
         response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
             acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
             requestBody: "{ \"full_description\": \"${readme}\" }",
-            url: "https://hub.docker.com/v2/repositories/${organization}/${repository}/"
+            url: "https://hub.docker.com/v2/repositories/${organization}/${dockerHubRepository}/"
       }
     }
     stage('Push tags') {
