@@ -27,6 +27,7 @@ A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
 * [Building the Nexus Repository Manager image](#building-the-nexus-repository-manager-image)
 * [Chef Solo for Runtime and Application](#chef-solo-for-runtime-and-application)
 * [Testing the Dockerfile](#testing-the-dockerfile)
+* [Red Hat Certified Image](#red-hat-certified-image)
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
 * [Getting Help](#getting-help)
@@ -77,6 +78,19 @@ We are using `rspec` as the test framework. `serverspec` provides a docker backe
  (e.g. yum, apt,...).
 
     rspec [--backtrace] spec/Dockerfile_spec.rb
+
+## Red Hat Certified Image
+
+A Red Hat certified container image can be created using Dockerfile.rhel which pulls from assets in the red-hat-assets folder. The 
+image includes additional meta data to comform with Atomic and OpenShift standards, a directory with the licesense applicable to the
+software and a man file for help on how to use the software. It also uses an ENTRYPOINT which adds the running user's id from host 
+in order to set appropriate permissions on mounted volumes.
+
+### Red Hat help.1
+
+The man file included in the Red Hat image is generated from this [help markdown](red-hat-assets/help.md). Markdown can be converted to
+the appropriate format using [md2roff](https://github.com/nereusx/md2roff). This process is currently not part of the automated build
+and needs to be done manually after any update to the help markdown.
 
 ## Notes
 
