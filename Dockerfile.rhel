@@ -53,14 +53,13 @@ ENV SONATYPE_DIR=/opt/sonatype
 ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_DATA=/nexus-data \
     NEXUS_CONTEXT='' \
-    SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
+    SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
+    DOCKER_TYPE='rhel-docker'
 
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20171127-222629.c2a02ed"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
-
-ADD red-hat-assets/help.1 red-hat-assets/uid_entrypoint red-hat-assets/licenses /
 
 # Install using chef-solo
 RUN curl -L https://www.getchef.com/chef/install.sh | bash \
@@ -73,7 +72,8 @@ RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && rm -rf /etc/chef \
     && rm -rf /opt/chefdk \
     && rm -rf /var/cache/yum \
-    && rm -rf /var/chef
+    && rm -rf /var/chef \
+    && /uid_template.sh
 
 VOLUME ${NEXUS_DATA}
 
@@ -82,5 +82,5 @@ USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
-ENTRYPOINT ["/uid_entrypoint"]
+ENTRYPOINT ["/uid_entrypoint.sh"]
 CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]

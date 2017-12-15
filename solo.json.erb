@@ -15,12 +15,13 @@
 <%=
 require 'json'
 
+raise RuntimeError, 'environment variable DOCKER_TYPE is required' if ENV['DOCKER_TYPE'].nil? || ENV['DOCKER_TYPE'].empty?
 raise RuntimeError, 'environment variable SONATYPE_DIR is required' if ENV['SONATYPE_DIR'].nil? || ENV['SONATYPE_DIR'].empty?
 raise RuntimeError, 'environment variable NEXUS_HOME is required' if ENV['NEXUS_HOME'].nil? || ENV['NEXUS_HOME'].empty?
 raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_DATA'].nil? || ENV['NEXUS_DATA'].empty?
 
 {
-  :run_list => [ 'recipe[nexus_repository_manager::docker]' ],
+  :run_list => [ "recipe[nexus_repository_manager::#{ENV['DOCKER_TYPE']}]" ],
   :java => {
     :jdk_version => ENV['JAVA_VERSION_MAJOR'],
     :java_home => ENV['JAVA_HOME'],
