@@ -72,8 +72,7 @@ RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && rm -rf /etc/chef \
     && rm -rf /opt/chefdk \
     && rm -rf /var/cache/yum \
-    && rm -rf /var/chef \
-    && /uid_template.sh
+    && rm -rf /var/chef
 
 VOLUME ${NEXUS_DATA}
 
