@@ -65,7 +65,7 @@ ADD solo.json.erb /var/chef/solo.json.erb
 RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
-       --node_name nexus_repository_red_hat_docker_build
+       --node_name nexus_repository_red_hat_docker_build \
        --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
        --json-attributes /var/chef/solo.json \
     && rpm -qa *chef* | xargs rpm -e \
