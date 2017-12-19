@@ -126,9 +126,7 @@ node('ubuntu-zion') {
           OsTools.runSafe(this, """
             git add .
             git commit -m '${commitMessage}'
-            git push
-            https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git \
-              ${branch}
+            git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git ${branch}
           """)
         }
       }
