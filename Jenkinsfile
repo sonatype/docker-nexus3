@@ -19,7 +19,7 @@ properties([
 node('ubuntu-zion') {
   def commitId, commitDate, version, imageId, branch, dockerFileLocation
   def organization = 'sonatype',
-      repository = 'docker-nexus3',
+      gitHubRepository = 'docker-nexus3',
       credentialsId = 'integrations-github-api',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
@@ -49,7 +49,7 @@ node('ubuntu-zion') {
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
         apiToken = env.GITHUB_API_PASSWORD
       }
-      gitHub = new GitHub(this, "${organization}/${repository}", apiToken)
+      gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
 
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
@@ -178,7 +178,7 @@ node('ubuntu-zion') {
         OsTools.runSafe(this, "git tag ${version}")
         OsTools.runSafe(this, """
           git push \
-          https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${repository}.git \
+          https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git \
             ${version}
         """)
       }
