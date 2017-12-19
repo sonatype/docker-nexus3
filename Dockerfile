@@ -20,9 +20,9 @@ LABEL vendor=Sonatype \
       com.sonatype.license="Apache License, Version 2.0" \
       com.sonatype.name="Nexus Repository Manager base image"
 
-ARG NEXUS_VERSION=3.6.2-01
+ARG NEXUS_VERSION=3.7.0-04
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=d055006ce90778ca7441efcccb2c979429fe296d1871642b99da2e97c04724a5
+ARG NEXUS_DOWNLOAD_SHA256_HASH=542912830cb804bc2cad1dc247d28440ecd14edd36684bf8bd55d6999b5e083f
 
 ENV JAVA_HOME=/opt/java \
     JAVA_VERSION_MAJOR=8 \
@@ -40,7 +40,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work
 
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20171127-222629.c2a02ed"
+ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20171219-161323.cc1040a"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
