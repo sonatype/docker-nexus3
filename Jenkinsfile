@@ -7,10 +7,19 @@
 import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 
+properties([
+  parameters([
+    string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
+    string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
+
+    string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version')
+  ])
+])
+
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId
+  def commitId, commitDate, version, imageId, branch, dockerFileLocation
   def organization = 'sonatype',
-      repository = 'docker-nexus3',
+      gitHubRepository = 'docker-nexus3',
       credentialsId = 'integrations-github-api',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
@@ -23,9 +32,15 @@ node('ubuntu-zion') {
       OsTools.runSafe(this, "docker system prune -a -f")
 
       checkout scm
+      branch = scm.branches[0].name
+
+      dockerFileLocation = "${pwd()}/Dockerfile"
 
       commitId = OsTools.runSafe(this, 'git rev-parse HEAD')
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
+
+      OsTools.runSafe(this, 'git config --global user.email sonatype-ci@sonatype.com')
+      OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
 
       version = readVersion()
 
@@ -34,7 +49,34 @@ node('ubuntu-zion') {
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
         apiToken = env.GITHUB_API_PASSWORD
       }
-      gitHub = new GitHub(this, "${organization}/${repository}", apiToken)
+      gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
+
+      if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
+        stage('Update Repository Manager Version') {
+          OsTools.runSafe(this, "git checkout ${branch}")
+          def dockerFile = readFile(file: dockerFileLocation)
+
+          def versionRegex = /(ARG NEXUS_VERSION=)(\d\.\d{1,3}\.\d\-\d{2})/
+          def shaRegex = /(ARG NEXUS_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
+
+          dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
+          dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
+
+          writeFile(file: dockerFileLocation, text: dockerFile)
+        }
+      }
+      if (params.nexus_repository_manager_cookbook_version) {
+        stage('Update Repository Manager Cookbook Version') {
+          OsTools.runSafe(this, "git checkout ${branch}")
+          def dockerFile = readFile(file: dockerFileLocation)
+
+          def cookbookVersionRegex = /(ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION=")(release-\d\.\d\.\d{8}\-\d{6}\.[a-z0-9]{7})(")/
+
+          dockerFile = dockerFile.replaceAll(cookbookVersionRegex, "\$1${params.nexus_repository_manager_cookbook_version}\$3")
+
+          writeFile(file: dockerFileLocation, text: dockerFile)
+        }
+      }
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
@@ -70,13 +112,32 @@ node('ubuntu-zion') {
     if (currentBuild.result == 'FAILURE') {
       return
     }
+    if (params.nexus_repository_manager_version
+        && params.nexus_repository_manager_version_sha || params.nexus_repository_manager_cookbook_version) {
+      stage('Commit Repository Manager Version Update') {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'integrations-github-api',
+                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+          def commitMessage = [
+            params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha ?
+                "Update Repository Manager to ${params.nexus_repository_manager_version}." : "",
+            params.nexus_repository_manager_cookbook_version ?
+                "Update Repository Manager Cookbook to ${params.nexus_repository_manager_cookbook_version}." : "",
+          ].findAll({ it }).join(' ')
+          OsTools.runSafe(this, """
+            git add .
+            git commit -m '${commitMessage}'
+            git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git ${branch}
+          """)
+        }
+      }
+    }
     stage('Archive') {
       dir('build/target') {
         OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (scm.branches[0].name != '*/master') {
+     if (branch != '*/master') {
       return
     }
     input 'Push image and tags?'
@@ -115,7 +176,7 @@ node('ubuntu-zion') {
         OsTools.runSafe(this, "git tag ${version}")
         OsTools.runSafe(this, """
           git push \
-          https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${repository}.git \
+          https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git \
             ${version}
         """)
       }
