@@ -31,12 +31,12 @@ node('ubuntu-zion') {
       deleteDir()
       OsTools.runSafe(this, "docker system prune -a -f")
 
-      checkout scm
+      def checkoutDetails = checkout scm
 
       dockerFileLocation = "${pwd()}/Dockerfile"
 
-      branch = OsTools.runSafe(this, 'git rev-parse --abbrev-ref HEAD')
-      commitId = OsTools.runSafe(this, 'git rev-parse HEAD')
+      branch = checkoutDetails.GIT_BRANCH
+      commitId = checkoutDetails.GIT_COMMIT
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
 
       OsTools.runSafe(this, 'git config --global user.email sonatype-ci@sonatype.com')
