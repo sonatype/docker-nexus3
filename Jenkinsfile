@@ -32,10 +32,10 @@ node('ubuntu-zion') {
       OsTools.runSafe(this, "docker system prune -a -f")
 
       checkout scm
-      branch = env.BRANCH_NAME
 
       dockerFileLocation = "${pwd()}/Dockerfile"
 
+      branch = OsTools.runSafe(this, 'git rev-parse --abbrev-ref HEAD')
       commitId = OsTools.runSafe(this, 'git rev-parse HEAD')
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
 
@@ -137,7 +137,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-     if (branch != 'master') {
+    if (branch != 'master') {
       return
     }
     input 'Push image and tags?'
