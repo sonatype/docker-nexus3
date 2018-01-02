@@ -32,7 +32,11 @@ node('ubuntu-zion') {
       OsTools.runSafe(this, "docker system prune -a -f")
 
       checkout scm
-      branch = scm.branches[0].name
+      branch = env.BRANCH_NAME
+
+      echo "${branch}"
+
+      return
 
       dockerFileLocation = "${pwd()}/Dockerfile"
 
@@ -78,6 +82,7 @@ node('ubuntu-zion') {
         }
       }
     }
+    return
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
