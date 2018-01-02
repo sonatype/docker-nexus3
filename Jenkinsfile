@@ -34,10 +34,6 @@ node('ubuntu-zion') {
       checkout scm
       branch = env.BRANCH_NAME
 
-      echo "${branch}"
-
-      return
-
       dockerFileLocation = "${pwd()}/Dockerfile"
 
       commitId = OsTools.runSafe(this, 'git rev-parse HEAD')
@@ -82,7 +78,6 @@ node('ubuntu-zion') {
         }
       }
     }
-    return
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
