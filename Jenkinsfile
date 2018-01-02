@@ -35,7 +35,7 @@ node('ubuntu-zion') {
 
       dockerFileLocation = "${pwd()}/Dockerfile"
 
-      branch = checkoutDetails.GIT_BRANCH
+      branch = checkoutDetails.GIT_BRANCH == 'origin/master' ? 'master' : checkoutDetails.GIT_BRANCH
       commitId = checkoutDetails.GIT_COMMIT
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
 
