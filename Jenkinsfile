@@ -137,7 +137,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-     if (branch != '*/master') {
+     if (branch != 'master') {
       return
     }
     input 'Push image and tags?'
