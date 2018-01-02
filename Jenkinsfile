@@ -31,12 +31,12 @@ node('ubuntu-zion') {
       deleteDir()
       OsTools.runSafe(this, "docker system prune -a -f")
 
-      checkout scm
-      branch = scm.branches[0].name
+      def checkoutDetails = checkout scm
 
       dockerFileLocation = "${pwd()}/Dockerfile"
 
-      commitId = OsTools.runSafe(this, 'git rev-parse HEAD')
+      branch = checkoutDetails.GIT_BRANCH == 'origin/master' ? 'master' : checkoutDetails.GIT_BRANCH
+      commitId = checkoutDetails.GIT_COMMIT
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
 
       OsTools.runSafe(this, 'git config --global user.email sonatype-ci@sonatype.com')
@@ -137,7 +137,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-     if (branch != '*/master') {
+    if (branch != 'master') {
       return
     }
     input 'Push image and tags?'
