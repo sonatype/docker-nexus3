@@ -18,8 +18,8 @@ MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
 LABEL name="Nexus Repository Manager" \
       vendor=Sonatype \
-      version="3.6.2-01" \
-      release="3.6.2" \
+      version="3.7.1-02" \
+      release="3.7.1" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -35,9 +35,9 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.6.2-01
+ARG NEXUS_VERSION=3.7.1-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=d055006ce90778ca7441efcccb2c979429fe296d1871642b99da2e97c04724a5
+ARG NEXUS_DOWNLOAD_SHA256_HASH=d6605064eae2d6a0679054e3afb039c8b071862644632894e04558e1d067cbfb
 
 ENV JAVA_HOME=/opt/java \
     JAVA_VERSION_MAJOR=8 \
@@ -54,7 +54,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_DATA=/nexus-data \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
-    DOCKER_TYPE='rhel-docker'
+    DOCKER_TYPE='rh-docker'
 
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20171215-153558.d31fd5f"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
