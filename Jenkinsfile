@@ -201,15 +201,16 @@ def getGemInstallDirectory() {
 def updateRepositoryManagerVersion(dockerFileLocation) {
   def dockerFile = readFile(file: dockerFileLocation)
 
-  def metaVersionRegex = /version="=)(\d\.\d{1,3}\.\d\-\d{2}" \\/
-  def metaShortVersionRegex = /release="\d\.\d{1,3}\.\d" \\/
+  def metaVersionRegex = /(version="=)(\d\.\d{1,3}\.\d\-\d{2})(" \\)/
+  def metaShortVersionRegex = /(release=")(\d\.\d{1,3}\.\d)(" \\)/
 
   def versionRegex = /(ARG NEXUS_VERSION=)(\d\.\d{1,3}\.\d\-\d{2})/
   def shaRegex = /(ARG NEXUS_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
 
   dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
-  dockerFile = dockerFile.replaceAll(versionRegex,
-    "\$1${params.nexus_repository_manager_version.substring(params.nexus_repository_manager_version.indexOf('-'))}")
+  dockerFile = dockerFile.replaceAll(shaRegex,
+    "\$1${params.nexus_repository_manager_version.substring(params.nexus_repository_manager_version.indexOf('-'))}\$3")
+  dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
 
   writeFile(file: dockerFileLocation, text: dockerFile)
