@@ -58,13 +58,13 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerFileLocations.each(updateRepositoryManagerVersion)
+          dockerFileLocations.each { updateRepositoryManagerVersion(it) }
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerFileLocations.each(updateRepositoryCookbookVersion)
+          dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
         }
       }
     }
@@ -201,7 +201,7 @@ def getGemInstallDirectory() {
 def updateRepositoryManagerVersion(dockerFileLocation) {
   def dockerFile = readFile(file: dockerFileLocation)
 
-  def metaVersionRegex = /(version="=)(\d\.\d{1,3}\.\d\-\d{2})(" \\)/
+  def metaVersionRegex = /(version=")(\d\.\d{1,3}\.\d\-\d{2})(" \\)/
   def metaShortVersionRegex = /(release=")(\d\.\d{1,3}\.\d)(" \\)/
 
   def versionRegex = /(ARG NEXUS_VERSION=)(\d\.\d{1,3}\.\d\-\d{2})/
@@ -209,7 +209,7 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
 
   dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
   dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
-    "\$1${params.nexus_repository_manager_version.substring(params.nexus_repository_manager_version.indexOf('-'))}\$3")
+    "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
   dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
 
