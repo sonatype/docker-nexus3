@@ -208,7 +208,7 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   def shaRegex = /(ARG NEXUS_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
 
   dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
-  dockerFile = dockerFile.replaceAll(shaRegex,
+  dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
     "\$1${params.nexus_repository_manager_version.substring(params.nexus_repository_manager_version.indexOf('-'))}\$3")
   dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
