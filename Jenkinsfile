@@ -17,7 +17,7 @@ properties([
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId, branch, dockerFileLocation
+  def commitId, commitDate, version, imageId, branch, dockerFileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
       credentialsId = 'integrations-github-api',
@@ -33,7 +33,11 @@ node('ubuntu-zion') {
 
       def checkoutDetails = checkout scm
 
-      dockerFileLocation = "${pwd()}/Dockerfile"
+      dockerFileLocations = [
+        "${pwd()}/Dockerfile",
+        "${pwd()}/Dockerfile.rh.centos",
+        "${pwd()}/Dockerfile.rh.el"
+      ]
 
       branch = checkoutDetails.GIT_BRANCH == 'origin/master' ? 'master' : checkoutDetails.GIT_BRANCH
       commitId = checkoutDetails.GIT_COMMIT
@@ -54,27 +58,13 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          def dockerFile = readFile(file: dockerFileLocation)
-
-          def versionRegex = /(ARG NEXUS_VERSION=)(\d\.\d{1,3}\.\d\-\d{2})/
-          def shaRegex = /(ARG NEXUS_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
-
-          dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
-          dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
-
-          writeFile(file: dockerFileLocation, text: dockerFile)
+          dockerFileLocations.each { updateRepositoryManagerVersion(it) }
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          def dockerFile = readFile(file: dockerFileLocation)
-
-          def cookbookVersionRegex = /(ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION=")(release-\d\.\d\.\d{8}\-\d{6}\.[a-z0-9]{7})(")/
-
-          dockerFile = dockerFile.replaceAll(cookbookVersionRegex, "\$1${params.nexus_repository_manager_cookbook_version}\$3")
-
-          writeFile(file: dockerFileLocation, text: dockerFile)
+          dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
         }
       }
     }
@@ -188,6 +178,7 @@ node('ubuntu-zion') {
     OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
   }
 }
+
 def readVersion() {
   def content = readFile 'Dockerfile'
   for (line in content.split('\n')) {
@@ -205,4 +196,32 @@ def getGemInstallDirectory() {
     }
   }
   error 'Could not determine user gem install directory.'
+}
+
+def updateRepositoryManagerVersion(dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+
+  def metaVersionRegex = /(version=")(\d\.\d{1,3}\.\d\-\d{2})(" \\)/
+  def metaShortVersionRegex = /(release=")(\d\.\d{1,3}\.\d)(" \\)/
+
+  def versionRegex = /(ARG NEXUS_VERSION=)(\d\.\d{1,3}\.\d\-\d{2})/
+  def shaRegex = /(ARG NEXUS_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
+
+  dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
+  dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
+    "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
+  dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
+  dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
+
+  writeFile(file: dockerFileLocation, text: dockerFile)
+}
+
+def updateRepositoryCookbookVersion(dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+
+  def cookbookVersionRegex = /(ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION=")(release-\d\.\d\.\d{8}\-\d{6}\.[a-z0-9]{7})(")/
+
+  dockerFile = dockerFile.replaceAll(cookbookVersionRegex, "\$1${params.nexus_repository_manager_cookbook_version}\$3")
+
+  writeFile(file: dockerFileLocation, text: dockerFile)
 }
