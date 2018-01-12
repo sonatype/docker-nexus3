@@ -81,10 +81,11 @@ We are using `rspec` as the test framework. `serverspec` provides a docker backe
 
 ## Red Hat Certified Image
 
-A Red Hat certified container image can be created using Dockerfile.rhel which pulls from assets in the red-hat-assets
-folder. The image includes additional meta data to comform with Atomic and OpenShift standards, a directory with the
-licenses applicable to the software and a man file for help on how to use the software.  It also uses an ENTRYPOINT
-script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC.
+A Red Hat certified container image can be created using `Dockerfile.rh.el` which is built to be compliant with Red Had certification.
+The image includes additional meta data to comform with Kubernetes and OpenShift standards, a directory with the
+licenses applicable to the software and a man file for help on how to use the software. It also uses an ENTRYPOINT
+script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. In addition to the
+Red Hat Enterprise Linux image, `Dockerfile.rh.centos` provides the same additions but with a CentOS base.
 
 ## Notes
 
