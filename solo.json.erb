@@ -23,7 +23,6 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
 {
   :run_list => [ "recipe[nexus_repository_manager::#{ENV['DOCKER_TYPE']}]" ],
   :java => {
-    :jdk_version => ENV['JAVA_VERSION_MAJOR'],
     :java_home => ENV['JAVA_HOME'],
     :install_flavor => 'oracle',
     :oracle => {
@@ -33,7 +32,7 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
       :'8' => {
         :x86_64 => {
           :url => ENV['JAVA_URL'],
-          :checksum => ENV['JAVA_DOWNLOAD_SHA256_HASH']
+          :checksum => ENV['JAVA_SHA256_HASH']
         }
       }
     }

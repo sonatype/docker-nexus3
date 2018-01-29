@@ -24,14 +24,10 @@ ARG NEXUS_VERSION=3.7.1-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
 ARG NEXUS_DOWNLOAD_SHA256_HASH=d6605064eae2d6a0679054e3afb039c8b071862644632894e04558e1d067cbfb
 
-ENV JAVA_HOME=/opt/java \
-    JAVA_VERSION_MAJOR=8 \
-    JAVA_VERSION_MINOR=152 \
-    JAVA_VERSION_BUILD=16 \
-    JAVA_DOWNLOAD_HASH=aa0333dd3019491ca4f6ddbe78cdb6d0
-
-ENV JAVA_URL=http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/${JAVA_DOWNLOAD_HASH}/server-jre-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz \
-    JAVA_DOWNLOAD_SHA256_HASH=e8a341ce566f32c3d06f6d0f0eeea9a0f434f538d22af949ae58bc86f2eeaae4
+ENV JAVA_HOME=/opt/java
+  
+ENV JAVA_URL=file:///tmp/server-jre-8u161-linux-x64.tar.gz \
+    JAVA_DOWNLOAD_HASH=eb5776cacfd57fbf0ffb907f68c58a1cc6f823e761f4e75d78a6e3240846534e
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -45,6 +41,7 @@ ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20180105-135811.666c1
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
+COPY server-jre-8u161-linux-x64.tar.gz /tmp
 
 # Install using chef-solo
 RUN curl -L https://www.getchef.com/chef/install.sh | bash \
