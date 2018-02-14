@@ -59,6 +59,7 @@ node('ubuntu-zion') {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
           dockerFileLocations.each { updateRepositoryManagerVersion(it) }
+          version = params.nexus_repository_manager_version
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
