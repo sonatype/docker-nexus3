@@ -59,7 +59,7 @@ node('ubuntu-zion') {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
           dockerFileLocations.each { updateRepositoryManagerVersion(it) }
-          version = params.nexus_repository_manager_version
+          version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
@@ -184,11 +184,16 @@ def readVersion() {
   def content = readFile 'Dockerfile'
   for (line in content.split('\n')) {
     if (line.startsWith('ARG NEXUS_VERSION=')) {
-      return line.substring(18).split('-')[0]
+      return getShortVersion(line.substring(18))
     }
   }
   error 'Could not determine version.'
 }
+
+def getShortVersion(version) {
+  return version.split('-')[0]
+}
+
 def getGemInstallDirectory() {
   def content = OsTools.runSafe(this, "gem env")
   for (line in content.split('\n')) {
