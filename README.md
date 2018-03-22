@@ -87,6 +87,10 @@ licenses applicable to the software and a man file for help on how to use the so
 script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. In addition to the
 Red Hat Enterprise Linux image, `Dockerfile.rh.centos` provides the same additions but with a CentOS base.
 
+The Red Hat certified container image is available from the 
+[Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager)
+and qualified accounts can pull it from registry.connect.redhat.com.
+
 ## Notes
 
 * Default credentials are: `admin` / `admin123`
