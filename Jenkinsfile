@@ -115,7 +115,7 @@ node('ubuntu-zion') {
     if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha 
           || params.nexus_repository_manager_cookbook_version
           || params.oracle_jre_url && params.oracle_jre_sha) {
-      stage('Commit Repository Manager Version Update') {
+      stage('Commit Automated Code Update') {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'integrations-github-api',
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
           def commitMessage = [
