@@ -12,7 +12,10 @@ properties([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
 
-    string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version')
+    string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
+
+    string(defaultValue: '', description: 'New JRE Url', name: 'oracle_jre_url'),
+    string(defaultValue: '', description: 'New JRE Sha256', name: 'oracle_jre_sha')
   ])
 ])
 
@@ -68,6 +71,12 @@ node('ubuntu-zion') {
           dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
         }
       }
+      if (params.oracle_jre_url && params.oracle_jre_sha) {
+        stage('Update JRE Url') {
+          OsTools.runSafe(this, "git checkout ${branch}")
+          dockerFileLocations.each { updateJreUrl(it) }
+        }
+      }
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
@@ -103,9 +112,10 @@ node('ubuntu-zion') {
     if (currentBuild.result == 'FAILURE') {
       return
     }
-    if (params.nexus_repository_manager_version
-        && params.nexus_repository_manager_version_sha || params.nexus_repository_manager_cookbook_version) {
-      stage('Commit Repository Manager Version Update') {
+    if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha 
+          || params.nexus_repository_manager_cookbook_version
+          || params.oracle_jre_url && params.oracle_jre_sha) {
+      stage('Commit Automated Code Update') {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'integrations-github-api',
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
           def commitMessage = [
@@ -113,6 +123,8 @@ node('ubuntu-zion') {
                 "Update Repository Manager to ${params.nexus_repository_manager_version}." : "",
             params.nexus_repository_manager_cookbook_version ?
                 "Update Repository Manager Cookbook to ${params.nexus_repository_manager_cookbook_version}." : "",
+            params.oracle_jre_url && params.oracle_jre_sha ?
+                "Update Oracle JRE to ${(params.oracle_jre_url =~ /(\du\d{3}\-b\d{2})/)[0][0]}." : ""
           ].findAll({ it }).join(' ')
           OsTools.runSafe(this, """
             git add .
@@ -228,6 +240,18 @@ def updateRepositoryCookbookVersion(dockerFileLocation) {
   def cookbookVersionRegex = /(ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION=")(release-\d\.\d\.\d{8}\-\d{6}\.[a-z0-9]{7})(")/
 
   dockerFile = dockerFile.replaceAll(cookbookVersionRegex, "\$1${params.nexus_repository_manager_cookbook_version}\$3")
+
+  writeFile(file: dockerFileLocation, text: dockerFile)
+}
+
+def updateJreUrl(dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+
+  def jreUrlRegex = /(ARG JAVA_URL=)(http.*-linux-x64\.tar\.gz)/
+  def jreShaRegex = /(JAVA_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
+
+  dockerFile = dockerFile.replaceAll(jreUrlRegex, "\$1${params.oracle_jre_url}")
+  dockerFile = dockerFile.replaceAll(jreShaRegex, "\$1${params.oracle_jre_sha}")
 
   writeFile(file: dockerFileLocation, text: dockerFile)
 }
