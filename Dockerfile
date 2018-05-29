@@ -37,7 +37,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='docker'
 
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20180307-101842.bde3aae"
+ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20180420-205540.75aa3de"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
