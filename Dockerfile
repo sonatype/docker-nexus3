@@ -58,8 +58,10 @@ RUN curl -L https://www.getchef.com/chef/install.sh | bash \
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
+EXPOSE 8443
 USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
-
+COPY keystore.jks /opt/sonatype/nexus/etc/ssl/
+COPY nexus.properties /nexus-data/etc/nexus.properties
 CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]
