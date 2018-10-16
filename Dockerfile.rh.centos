@@ -41,8 +41,8 @@ ARG NEXUS_VERSION=3.14.0-04
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
 ARG NEXUS_DOWNLOAD_SHA256_HASH=ae8cc7891942d71cf12c11e1a98d70c1310e788ab44aa95c5d1e7671cc0187e2
 
-ARG JAVA_URL=http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/server-jre-8u181-linux-x64.tar.gz
-ARG JAVA_DOWNLOAD_SHA256_HASH=0b26c7fcfad20029e6e0989e678efcd4a81f0fe502a478b4972215533867de1b
+ARG JAVA_URL=http://download.oracle.com/otn-pub/java/jdk/8u192-b12/750e1c8617c5452694857ad95c3ee230/server-jre-8u192-linux-x64.tar.gz
+ARG JAVA_DOWNLOAD_SHA256_HASH=3d811a5ec65dc6fc261f488757bae86ecfe285a79992363b016f60cdb4dbe7e6
 
 ENV JAVA_HOME=/opt/java
 
@@ -54,7 +54,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20180828-161555.3c23098"
+ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20180828-231916.863899c"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
