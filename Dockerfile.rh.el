@@ -41,11 +41,6 @@ ARG NEXUS_VERSION=3.15.1-01
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
 ARG NEXUS_DOWNLOAD_SHA256_HASH=5ddf03e35f92b4b90eb290f48ada15bb8b15ba5b76e7f190a24ede0d8982ffcf
 
-ARG JAVA_URL=https://download.oracle.com/otn-pub/java/jdk/8u202-b08/1961070e4c9b4e26a04e7f5a083f551e/server-jre-8u202-linux-x64.tar.gz
-ARG JAVA_DOWNLOAD_SHA256_HASH=61292e9d9ef84d9702f0e30f57b208e8fbd9a272d87cd530aece4f5213c98e4e
-
-ENV JAVA_HOME=/opt/java
-
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
 ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \

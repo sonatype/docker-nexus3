@@ -28,6 +28,7 @@ Sonatype internal people:
 * [@jeviolle](https://github.com/jeviolle/) (Rick Briganti/The Money)
 * [@jswank](https://github.com/jswank/) (Jason Swank)
 * [@DarthHater](https://github.com/darthhater/) (Jeffry Hesse)
+* [@dawidsawa](https://github.com/dawidsawa/) (Dawid Sawa)
 
 External contributors:
 
