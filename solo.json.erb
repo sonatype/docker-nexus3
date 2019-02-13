@@ -23,10 +23,8 @@ raise RuntimeError, 'environment variable NEXUS_DATA is required' if ENV['NEXUS_
 {
   :run_list => [ "recipe[nexus_repository_manager::#{ENV['DOCKER_TYPE']}]" ],
   :java => {
-    :jdk_version => ENV['JAVA_VERSION_MAJOR'],
-    :java_home => ENV['JAVA_HOME'],
     :install_flavor => 'openjdk',
-    :jdk_version => '8'
+    :accept_license_agreement => true
   },
   :nexus_repository_manager => {
     :version => ENV['NEXUS_VERSION'],
