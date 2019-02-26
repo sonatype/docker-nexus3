@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM centos:centos7
+FROM registry.access.redhat.com/ubi7/ubi
 
 MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
