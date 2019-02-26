@@ -30,7 +30,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_DATA=/nexus-data \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
-    DOCKER_TYPE='docker'
+    DOCKER_TYPE='rh-docker'
 
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20190212-155606.d1afdfe"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
@@ -41,6 +41,7 @@ ADD solo.json.erb /var/chef/solo.json.erb
 RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
+       --node_name nexus_repository_red_hat_docker_build \
        --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
        --json-attributes /var/chef/solo.json \
     && rpm -qa *chef* | xargs rpm -e \
@@ -57,4 +58,5 @@ USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
+ENTRYPOINT ["/uid_entrypoint.sh"]
 CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]
