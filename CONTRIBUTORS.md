@@ -34,5 +34,6 @@ External contributors:
 
 * [@bestlong](https://github.com/bestlong/) (Yu-Lung Shao (Allen))
 * [@jperville](https://github.com/jperville/) (Julien Pervillé)
+* [@sivapalan](https://github.com/sivapalan/) (Varun Sivapalan)
 
 ![Possibly You!](http://i.imgur.com/A3eScYul.jpg)
