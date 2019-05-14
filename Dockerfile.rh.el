@@ -54,7 +54,7 @@ ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexu
 
 ADD solo.json.erb /var/chef/solo.json.erb
 
-ENV CHEF_LICENSE=accept
+ENV CHEF_LICENSE='accept-no-persist'
 
 # Install using chef-solo
 RUN curl -L https://www.getchef.com/chef/install.sh | bash \
