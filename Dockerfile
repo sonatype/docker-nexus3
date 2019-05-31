@@ -20,9 +20,9 @@ LABEL vendor=Sonatype \
       com.sonatype.license="Apache License, Version 2.0" \
       com.sonatype.name="Nexus Repository Manager base image"
 
-ARG NEXUS_VERSION=3.16.1-02
+ARG NEXUS_VERSION=3.16.2-01
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=961e29d7242626fdeebf3a1c429ae0bc6468544a2c80df328fd3fb7596becc59
+ARG NEXUS_DOWNLOAD_SHA256_HASH=d6e8016d389b35f2dc569c981a8076f0d5fcca54778c611c601db2aa9a984cf0
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
