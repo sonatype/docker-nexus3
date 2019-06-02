@@ -14,11 +14,11 @@
 
 FROM centos:centos7
 
-MAINTAINER Sonatype <cloud-ops@sonatype.com>
+LABEL maintainer="Sonatype <cloud-ops@sonatype.com>"
 
 LABEL vendor=Sonatype \
-      com.sonatype.license="Apache License, Version 2.0" \
-      com.sonatype.name="Nexus Repository Manager base image"
+    com.sonatype.license="Apache License, Version 2.0" \
+    com.sonatype.name="Nexus Repository Manager base image"
 
 ARG NEXUS_VERSION=3.16.2-01
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
@@ -42,8 +42,8 @@ ADD solo.json.erb /var/chef/solo.json.erb
 RUN curl -L https://www.getchef.com/chef/install.sh | bash -s -- -v 14.12.9 \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
-       --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
-       --json-attributes /var/chef/solo.json \
+    --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
+    --json-attributes /var/chef/solo.json \
     && rpm -qa *chef* | xargs rpm -e \
     && rpm --rebuilddb \
     && rm -rf /etc/chef \
