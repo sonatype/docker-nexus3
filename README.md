@@ -39,7 +39,7 @@ we would like things to flow.
 
 ## Running
 
-To run, binding the exposed port 8081 to the host.
+To run, binding the exposed port 8081 to the host, use:
 
 ```
 $ docker run -d -p 8081:8081 --name nexus sonatype/nexus3
