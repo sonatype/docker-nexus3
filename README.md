@@ -48,7 +48,7 @@ $ docker run -d -p 8081:8081 --name nexus sonatype/nexus3
 To test:
 
 ```
-$ curl -u admin:admin123 http://localhost:8081/service/metrics/ping
+$ curl http://localhost:8081/
 ```
 
 ## Building the Nexus Repository Manager image
@@ -93,7 +93,7 @@ and qualified accounts can pull it from registry.connect.redhat.com.
 
 ## Notes
 
-* Default credentials are: `admin` / `admin123`
+* Default user is `admin` and the uniquely generated password can be found in the `admin.password` file inside the volume. See [Persistent Data](#user-content-persistent-data) for information about the volume.
 
 * It can take some time (2-3 minutes) for the service to launch in a
 new container.  You can tail the log to determine once Nexus is ready:
