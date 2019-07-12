@@ -93,6 +93,7 @@ and qualified accounts can pull it from registry.connect.redhat.com.
 
 ## Notes
 
+* Our [system requirements](https://help.sonatype.com/display/NXRM3/System+Requirements) should be taken into account when provisioning the Docker container.
 * Default user is `admin` and the uniquely generated password can be found in the `admin.password` file inside the volume. See [Persistent Data](#user-content-persistent-data) for information about the volume.
 
 * It can take some time (2-3 minutes) for the service to launch in a
