@@ -38,7 +38,7 @@ ADD solo.json.erb /var/chef/solo.json.erb
 
 # Install using chef-solo
 # Chef version locked to avoid needing to accept the EULA on behalf of whomever builds the image
-RUN yum install -y --disableplugin=subscription-manager hostname \
+RUN yum install -y --disableplugin=subscription-manager hostname procps \
     && curl -L https://www.getchef.com/chef/install.sh | bash -s -- -v 14.12.9 \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
@@ -49,7 +49,6 @@ RUN yum install -y --disableplugin=subscription-manager hostname \
     && rm -rf /opt/chefdk \
     && rm -rf /var/cache/yum \
     && rm -rf /var/chef \
-    && yum remove -y java-1.8.0-openjdk-devel windows homebrew \
     && yum clean all
 
 VOLUME ${NEXUS_DATA}
