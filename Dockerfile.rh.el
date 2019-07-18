@@ -14,9 +14,8 @@
 
 FROM registry.access.redhat.com/rhel7/rhel
 
-MAINTAINER Sonatype <cloud-ops@sonatype.com>
-
 LABEL name="Nexus Repository Manager" \
+      maintainer="Sonatype <cloud-ops@sonatype.com>" \
       vendor=Sonatype \
       version="3.17.0-01" \
       release="3.17.0" \
