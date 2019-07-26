@@ -20,7 +20,7 @@
 
 [![Join the chat at https://gitter.im/sonatype/nexus-developers](https://badges.gitter.im/sonatype/nexus-developers.svg)](https://gitter.im/sonatype/nexus-developers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A Dockerfile for Sonatype Nexus Repository Manager 3, based on CentOS.
+A Dockerfile for Sonatype Nexus Repository Manager 3, starting with 3.18 the image is based on the [Red Hat Universal Base Image](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image) while earlier versions used CentOS.
 
 * [Contribution Guidlines](#contribution-guidelines)
 * [Running](#running)
