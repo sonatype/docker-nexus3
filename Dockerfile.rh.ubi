@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM centos:centos7
-
-MAINTAINER Sonatype <cloud-ops@sonatype.com>
+FROM registry.access.redhat.com/ubi8/ubi
 
 LABEL name="Nexus Repository Manager" \
       vendor=Sonatype \
+      maintainer="Sonatype <cloud-ops@sonatype.com>" \
       version="3.18.1-01" \
       release="3.18.1" \
       url="https://sonatype.com" \
@@ -55,7 +54,7 @@ ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexu
 ADD solo.json.erb /var/chef/solo.json.erb
 
 # Install using chef-solo
-RUN curl -L https://www.getchef.com/chef/install.sh | bash \
+RUN curl -L https://www.getchef.com/chef/install.sh | bash -s -- -v 14.12.9 \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
        --node_name nexus_repository_red_hat_docker_build \
@@ -66,7 +65,8 @@ RUN curl -L https://www.getchef.com/chef/install.sh | bash \
     && rm -rf /etc/chef \
     && rm -rf /opt/chefdk \
     && rm -rf /var/cache/yum \
-    && rm -rf /var/chef
+    && rm -rf /var/chef \
+    && yum clean all
 
 VOLUME ${NEXUS_DATA}
 
