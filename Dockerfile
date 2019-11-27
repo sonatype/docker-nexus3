@@ -19,6 +19,12 @@ LABEL vendor=Sonatype \
       com.sonatype.license="Apache License, Version 2.0" \
       com.sonatype.name="Nexus Repository Manager base image"
 
+
+#### Some args to build the docker --build-args
+ENV SSL_STOREPASS=changeit
+ENV SSL_KEYPASS=changeit
+ENV SSL_DOMAIN_NAME="elium.io"
+
 ARG NEXUS_VERSION=3.19.1-01
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
 ARG NEXUS_DOWNLOAD_SHA256_HASH=7a2e62848abeb047c99e114b3613d29b4afbd635b03a19842efdcd6b6cb95f4e
@@ -31,10 +37,15 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
+ENV SSL_WORK /etc/ssl/private
+
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20190212-155606.d1afdfe"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
+
+# Install OpenSSL
+RUN yum install -y --disableplugin=subscription-manager  openssl openssl-devel
 
 # Install using chef-solo
 # Chef version locked to avoid needing to accept the EULA on behalf of whomever builds the image
@@ -51,11 +62,30 @@ RUN yum install -y --disableplugin=subscription-manager hostname procps \
     && rm -rf /var/chef \
     && yum clean all
 
-VOLUME ${NEXUS_DATA}
+#CUSTOM
+#https://help.sonatype.com/repomanager3/security/configuring-ssl#ConfiguringSSL-ServingSSLDirectly
 
-EXPOSE 8081
+RUN mkdir -p ${SONATYPE_WORK}etc/ssl
+RUN mkdir -p ${NEXUS_DATA}etc/ssl
+
+### Edit nexus.properties ###
+RUN echo "application-port-ssl=8443" >> ${NEXUS_DATA}etc/nexus.properties
+RUN sed -i -e '/nexus-args=/ s/=.*/=${jetty.etc}\/jetty.xml,${jetty.etc}\/jetty-http.xml,${jetty.etc}\/jetty-https.xml,${jetty.etc}\/jetty-requestlog.xml,${jetty.etc}\/jetty-http-redirect-to-https.xml/' ${NEXUS_DATA}etc/nexus.properties
+RUN echo "ssl.etc=\${karaf.data}/etc/ssl" >> ${NEXUS_DATA}etc/nexus.properties
+RUN sed -i 's/<Set name="KeyStorePath">.*<\/Set>/<Set name="KeyStorePath">\/opt\/nexus\/etc\/ssl\/keystore.jks<\/Set>/g' /${NEXUS_HOME}/etc/jetty-https.xml \
+  && sed -i 's/<Set name="KeyStorePassword">.*<\/Set>/<Set name="KeyStorePassword">changeit<\/Set>/g' ${NEXUS_HOME}/etc/jetty-https.xml \
+  && sed -i 's/<Set name="KeyManagerPassword">.*<\/Set>/<Set name="KeyManagerPassword">changeit<\/Set>/g' ${NEXUS_HOME}/etc/jetty-https.xml \
+  && sed -i 's/<Set name="TrustStorePath">.*<\/Set>/<Set name="TrustStorePath">\/opt\/nexus\/etc\/ssl\/keystore.jks<\/Set>/g' ${NEXUS_HOME}/etc/jetty-https.xml \
+  && sed -i 's/<Set name="TrustStorePassword">.*<\/Set>/<Set name="TrustStorePassword">changeit<\/Set>/g' ${NEXUS_HOME}/etc/jetty-https.xml
+
+VOLUME ${NEXUS_DATA}
+VOLUME ${SSL_WORK}
+
+#### http, https, https for docker group, https for hosted docker hub ####
+EXPOSE 8081 5000 5001
 USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
+CMD bin/run
 CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]
