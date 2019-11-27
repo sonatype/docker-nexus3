@@ -65,6 +65,10 @@ RUN yum install -y --disableplugin=subscription-manager hostname procps \
 #CUSTOM
 #https://help.sonatype.com/repomanager3/security/configuring-ssl#ConfiguringSSL-ServingSSLDirectly
 
+#### Add run script ####
+ADD run ${SONATYPE_WORK}/bin/run
+RUN chmod +x ${SONATYPE_WORK}/bin/run
+
 RUN mkdir -p ${SONATYPE_WORK}etc/ssl
 RUN mkdir -p ${NEXUS_DATA}etc/ssl
 
@@ -88,4 +92,3 @@ USER nexus
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms1200m -Xmx1200m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
 CMD bin/run
-CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]
