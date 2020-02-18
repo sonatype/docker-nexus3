@@ -18,8 +18,8 @@ MAINTAINER Sonatype <cloud-ops@sonatype.com>
 
 LABEL name="Nexus Repository Manager" \
       vendor=Sonatype \
-      version="3.20.1-01" \
-      release="3.20.1" \
+      version="3.21.0-05" \
+      release="3.21.0" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -37,9 +37,9 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.20.1-01
+ARG NEXUS_VERSION=3.21.0-05
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=fba9953e70e2d53262d2bd953e5fbab3e44cf2965467df14a665b0752de30e51
+ARG NEXUS_DOWNLOAD_SHA256_HASH=d4c6a8dfa80381fc34bbd4c4e949a5320441d63886573c38b43d4fc18c3e926b
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
