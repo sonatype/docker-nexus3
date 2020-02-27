@@ -179,6 +179,16 @@ node('ubuntu-zion') {
     OsTools.runSafe(this, "docker system prune -a -f")
     OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
   }
+
+  stage('Trigger Red Hat Certified Image Build') {
+    withCredentials([string(credentialsId: 'docker-nexus3-rh-build-project-id', variable: 'PROJECT_ID')]) {
+      def rhVersion = "${version}-ubi-1"
+      OsTools.runSafe(this, """
+        curl -H "Content-type: application/json" -X POST -d '{"tag": "${rhVersion}"}' \
+          https://connect.redhat.com/api/v2/projects/${PROJECT_ID}/build 
+      """)
+    }
+  }
 }
 
 def readVersion() {
