@@ -56,7 +56,7 @@ Map build(String apiKey, String projectId, String nextTag) {
 
 Map getCompletedBuild(String apiKey, String projectId, String nextTag) {
   while (true) {
-    println "Waiting for build to finish."
+    println 'Waiting for build to finish.'
     sleep 60000
 
     final newTags = HttpBuilder.configure {
@@ -78,13 +78,13 @@ Map getCompletedBuild(String apiKey, String projectId, String nextTag) {
 
 Map publish(String apiKey, String projectId, String digest, String name) {
   final publishUri = [
-    "https://connect.redhat.com/api/v2/projects",
+    'https://connect.redhat.com/api/v2/projects',
     projectId,
-    "containers",
+    'containers',
     digest,
-    "tags",
+    'tags',
     name,
-    "publish"
+    'publish'
   ].join('/')
 
   try {
