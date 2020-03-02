@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2020-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/clm/attributions.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
 @Grab('io.github.http-builder-ng:http-builder-ng-core:1.0.4')
 
 import groovyx.net.http.HttpBuilder
