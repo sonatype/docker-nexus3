@@ -181,12 +181,11 @@ node('ubuntu-zion') {
   }
 
   stage('Trigger Red Hat Certified Image Build') {
-    withCredentials([string(credentialsId: 'docker-nexus3-rh-build-project-id', variable: 'PROJECT_ID')]) {
-      def rhVersion = "${version}-ubi-1"
-      OsTools.runSafe(this, """
-        curl -H "Content-type: application/json" -X POST -d '{"tag": "${rhVersion}"}' \
-          https://connect.redhat.com/api/v2/projects/${PROJECT_ID}/build 
-      """)
+    withCredentials([
+        string(credentialsId: 'docker-nexus3-rh-build-project-id', variable: 'PROJECT_ID'),
+        string(credentialsId: 'rh-build-service-api-key', variable: 'API_KEY')]) {
+      def redHatVersion = "${version}-ubi"
+      runGroovy('TriggerRedHatBuild.groovy', [redHatVersion, PROJECT_ID, API_KEY].join(' '))
     }
   }
 }
