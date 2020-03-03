@@ -14,8 +14,7 @@ import groovyx.net.http.HttpBuilder
 import groovyx.net.http.HttpException
 
 if (args.size() < 3) {
-  println 'Usage: groovy TriggerRedhatBuild.groovy <version> <projectId> <apiKey>'
-  return
+  fail('Usage: groovy TriggerRedhatBuild.groovy <version> <projectId> <apiKey>')
 }
 
 def (version, projectId, apiKey) = args
@@ -30,13 +29,32 @@ final HttpBuilder builder = HttpBuilder.configure {
 final nextTag = getNextTag(builder, projectId, version)
 println "Triggering build as ${nextTag}"
 
-build(builder, projectId, nextTag)
+final buildStatus = build(builder, projectId, nextTag)
+
+if (buildStatus.status != 'Created') {
+  fail(buildStatus)
+}
 
 final completedBuild = getCompletedBuild(builder, projectId, nextTag)
 
-println publish(builder, projectId, completedBuild.digest, completedBuild.name)
+final published = publish(builder, projectId, completedBuild.digest, completedBuild.name)
+
+if (published.failure) {
+  fail(published.failure)
+}
+
+println published
 
 // END
+
+/**
+ * fail with message and exit with an error code for jenkins to see
+ * @param message message to print
+ */
+void fail(String message) {
+  System.err.println(message)
+  System.exit(1)
+}
 
 /**
  * Request current version tags available at Red Hat,
