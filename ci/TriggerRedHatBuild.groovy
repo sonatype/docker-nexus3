@@ -17,45 +17,49 @@ if (args.size() < 3) {
   fail('Usage: groovy TriggerRedhatBuild.groovy <version> <projectId> <apiKey>')
 }
 
-new BuildClient(version: args[0], projectId: args[1], apiKey: args[2]).run()
+new BuildClient(*args).run()
 
 class BuildClient {
-  String version
-  String projectId
-  String apiKey
   private static final Integer TIMEOUT_MINUTES = 20
+
+  final String version
+  final String projectId
+
+  final HttpBuilder builder
+
+  BuildClient(String version, String projectId, String apiKey) {
+    this.version = version
+    this.projectId = projectId
+
+    builder = HttpBuilder.configure {
+      request.uri = 'https://connect.redhat.com'
+      request.headers['Authorization'] = "Bearer ${apiKey}"
+      request.contentType = 'application/json'
+      request.body = [:]
+    }
+  }
 
   /**
    * fire off a series of requests to build and publish
    * a container.
    */
   void run() {
-    final HttpBuilder builder = HttpBuilder.configure {
-      request.uri = 'https://connect.redhat.com'
-      request.headers['Authorization'] = "Bearer ${apiKey}"
-      request.contentType = 'application/json'
-      request.body = [:]
-    }
-
-    /* a function for querying all the tags */
-    final Closure tagFn = this.&getTags.curry(builder)
-
-    final nextTag = getNextTag(tagFn, version)
+    final nextTag = getNextTag(version)
     println "Triggering build as ${nextTag}"
 
-    final buildStatus = build(builder, nextTag)
+    final buildStatus = build(nextTag)
 
     if (buildStatus.status != 'Created') {
       fail(buildStatus)
     }
 
-    final completedBuild = getCompletedBuild(tagFn, nextTag)
+    final completedBuild = getCompletedBuild(nextTag)
 
     if (completedBuild.failure) {
       fail(completedBuild.failure)
     }
 
-    final published = publish(builder, completedBuild.digest, completedBuild.name)
+    final published = publish(completedBuild.digest, completedBuild.name)
 
     if (published.failure) {
       fail(published.failure)
@@ -87,10 +91,9 @@ class BuildClient {
 
   /**
   * Request current version tags available at Red Hat.
-  * @param builder the configured http builder to use for requests
   * @return the list of all tags
   */
-  private List getTags(HttpBuilder builder) {
+  private List getTags() {
     return builder.post {
       request.uri.path = "/api/v2/projects/${projectId}/tags"
     }.tags
@@ -99,12 +102,11 @@ class BuildClient {
   /**
   * Request current version tags available at Red Hat,
   * and calculate the next tag to use in this build.
-  * @param requestTags a closure that produces a list of all the tags
   * @param version the base version we're currently building
   * @return the full new version string to submit for the next build
   */
-  private String getNextTag(Closure requestTags, String version) {
-    final tags = requestTags()*.name.collectMany {
+  private String getNextTag(String version) {
+    final tags = getTags()*.name.collectMany {
       it.split(', ').collect()
     }
 
@@ -121,11 +123,10 @@ class BuildClient {
 
   /**
   * Trigger build of the certified image at Red Hat,
-  * @param builder the configured http builder to use for requests
   * @param nextTag the full version tag to be assigned to the new build
   * @return the map from json with the status of the submitted build
   */
-  private Map build(HttpBuilder builder, String nextTag) {
+  private Map build(String nextTag) {
     return builder.post {
       request.uri.path = "/api/v2/projects/${projectId}/build"
       request.body = [tag: nextTag]
@@ -134,18 +135,17 @@ class BuildClient {
 
   /**
   * Poll for the completed (built and scanned) build at Red Hat build service.
-  * @param requestTags a closure that produces a list of all the tags
   * @param nextTag the full version tag assigned to the new build
   * @return the map from json with info about the completed build
   */
-  private Map getCompletedBuild(Closure requestTags, String nextTag) {
+  private Map getCompletedBuild(String nextTag) {
     final endTime = calcCutoffTime(System.currentTimeMillis(), TIMEOUT_MINUTES)
 
     while (System.currentTimeMillis() < endTime) {
       println 'Waiting for build to finish.'
       sleep 60000
 
-      final completedBuild = requestTags().find {
+      final completedBuild = getTags().find {
         it.name == nextTag && it.scan_status == 'passed'
       }
 
@@ -159,12 +159,11 @@ class BuildClient {
 
   /**
   * Trigger publishing of the new image at Red Hat build service.
-  * @param builder the configured http builder to use for requests
   * @param digest hash string that identifies the container to publish
   * @param name tag name (version) of the container image to publish
   * @return the map from json with status of the published container image
   */
-  private Map publish(HttpBuilder builder, String digest, String name) {
+  private Map publish(String digest, String name) {
     final publishPath = [
       '/api/v2/projects',
       projectId,
