@@ -20,22 +20,28 @@ if (args.size() < 3) {
 
 def (version, projectId, apiKey) = args
 
-final nextTag = getNextTag(apiKey, projectId, version)
+final HttpBuilder builder = HttpBuilder.configure {
+  request.uri = 'https://connect.redhat.com'
+  request.headers['Authorization'] = "Bearer ${apiKey}"
+  request.contentType = 'application/json'
+  request.body = [:]
+}
+
+final nextTag = getNextTag(builder, projectId, version)
 println "Deploying as ${nextTag}"
 
-build(apiKey, projectId, nextTag)
+build(builder, projectId, nextTag)
 
-final completedBuild = getCompletedBuild(apiKey, projectId, nextTag)
+final completedBuild = getCompletedBuild(builder, projectId, nextTag)
 
-println publish(apiKey, projectId, completedBuild.digest, completedBuild.name)
+println publish(builder, projectId, completedBuild.digest, completedBuild.name)
 
-String getNextTag(String apiKey, String projectId, String version) {
-  final tags = HttpBuilder.configure {
-    request.uri = "https://connect.redhat.com/api/v2/projects/${projectId}/tags"
-    request.headers['Authorization'] = "Bearer ${apiKey}"
-    request.contentType = 'application/json'
-    request.body = [:]
-  }.post().tags*.name.collectMany {
+// END
+
+String getNextTag(HttpBuilder builder, String projectId, String version) {
+  final tags = builder.post {
+    request.uri.path = "/api/v2/projects/${projectId}/tags"
+  }.tags*.name.collectMany {
     it.split(', ').collect()
   }
 
@@ -50,26 +56,21 @@ String getNextTag(String apiKey, String projectId, String version) {
   return "${version}-${nextIndex}"
 }
 
-Map build(String apiKey, String projectId, String nextTag) {
-  return HttpBuilder.configure {
-    request.uri = "https://connect.redhat.com/api/v2/projects/${projectId}/build"
-    request.headers['Authorization'] = "Bearer ${apiKey}"
-    request.contentType = 'application/json'
+Map build(HttpBuilder builder, String projectId, String nextTag) {
+  return builder.post {
+    request.uri.path = "/api/v2/projects/${projectId}/build"
     request.body = [tag: nextTag]
-  }.post()
+  }
 }
 
-Map getCompletedBuild(String apiKey, String projectId, String nextTag) {
+Map getCompletedBuild(HttpBuilder builder, String projectId, String nextTag) {
   while (true) {
     println 'Waiting for build to finish.'
     sleep 60000
 
-    final newTags = HttpBuilder.configure {
-      request.uri = "https://connect.redhat.com/api/v2/projects/${projectId}/tags"
-      request.headers['Authorization'] = "Bearer ${apiKey}"
-      request.contentType = 'application/json'
-      request.body = [:]
-    }.post().tags
+    final newTags = builder.post {
+      request.uri.path = "/api/v2/projects/${projectId}/tags"
+    }.tags
 
     final completedBuild = newTags.find {
       it.name == nextTag && it.scan_status == 'passed'
@@ -81,9 +82,9 @@ Map getCompletedBuild(String apiKey, String projectId, String nextTag) {
   }
 }
 
-Map publish(String apiKey, String projectId, String digest, String name) {
-  final publishUri = [
-    'https://connect.redhat.com/api/v2/projects',
+Map publish(HttpBuilder builder, String projectId, String digest, String name) {
+  final publishPath = [
+    '/api/v2/projects',
     projectId,
     'containers',
     digest,
@@ -93,11 +94,8 @@ Map publish(String apiKey, String projectId, String digest, String name) {
   ].join('/')
 
   try {
-    return HttpBuilder.configure {
-      request.uri = publishUri
-      request.headers['Authorization'] = "Bearer ${apiKey}"
-      request.contentType = 'application/json'
-      request.body = [:]
+    return builder.post {
+      request.uri.path = publishPath
     }.post()
   } catch (HttpException ex) {
     ex.printStackTrace()
