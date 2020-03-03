@@ -23,6 +23,7 @@ class BuildClient {
   String version
   String projectId
   String apiKey
+  private static final Integer TIMEOUT_MINUTES = 20
 
   /**
    * fire off a series of requests to build and publish
@@ -50,6 +51,10 @@ class BuildClient {
 
     final completedBuild = getCompletedBuild(tagFn, nextTag)
 
+    if (completedBuild.failure) {
+      fail(completedBuild.failure)
+    }
+
     final published = publish(builder, completedBuild.digest, completedBuild.name)
 
     if (published.failure) {
@@ -57,6 +62,17 @@ class BuildClient {
     }
 
     println published
+  }
+
+  /**
+   * calculate the cutoff time in the future in miliseconds
+   * for comparison to System.currentTimeMillis()
+   * @param start start time in millis
+   * @param minutes minutes into the future
+   * @return future time in millis
+   */
+  private Long calcCutoffTime(Long start, Integer minutes) {
+    return minutes * 60 * 1000 + start
   }
 
   /**
@@ -123,7 +139,9 @@ class BuildClient {
   * @return the map from json with info about the completed build
   */
   private Map getCompletedBuild(Closure requestTags, String nextTag) {
-    while (true) {
+    final endTime = calcCutoffTime(System.currentTimeMillis(), TIMEOUT_MINUTES)
+
+    while (System.currentTimeMillis() < endTime) {
       println 'Waiting for build to finish.'
       sleep 60000
 
@@ -135,6 +153,8 @@ class BuildClient {
         return completedBuild
       }
     }
+
+    return [failure: "Timeout waiting for complete build"]
   }
 
   /**
