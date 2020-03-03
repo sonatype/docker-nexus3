@@ -154,7 +154,7 @@ class BuildClient {
       }
     }
 
-    return [failure: "Timeout waiting for complete build"]
+    return [failure: "TIMEOUT waiting for complete build: ${TIMEOUT_MINUTES} minutes"]
   }
 
   /**
