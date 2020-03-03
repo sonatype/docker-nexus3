@@ -96,7 +96,7 @@ Map publish(HttpBuilder builder, String projectId, String digest, String name) {
   try {
     return builder.post {
       request.uri.path = publishPath
-    }.post()
+    }
   } catch (HttpException ex) {
     ex.printStackTrace()
     return [failure: "Failed to publish: ${ex.statusCode} [${ex.body}]"]
