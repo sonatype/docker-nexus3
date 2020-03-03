@@ -22,10 +22,10 @@ new BuildClient(*args).run()
 class BuildClient {
   private static final Integer TIMEOUT_MINUTES = 20
 
-  final String version
-  final String projectId
+  private final String version
+  private final String projectId
 
-  final HttpBuilder builder
+  private final HttpBuilder builder
 
   BuildClient(String version, String projectId, String apiKey) {
     this.version = version
