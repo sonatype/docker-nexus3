@@ -3,6 +3,11 @@
  * Includes the third-party code listed at http://links.sonatype.com/products/clm/attributions.
  * "Sonatype" is a trademark of Sonatype, Inc.
  */
+
+/**
+ * This script triggers the build service for a certified docker image at Red Hat.
+ * It's meant to be used by Jenkins via the Jenkinsfile.
+ */
 @Grab('io.github.http-builder-ng:http-builder-ng-core:1.0.4')
 
 import groovyx.net.http.HttpBuilder
