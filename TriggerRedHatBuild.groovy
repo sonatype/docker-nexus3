@@ -28,7 +28,7 @@ final HttpBuilder builder = HttpBuilder.configure {
 }
 
 final nextTag = getNextTag(builder, projectId, version)
-println "Deploying as ${nextTag}"
+println "Triggering build as ${nextTag}"
 
 build(builder, projectId, nextTag)
 
@@ -38,6 +38,14 @@ println publish(builder, projectId, completedBuild.digest, completedBuild.name)
 
 // END
 
+/**
+ * Request current version tags available at Red Hat,
+ * and calculate the next tag to use in this build.
+ * @param builder the configured http builder to use for requests
+ * @param projectId project to query versions
+ * @param version the base version we're currently building
+ * @return the full new version string to submit for the next build
+ */
 String getNextTag(HttpBuilder builder, String projectId, String version) {
   final tags = builder.post {
     request.uri.path = "/api/v2/projects/${projectId}/tags"
@@ -56,6 +64,13 @@ String getNextTag(HttpBuilder builder, String projectId, String version) {
   return "${version}-${nextIndex}"
 }
 
+/**
+ * Trigger build of the certified image at Red Hat,
+ * @param builder the configured http builder to use for requests
+ * @param projectId project to build
+ * @param nextTag the full version tag to be assigned to the new build
+ * @return the map from json with the status of the submitted build
+ */
 Map build(HttpBuilder builder, String projectId, String nextTag) {
   return builder.post {
     request.uri.path = "/api/v2/projects/${projectId}/build"
@@ -63,6 +78,13 @@ Map build(HttpBuilder builder, String projectId, String nextTag) {
   }
 }
 
+/**
+ * Poll for the completed (built and scanned) build at Red Hat build service.
+ * @param builder the configured http builder to use for requests
+ * @param projectId project that is building
+ * @param nextTag the full version tag assigned to the new build
+ * @return the map from json with info about the completed build
+ */
 Map getCompletedBuild(HttpBuilder builder, String projectId, String nextTag) {
   while (true) {
     println 'Waiting for build to finish.'
@@ -82,6 +104,14 @@ Map getCompletedBuild(HttpBuilder builder, String projectId, String nextTag) {
   }
 }
 
+/**
+ * Trigger publishing of the new image at Red Hat build service.
+ * @param builder the configured http builder to use for requests
+ * @param projectId project to publish
+ * @param digest hash string that identifies the container to publish
+ * @param name tag name (version) of the container image to publish
+ * @return the map from json with status of the published container image
+ */
 Map publish(HttpBuilder builder, String projectId, String digest, String name) {
   final publishPath = [
     '/api/v2/projects',
