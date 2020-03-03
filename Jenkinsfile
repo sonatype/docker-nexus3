@@ -104,7 +104,7 @@ node('ubuntu-zion') {
     if (currentBuild.result == 'FAILURE') {
       return
     }
-    if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha 
+    if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha
           || params.nexus_repository_manager_cookbook_version) {
       stage('Commit Automated Code Update') {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'integrations-github-api',
@@ -185,7 +185,7 @@ node('ubuntu-zion') {
         string(credentialsId: 'docker-nexus3-rh-build-project-id', variable: 'PROJECT_ID'),
         string(credentialsId: 'rh-build-service-api-key', variable: 'API_KEY')]) {
       def redHatVersion = "${version}-ubi"
-      runGroovy('TriggerRedHatBuild.groovy', [redHatVersion, PROJECT_ID, API_KEY].join(' '))
+      runGroovy('ci/TriggerRedHatBuild.groovy', [redHatVersion, PROJECT_ID, API_KEY].join(' '))
     }
   }
 }
