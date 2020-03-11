@@ -12,6 +12,7 @@ properties([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
+    booleanParam(defaultValue: false, description: 'Skip Push Docker Image and Tags', name: 'skip_push'),
     booleanParam(defaultValue: false, description: 'Force Red Hat Certified Build for a non-master branch', name: 'force_red_hat_build'),
   ])
 ])
@@ -129,7 +130,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'master') {
+    if (branch == 'master' && ! params.skip_push) {
       input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
