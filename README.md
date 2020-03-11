@@ -81,15 +81,20 @@ We are using `rspec` as the test framework. `serverspec` provides a docker backe
 
 ## Red Hat Certified Image
 
-A Red Hat certified container image can be created using `Dockerfile.rh.el` which is built to be compliant with Red Hat certification.
+A Red Hat certified container image can be created using `Dockerfile.rh.ubi` which is built to be compliant with Red Hat certification.
 The image includes additional meta data to comform with Kubernetes and OpenShift standards, a directory with the
 licenses applicable to the software and a man file for help on how to use the software. It also uses an ENTRYPOINT
-script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. In addition to the
-Red Hat Enterprise Linux image, `Dockerfile.rh.centos` provides the same additions but with a CentOS base.
+script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. 
 
 The Red Hat certified container image is available from the 
 [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager)
 and qualified accounts can pull it from registry.connect.redhat.com.
+
+## Other Red Hat Images
+
+In addition to the Universal Base Image, we can build images based on:
+* Red Hat Enterprise Linux: `Dockerfile.rh.el`
+* CentOS: `Dockerfile.rh.centos`
 
 ## Notes
 
