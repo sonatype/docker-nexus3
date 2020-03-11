@@ -12,7 +12,7 @@ properties([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
-    booleanParam(defaultValue: false, description: 'Force Red Hat Certified Build', name 'force_red_hat_build'),
+    booleanParam(defaultValue: false, description: 'Force Red Hat Certified Build', name: 'force_red_hat_build'),
   ])
 ])
 
