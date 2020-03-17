@@ -100,6 +100,13 @@ In addition to the Universal Base Image, we can build images based on:
 
 * Our [system requirements](https://help.sonatype.com/display/NXRM3/System+Requirements) should be taken into account when provisioning the Docker container.
 * Default user is `admin` and the uniquely generated password can be found in the `admin.password` file inside the volume. See [Persistent Data](#user-content-persistent-data) for information about the volume.
+  
+  > A simple way to print the password is the follwoing:
+  > - After the nexus3 contaier is finished running, run `docker ps --filter "ancestor=sonatype/nexus3"`
+  >   it will print a list of containers, find your container and copy the `CONTAINER ID`
+  > - Run `docker container exec -it <CONTAINER ID> cat /nexus-data/admin.password && echo`
+  >   
+  >   if my `CONTAINER ID` was  `1951dfd68025`, I'd run `docker container exec -it 1951dfd68025 cat /nexus-data/admin.password && echo`
 
 * It can take some time (2-3 minutes) for the service to launch in a
 new container.  You can tail the log to determine once Nexus is ready:
