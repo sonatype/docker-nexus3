@@ -101,11 +101,11 @@ In addition to the Universal Base Image, we can build images based on:
 * Our [system requirements](https://help.sonatype.com/display/NXRM3/System+Requirements) should be taken into account when provisioning the Docker container.
 * Default user is `admin` and the uniquely generated password can be found in the `admin.password` file inside the volume. See [Persistent Data](#user-content-persistent-data) for information about the volume.
   
-  > You could print the generated admin password by running the following command after the container is finished running:
+  > You can print the generated admin password by running the following command after the container is finished running:
   > 
   > ```sh
-  docker container exec -it $(docker ps -q --filter "name=nexus") cat /nexus-data/admin.password && echo
-  ```
+  > docker container exec -it $(docker ps -q --filter "name=nexus") cat /nexus-data/admin.password && echo
+  > ```
   > Above command assumes you are running one container.
 
 
