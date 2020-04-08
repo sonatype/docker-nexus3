@@ -14,10 +14,27 @@
 
 FROM registry.access.redhat.com/ubi8/ubi
 
-LABEL vendor=Sonatype \
+LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <cloud-ops@sonatype.com>" \
+      vendor=Sonatype \
+      version="3.22.0-02" \
+      release="3.22.0" \
+      url="https://sonatype.com" \
+      summary="The Nexus Repository Manager server \
+          with universal support for popular component formats." \
+      description="The Nexus Repository Manager server \
+          with universal support for popular component formats." \
+      run="docker run -d --name NAME \
+          -p 8081:8081 \
+          IMAGE" \
+      stop="docker stop NAME" \
       com.sonatype.license="Apache License, Version 2.0" \
-      com.sonatype.name="Nexus Repository Manager base image"
+      com.sonatype.name="Nexus Repository Manager base image" \
+      io.k8s.description="The Nexus Repository Manager server \
+          with universal support for popular component formats." \
+      io.k8s.display-name="Nexus Repository Manager" \
+      io.openshift.expose-services="8081:8081" \
+      io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
 ARG NEXUS_VERSION=3.22.0-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
