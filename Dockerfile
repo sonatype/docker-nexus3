@@ -17,8 +17,8 @@ FROM registry.access.redhat.com/ubi8/ubi
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <cloud-ops@sonatype.com>" \
       vendor=Sonatype \
-      version="3.18.1-01" \
-      release="3.18.1" \
+      version="3.22.0-02" \
+      release="3.22.0" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
