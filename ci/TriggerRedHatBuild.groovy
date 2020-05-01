@@ -145,12 +145,17 @@ class BuildClient {
       println 'Waiting for build to finish.'
       sleep 60000
 
-      final completedBuild = getTags().find {
-        it.name == nextTag && it.scan_status == 'passed'
-      }
+      try {
+        final completedBuild = getTags().find {
+          it.name == nextTag && it.scan_status == 'passed'
+        }
 
-      if (completedBuild) {
-        return completedBuild
+        if (completedBuild) {
+          return completedBuild
+        }
+      } catch (HttpException ex) {
+        ex.printStackTrace()
+        System.err.println "Failed waiting for compleet build, but still retrying: ${ex.statusCode} [${ex.body}]"
       }
     }
 
