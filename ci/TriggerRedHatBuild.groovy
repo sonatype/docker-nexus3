@@ -14,7 +14,8 @@ import groovyx.net.http.HttpBuilder
 import groovyx.net.http.HttpException
 
 if (args.size() < 3) {
-  fail('Usage: groovy TriggerRedhatBuild.groovy <version> <projectId> <apiKey>')
+  System.err.println('Usage: groovy TriggerRedhatBuild.groovy <version> <projectId> <apiKey>')
+  System.exit(1)
 }
 
 new BuildClient(*args).run()
@@ -145,12 +146,17 @@ class BuildClient {
       println 'Waiting for build to finish.'
       sleep 60000
 
-      final completedBuild = getTags().find {
-        it.name == nextTag && it.scan_status == 'passed'
-      }
+      try {
+        final completedBuild = getTags().find {
+          it.name == nextTag && it.scan_status == 'passed'
+        }
 
-      if (completedBuild) {
-        return completedBuild
+        if (completedBuild) {
+          return completedBuild
+        }
+      } catch (HttpException ex) {
+        ex.printStackTrace()
+        System.err.println "Failed retrieving completed builds, but still trying: ${ex.statusCode} [${ex.body}]"
       }
     }
 
