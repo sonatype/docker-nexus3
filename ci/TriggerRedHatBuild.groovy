@@ -155,7 +155,7 @@ class BuildClient {
         }
       } catch (HttpException ex) {
         ex.printStackTrace()
-        System.err.println "Failed waiting for compleet build, but still retrying: ${ex.statusCode} [${ex.body}]"
+        System.err.println "Failed waiting for complete build, but still retrying: ${ex.statusCode} [${ex.body}]"
       }
     }
 
