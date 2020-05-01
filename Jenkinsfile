@@ -14,6 +14,7 @@ properties([
     string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
     booleanParam(defaultValue: false, description: 'Force Red Hat Certified Build for a non-master branch', name: 'force_red_hat_build'),
+    booleanParam(defaultValue: false, description: 'Skip Red Hat Certified Build', name: 'skip_red_hat_build'),
   ])
 ])
 
@@ -174,7 +175,7 @@ node('ubuntu-zion') {
         OsTools.runSafe(this, "git tag -d ${version}")
       }
     }
-    if (branch == 'master' || params.force_red_hat_build) {
+    if ((! params.skip_red_hat_build) && (branch == 'master' || params.force_red_hat_build)) {
       stage('Trigger Red Hat Certified Image Build') {
         withCredentials([
             string(credentialsId: 'docker-nexus3-rh-build-project-id', variable: 'PROJECT_ID'),
