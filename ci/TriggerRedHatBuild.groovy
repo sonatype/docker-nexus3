@@ -14,7 +14,8 @@ import groovyx.net.http.HttpBuilder
 import groovyx.net.http.HttpException
 
 if (args.size() < 3) {
-  fail('Usage: groovy TriggerRedhatBuild.groovy <version> <projectId> <apiKey>')
+  System.err.println('Usage: groovy TriggerRedhatBuild.groovy <version> <projectId> <apiKey>')
+  System.exit(1)
 }
 
 new BuildClient(*args).run()
