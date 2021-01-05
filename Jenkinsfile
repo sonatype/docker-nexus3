@@ -142,7 +142,7 @@ node('ubuntu-zion') {
           OsTools.runSafe(this, """
             docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
           """)
-          OsTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}")
+          OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
 
           response = OsTools.runSafe(this, """
             curl -X POST https://hub.docker.com/v2/users/login/ \
