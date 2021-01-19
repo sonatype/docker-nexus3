@@ -176,3 +176,7 @@ Looking to contribute to our Docker image but need some help? There's a few ways
 * File an issue [on our public JIRA](https://issues.sonatype.org/projects/NEXUS/)
 * Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
 * Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
+
+## License Disclaimer
+
+_Nexus Repository OSS is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work._
