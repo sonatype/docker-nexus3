@@ -175,6 +175,7 @@ node('ubuntu-zion') {
         OsTools.runSafe(this, "git tag -d ${version}")
       }
     }
+    /*
     if ((! params.skip_red_hat_build) && (branch == 'master' || params.force_red_hat_build)) {
       stage('Trigger Red Hat Certified Image Build') {
         withCredentials([
@@ -185,6 +186,7 @@ node('ubuntu-zion') {
         }
       }
     }
+    */
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
