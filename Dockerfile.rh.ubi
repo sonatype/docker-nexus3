@@ -55,7 +55,7 @@ ADD solo.json.erb /var/chef/solo.json.erb
 
 # Install using chef-solo
 # Chef version locked to avoid needing to accept the EULA on behalf of whomever builds the image
-RUN curl -L https://www.getchef.com/chef/install.sh | bash -s -- -v 14.12.9 \
+RUN curl -L https://omnitruck.chef.io/install.sh | bash -s -- -v 14.12.9 \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
        --node_name nexus_repository_red_hat_docker_build \
