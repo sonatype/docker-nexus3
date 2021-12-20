@@ -118,11 +118,14 @@ node('ubuntu-zion') {
             params.nexus_repository_manager_cookbook_version ?
                 "Update Repository Manager Cookbook to ${params.nexus_repository_manager_cookbook_version}." : ""
           ].findAll({ it }).join(' ')
-          OsTools.runSafe(this, """
-            git add .
-            git commit -m '${commitMessage}'
-            git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git ${branch}
-          """)
+
+          if (!params.update_latest_only) {
+            OsTools.runSafe(this, """
+              git add .
+              git commit -m '${commitMessage}'
+              git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git ${branch}
+            """)
+          }
         }
       }
     }
