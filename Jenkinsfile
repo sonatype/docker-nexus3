@@ -15,6 +15,7 @@ properties([
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
     booleanParam(defaultValue: false, description: 'Force Red Hat Certified Build for a non-master branch', name: 'force_red_hat_build'),
     booleanParam(defaultValue: false, description: 'Skip Red Hat Certified Build', name: 'skip_red_hat_build'),
+    booleanParam(defaultValue: false, description: 'Only update the latest tag', name: 'update_latest_only')
   ])
 ])
 
@@ -131,7 +132,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'master' && ! params.skip_push) {
+    if (branch == 'master' && !params.skip_push && !params.update_latest_only) {
       input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
@@ -173,6 +174,18 @@ node('ubuntu-zion') {
           """)
         }
         OsTools.runSafe(this, "git tag -d ${version}")
+      }
+    }
+    else if(params.update_latest_only) {
+    stage('Push tags') {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
+                          usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+          OsTools.runSafe(this, """
+            docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
+          """)
+          OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
+        }
       }
     }
     /*
