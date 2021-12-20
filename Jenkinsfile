@@ -177,9 +177,9 @@ node('ubuntu-zion') {
       }
     }
     else if(params.update_latest_only) {
-    stage('Push tags') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                          usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+      stage('Push tags') {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
+            usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
           OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
           OsTools.runSafe(this, """
             docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
