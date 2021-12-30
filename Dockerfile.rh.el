@@ -67,8 +67,6 @@ RUN curl -L https://omnitruck.chef.io/install.sh | bash \
     && rm -rf /var/cache/yum \
     && rm -rf /var/chef
 
-VOLUME ${NEXUS_DATA}
-
 EXPOSE 8081
 USER nexus
 
