@@ -39,6 +39,7 @@ LABEL name="Nexus Repository Manager" \
 ARG NEXUS_VERSION=3.37.3-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
 ARG NEXUS_DOWNLOAD_SHA256_HASH=c1db431908c5a76b44015c555d6ef4517abf0a86844faffee0f5d6c62359312d
+ARG SHIRO_VERSION=1.8.0
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -46,7 +47,8 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_DATA=/nexus-data \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
-    DOCKER_TYPE='3x-docker'
+    DOCKER_TYPE='3x-docker' \
+    SHIRO_CLI_JAR=/opt/shiro-tools-hasher-${SHIRO_VERSION}-cli.jar
 
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20210628-162332.70a6cb6"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
@@ -68,10 +70,15 @@ RUN yum install -y --disableplugin=subscription-manager hostname procps \
     && rm -rf /var/chef \
     && yum clean all
     
-# download and install openjdk 8
+# download and install openjdk 8 and shiro cli
 RUN curl -O https://vault.centos.org/8.3.2011/AppStream/x86_64/os/Packages/java-1.8.0-openjdk-headless-1.8.0.282.b08-2.el8_3.x86_64.rpm \
     && yum localinstall -y --disableplugin=subscription-manager java-1.8.0-openjdk-headless-1.8.0.282.b08-2.el8_3.x86_64.rpm \
-    && rm -rf java-1.8.0-openjdk-headless-1.8.0.282.b08-2.el8_3.x86_64.rpm
+    && rm -rf java-1.8.0-openjdk-headless-1.8.0.282.b08-2.el8_3.x86_64.rpm \
+    && curl -L https://repo1.maven.org/maven2/org/apache/shiro/tools/shiro-tools-hasher/${SHIRO_VERSION}/shiro-tools-hasher-${SHIRO_VERSION}-cli.jar > ${SHIRO_CLI_JAR}
+
+# copy entrypoint script
+COPY entrypoint.sh ${SONATYPE_DIR}/entrypoint.sh
+RUN chmod 0755 ${SONATYPE_DIR}/entrypoint.sh
 
 VOLUME ${NEXUS_DATA}
 
@@ -80,4 +87,4 @@ USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
-CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]
+CMD ["sh", "-c", "${SONATYPE_DIR}/entrypoint.sh"]
