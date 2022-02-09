@@ -34,5 +34,6 @@ External contributors:
 
 * [@bestlong](https://github.com/bestlong/) (Yu-Lung Shao (Allen))
 * [@jperville](https://github.com/jperville/) (Julien Pervillé)
+* [@leroyguillaume](https://github.com/leroyguillaume) (Guillaume Leroy)
 
 ![Possibly You!](http://i.imgur.com/A3eScYul.jpg)

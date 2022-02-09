@@ -146,6 +146,8 @@ process, which runs as UID 200.
   $ docker run -d -p 8081:8081 --name nexus -e NEXUS_CONTEXT=nexus sonatype/nexus3
   ```
 
+* You can set admin initial password by using `NEXUS_ADMIN_INIT_PASSWORD` environment variable
+
 ### Persistent Data
 
 There are two general approaches to handling persistent storage requirements
