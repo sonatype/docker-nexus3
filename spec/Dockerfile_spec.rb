@@ -37,8 +37,22 @@ describe 'Dockerfile' do
     expect(user('nexus')).to exist
   end
 
-  it 'should have a nexus process running' do
-    expect(process('java')).to be_running
-    expect(process('java')).to have_attributes(:user => 'nexus')
+  describe 'Dockerfile#running' do
+    before(:all) do
+      @container = Docker::Container.create(
+        'Image' => @image.id
+      )
+      @container.start
+    end
+
+    it 'should have a nexus process running' do
+      expect(process('java')).to be_running
+      expect(process('java')).to have_attributes(user: 'nexus')
+    end
+
+    after(:all) do
+      @container.kill
+      @container.delete(force: true)
+    end
   end
 end
