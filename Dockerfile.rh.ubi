@@ -70,7 +70,7 @@ RUN yum install -y --disableplugin=subscription-manager hostname procps \
     && rm -rf /var/chef
 
 # download and install openjdk 8
-RUN yum install -y --disableplugin=subscription-manager java-1.8.0-openjdk-devel \
+RUN yum install -y --disableplugin=subscription-manager java-1.8.0-openjdk-headless \
     && yum clean all
 
 VOLUME ${NEXUS_DATA}
