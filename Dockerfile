@@ -69,9 +69,7 @@ RUN yum install -y --disableplugin=subscription-manager hostname procps \
     && yum clean all
     
 # download and install openjdk 8
-RUN curl -O https://vault.centos.org/8.3.2011/AppStream/x86_64/os/Packages/java-1.8.0-openjdk-headless-1.8.0.282.b08-2.el8_3.x86_64.rpm \
-    && yum localinstall -y --disableplugin=subscription-manager java-1.8.0-openjdk-headless-1.8.0.282.b08-2.el8_3.x86_64.rpm \
-    && rm -rf java-1.8.0-openjdk-headless-1.8.0.282.b08-2.el8_3.x86_64.rpm
+RUN yum install -y --disableplugin=subscription-manager java-1.8.0-openjdk-devel
 
 VOLUME ${NEXUS_DATA}
 
