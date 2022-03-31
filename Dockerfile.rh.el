@@ -48,13 +48,15 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20190212-155606.d1afdfe"
+ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20210628-162332.70a6cb6"
 ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
 
 ADD solo.json.erb /var/chef/solo.json.erb
 
 # Install using chef-solo
-RUN curl -L https://omnitruck.chef.io/install.sh | bash \
+# Chef version locked to avoid needing to accept the EULA on behalf of whomever builds the image
+RUN yum install -y --disableplugin=subscription-manager hostname procps \
+    && curl -L https://omnitruck.chef.io/install.sh | bash -s -- -v 14.12.9 \
     && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
     && chef-solo \
        --node_name nexus_repository_red_hat_docker_build \
@@ -66,6 +68,10 @@ RUN curl -L https://omnitruck.chef.io/install.sh | bash \
     && rm -rf /opt/chefdk \
     && rm -rf /var/cache/yum \
     && rm -rf /var/chef
+
+# download and install openjdk 8
+RUN yum install -y --disableplugin=subscription-manager java-1.8.0-openjdk-devel \
+    && yum clean all
 
 VOLUME ${NEXUS_DATA}
 
