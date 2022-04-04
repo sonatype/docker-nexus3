@@ -13,8 +13,6 @@ properties([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
-    booleanParam(defaultValue: false, description: 'Force Red Hat Certified Build for a non-master branch', name: 'force_red_hat_build'),
-    booleanParam(defaultValue: false, description: 'Skip Red Hat Certified Build', name: 'skip_red_hat_build'),
     booleanParam(defaultValue: false, description: 'Only update the latest tag', name: 'update_latest_only')
   ])
 ])
@@ -191,18 +189,6 @@ node('ubuntu-zion') {
         }
       }
     }
-    /*
-    if ((! params.skip_red_hat_build) && (branch == 'master' || params.force_red_hat_build)) {
-      stage('Trigger Red Hat Certified Image Build') {
-        withCredentials([
-            string(credentialsId: 'docker-nexus3-rh-build-project-id', variable: 'PROJECT_ID'),
-            string(credentialsId: 'rh-build-service-api-key', variable: 'API_KEY')]) {
-          final redHatVersion = "${version}-ubi"
-          runGroovy('ci/TriggerRedHatBuild.groovy', [redHatVersion, PROJECT_ID, API_KEY].join(' '))
-        }
-      }
-    }
-    */
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
