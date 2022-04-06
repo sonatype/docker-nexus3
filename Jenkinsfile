@@ -74,13 +74,14 @@ node('ubuntu-zion') {
       return
     }
 
-    stage('Policy Evaluation') {
-      nexusPolicyEvaluation(
-        iqStage: 'build',
-        iqApplication: 'docker-nexus3',
-        iqScanPatterns: [[scanPattern: "container:${imageName}"]],
-        failBuildOnNetworkError: true,
-      )
+    stage('Evaluate Policies') {
+      runEvaluation({ stage ->
+        nexusPolicyEvaluation(
+          iqStage: stage,
+          iqApplication: 'docker-nexus3',
+          iqScanPatterns: [[scanPattern: "container:${imageName}"]],
+          failBuildOnNetworkError: true,
+        )}, 'build')
     }
 
     stage('Archive') {
