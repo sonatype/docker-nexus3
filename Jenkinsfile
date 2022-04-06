@@ -77,7 +77,7 @@ node('ubuntu-zion') {
           iqApplication: 'docker-nexus3',
           iqScanPatterns: [[scanPattern: "container:${imageName}"]],
           failBuildOnNetworkError: true,
-        )}, 'build')
+        )}, (branch == 'master') ? 'release' : 'build')
     }
 
     if (currentBuild.result == 'FAILURE') {
