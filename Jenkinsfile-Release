@@ -102,6 +102,17 @@ node('ubuntu-zion') {
         gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
       }
     }
+
+    stage('Evaluate Policies') {
+      runEvaluation({ stage ->
+        nexusPolicyEvaluation(
+          iqStage: stage,
+          iqApplication: 'docker-nexus3',
+          iqScanPatterns: [[scanPattern: "container:${imageName}"]],
+          failBuildOnNetworkError: true,
+        )}, 'release')
+    }
+
     if (currentBuild.result == 'FAILURE') {
       return
     }
