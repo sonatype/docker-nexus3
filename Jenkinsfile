@@ -70,10 +70,6 @@ node('ubuntu-zion') {
       gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
     }
 
-    if (currentBuild.result == 'FAILURE') {
-      return
-    }
-
     stage('Evaluate Policies') {
       runEvaluation({ stage ->
         nexusPolicyEvaluation(
@@ -82,6 +78,10 @@ node('ubuntu-zion') {
           iqScanPatterns: [[scanPattern: "container:${imageName}"]],
           failBuildOnNetworkError: true,
         )}, 'build')
+    }
+
+    if (currentBuild.result == 'FAILURE') {
+      return
     }
 
     stage('Archive') {
