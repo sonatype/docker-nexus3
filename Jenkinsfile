@@ -20,7 +20,7 @@ node('ubuntu-zion') {
   try {
     stage('Preparation') {
       deleteDir()
-      OsTools.runSafe(this, "docker system prune -a -f")
+      OsTools.runSafe(this, 'docker system prune -a -f')
 
       def checkoutDetails = checkout scm
 
@@ -56,9 +56,9 @@ node('ubuntu-zion') {
 
       def gemInstallDirectory = getGemInstallDirectory()
       withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
-        OsTools.runSafe(this, "gem install --user-install rspec")
-        OsTools.runSafe(this, "gem install --user-install serverspec")
-        OsTools.runSafe(this, "gem install --user-install docker-api")
+        OsTools.runSafe(this, 'gem install --user-install rspec')
+        OsTools.runSafe(this, 'gem install --user-install serverspec')
+        OsTools.runSafe(this, 'gem install --user-install docker-api')
         OsTools.runSafe(this, "IMAGE_ID=${imageId} rspec --backtrace spec/Dockerfile_spec.rb")
       }
 
@@ -68,6 +68,16 @@ node('ubuntu-zion') {
       }
 
       gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
+    }
+
+    stage('Evaluate Policies') {
+      runEvaluation({ stage ->
+        nexusPolicyEvaluation(
+          iqStage: stage,
+          iqApplication: 'docker-nexus3',
+          iqScanPatterns: [[scanPattern: "container:${imageName}"]],
+          failBuildOnNetworkError: true,
+        )}, (branch == 'master') ? 'build' : 'develop')
     }
 
     if (currentBuild.result == 'FAILURE') {
@@ -81,14 +91,14 @@ node('ubuntu-zion') {
       }
     }
   } finally {
-    OsTools.runSafe(this, "docker logout")
-    OsTools.runSafe(this, "docker system prune -a -f")
+    OsTools.runSafe(this, 'docker logout')
+    OsTools.runSafe(this, 'docker system prune -a -f')
     OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
   }
 }
 
 def getGemInstallDirectory() {
-  def content = OsTools.runSafe(this, "gem env")
+  def content = OsTools.runSafe(this, 'gem env')
   for (line in content.split('\n')) {
     if (line.startsWith('  - USER INSTALLATION DIRECTORY: ')) {
       return line.substring(33)
