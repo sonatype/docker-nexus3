@@ -30,6 +30,9 @@ services:
        dockerfile: Dockerfile.rh.postgresql.centos
        args:
          LICENSE: sonatype-repository-manager-trial.lic
+         POSTGRES_USER: nexus3
+         POSTGRES_PASSWORD: REDACTED
+         POSTGRES_DB: nexus3
     ports:
       - "8081"
 

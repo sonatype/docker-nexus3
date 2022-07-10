@@ -91,9 +91,9 @@ We are using `rspec` as the test framework. `serverspec` provides a docker backe
 A Red Hat certified container image can be created using [Dockerfile.rh.ubi](https://github.com/sonatype/docker-nexus3/blob/master/Dockerfile.rh.ubi) which is built to be compliant with Red Hat certification.
 The image includes additional meta data to comform with Kubernetes and OpenShift standards, a directory with the
 licenses applicable to the software and a man file for help on how to use the software. It also uses an ENTRYPOINT
-script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. 
+script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC.
 
-The Red Hat certified container image is available from the 
+The Red Hat certified container image is available from the
 [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager)
 and qualified accounts can pull it from registry.connect.redhat.com.
 
@@ -133,7 +133,7 @@ process, which runs as UID 200.
 
   Of particular note, `-Djava.util.prefs.userRoot=/some-other-dir` can be set to a persistent path, which will maintain
   the installed Nexus Repository License if the container is restarted.
-  
+
   Be sure to check the [memory requirements](https://help.sonatype.com/display/NXRM3/System+Requirements#SystemRequirements-MemoryRequirements) when deciding how much heap and direct memory to allocate.
 
 * Another environment variable can be used to control the Nexus Context Path
@@ -169,6 +169,15 @@ for additional information.
   $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
   $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
   ```
+### PostgreSQL support
+Licence key is mandatory
+
+copy it in sonatype-repository-manager-trial.lic
+  ```
+docker-compose -f docker-compose.postgresql.yml up
+  ```
+Docker compose use Dockerfile.rh.postgresql.centos
+
 
 ## Getting Help
 

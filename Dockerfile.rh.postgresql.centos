@@ -71,10 +71,27 @@ RUN curl -L https://omnitruck.chef.io/install.sh | bash -s -- -v 14.12.9 \
 
 #Configure Nexus
 #
+
+ARG POSTGRES_USER
+ARG POSTGRES_PASSWORD
+ARG POSTGRES_DB
 RUN mkdir ${NEXUS_DATA}/etc/fabric
+
 ADD config/nexus.properties ${NEXUS_DATA}/etc/nexus.properties
+
+RUN sed -i 's/POSTGRES_USER/${POSTGRES_USER}/g' ${NEXUS_DATA}/etc/nexus.properties
+RUN sed -i 's/POSTGRES_PASSWORD/${POSTGRES_PASSWORD}/g' ${NEXUS_DATA}/etc/nexus.properties
+RUN sed -i 's/POSTGRES_DB/${POSTGRES_DB}/g' ${NEXUS_DATA}/etc/nexus.properties
+
 ADD config/nexus-store.properties ${NEXUS_DATA}/etc/fabric/nexus-store.properties
-RUN chown nexus:nexus -R ${NEXUS_DATA}/etc/fabric ${NEXUS_DATA}/etc/nexus.properties
+
+RUN sed -i 's/POSTGRES_USER/${POSTGRES_USER}/g' ${NEXUS_DATA}/etc/fabric/nexus-store.properties
+RUN sed -i 's/POSTGRES_PASSWORD/${POSTGRES_PASSWORD}/g' ${NEXUS_DATA}/etc/fabric/nexus-store.properties
+RUN sed -i 's/POSTGRES_DB/${POSTGRES_DB}/g' ${NEXUS_DATA}/etc/fabric/nexus-store.properties
+
+RUN chown nexus:nexus -R ${NEXUS_DATA}/etc/fabric ${NEXUS_DATA}/etc/fabric/nexus-store.properties
+
+
 #Add license
 ARG LICENSE
 ADD  ${LICENSE} ${NEXUS_DATA}/license.lic
