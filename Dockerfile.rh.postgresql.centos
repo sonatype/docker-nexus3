@@ -79,15 +79,15 @@ RUN mkdir ${NEXUS_DATA}/etc/fabric
 
 ADD config/nexus.properties ${NEXUS_DATA}/etc/nexus.properties
 
-RUN sed -i 's/POSTGRES_USER/${POSTGRES_USER}/g' ${NEXUS_DATA}/etc/nexus.properties
-RUN sed -i 's/POSTGRES_PASSWORD/${POSTGRES_PASSWORD}/g' ${NEXUS_DATA}/etc/nexus.properties
-RUN sed -i 's/POSTGRES_DB/${POSTGRES_DB}/g' ${NEXUS_DATA}/etc/nexus.properties
+RUN sed -i "s/POSTGRES_USER/${POSTGRES_USER}/g" ${NEXUS_DATA}/etc/nexus.properties
+RUN sed -i "s/POSTGRES_PASSWORD/${POSTGRES_PASSWORD}/g" ${NEXUS_DATA}/etc/nexus.properties
+RUN sed -i "s/POSTGRES_DB/${POSTGRES_DB}/g" ${NEXUS_DATA}/etc/nexus.properties
 
 ADD config/nexus-store.properties ${NEXUS_DATA}/etc/fabric/nexus-store.properties
 
-RUN sed -i 's/POSTGRES_USER/${POSTGRES_USER}/g' ${NEXUS_DATA}/etc/fabric/nexus-store.properties
-RUN sed -i 's/POSTGRES_PASSWORD/${POSTGRES_PASSWORD}/g' ${NEXUS_DATA}/etc/fabric/nexus-store.properties
-RUN sed -i 's/POSTGRES_DB/${POSTGRES_DB}/g' ${NEXUS_DATA}/etc/fabric/nexus-store.properties
+RUN sed -i "s/POSTGRES_USER/${POSTGRES_USER}/g" ${NEXUS_DATA}/etc/fabric/nexus-store.properties
+RUN sed -i "s/POSTGRES_PASSWORD/${POSTGRES_PASSWORD}/g" ${NEXUS_DATA}/etc/fabric/nexus-store.properties
+RUN sed -i "s/POSTGRES_DB/${POSTGRES_DB}/g" ${NEXUS_DATA}/etc/fabric/nexus-store.properties
 
 RUN chown nexus:nexus -R ${NEXUS_DATA}/etc/fabric ${NEXUS_DATA}/etc/fabric/nexus-store.properties
 
