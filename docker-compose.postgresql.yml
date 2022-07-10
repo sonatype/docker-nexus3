@@ -1,6 +1,24 @@
 version: "3"
 services:
+  # HTTPS proxy
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:alpine
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Keep the dhparams (Should generate on the first run)
+      - dhparam:/etc/nginx/dhparam
 
+      # Push the certs to nginx
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./etc_nginx_certs:/etc/nginx/certs
+      - ./var_log_nginx:/var/log/nginx
+
+    depends_on:
+      - nexus
   # Artifact storage
   nexus:
     container_name: nexus
