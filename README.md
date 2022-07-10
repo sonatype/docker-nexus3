@@ -172,10 +172,12 @@ for additional information.
 ### PostgreSQL support
 Licence key is mandatory
 
-copy it in sonatype-repository-manager-trial.lic
+configure database and licence variable
+
   ```
 docker-compose -f docker-compose.postgresql.yml up
   ```
+
 Docker compose use Dockerfile.rh.postgresql.centos
 
 

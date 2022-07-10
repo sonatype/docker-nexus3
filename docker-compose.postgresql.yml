@@ -48,7 +48,7 @@ services:
     container_name: adminer
     restart: always
     environment:
-      VIRTUAL_HOST: "aep-fi-docker.fields.local"
+      VIRTUAL_HOST: "adminer.fields.local"
       VIRTUAL_PORT: "8080"
       ADMINER_DEFAULT_SERVER: postgresql
     ports:
