@@ -1,0 +1,60 @@
+version: "3"
+services:
+
+  # Artifact storage
+  nexus:
+    container_name: nexus
+    environment:
+      VIRTUAL_HOST: "nexus-new.fields.local"
+      VIRTUAL_PORT: "8081"
+    build:
+       context: .
+       dockerfile: Dockerfile.rh.postgresql.centos
+       args:
+         LICENSE: sonatype-repository-manager-trial.lic
+    ports:
+      - "8081"
+
+    restart: always
+    stop_grace_period: 2m
+    volumes:
+        - nexus-data:/nexus-data
+    depends_on:
+        - postgres
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    environment:
+      VIRTUAL_HOST: "aep-fi-docker.fields.local"
+      VIRTUAL_PORT: "8080"
+      ADMINER_DEFAULT_SERVER: postgresql
+    ports:
+      - "8080"
+    depends_on:
+        - postgres
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:latest
+    container_name: postgresql
+    restart: always
+    ports:
+      - "5432"
+    environment:
+        POSTGRES_USER: nexus3
+        POSTGRES_PASSWORD: REDACTED
+        POSTGRES_DB: nexus3
+    volumes:
+        - pgdata:/var/lib/postgresql/data
+
+volumes:
+  nexus-data:
+  pgdata:
+  dhparam:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
