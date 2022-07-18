@@ -16,6 +16,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ./etc_nginx_certs:/etc/nginx/certs
       - ./var_log_nginx:/var/log/nginx
+      - ./etc_nginx_conf.d/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
 
     depends_on:
       - nexus
