@@ -31,7 +31,7 @@ node('ubuntu-zion') {
     stage('Build') {
       withCredentials([
         string(
-          credentialsId: 'red-hat-scan-registry-password-nexus-repository-server',
+          credentialsId: 'red-hat-scan-registry-password-nexus-repository-manager',
           variable: 'REGISTRY_PASSWORD'),
         string(
           credentialsId: 'red-hat-api-token',
