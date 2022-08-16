@@ -50,14 +50,14 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y java-1.8.0-openjdk-headless tar \
-    && microdnf clean all
+    && microdnf clean all \
+    && groupadd --gid 200 -r nexus \
+    && useradd --uid 200 -r nexus -g nexus
 
 WORKDIR ${SONATYPE_DIR}
 
 RUN curl -L ${NEXUS_DOWNLOAD_URL} | tar -xz \
     && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
-    && groupadd --gid 200 -r nexus \
-    && useradd --uid 200 -r nexus -g nexus \
     && mv ${SONATYPE_WORK}/nexus3 ${NEXUS_DATA} \
     && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
     && chown -R nexus:nexus ${SONATYPE_WORK}
