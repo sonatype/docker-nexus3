@@ -62,6 +62,10 @@ RUN curl -L ${NEXUS_DOWNLOAD_URL} | tar -xz \
     && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
     && chown -R nexus:nexus ${SONATYPE_WORK}
 
+RUN echo "cd ${SONATYPE_DIR}" >> ${SONATYPE_DIR}/start.sh \
+    && echo "./nexus/bin/nexus run" >> ${SONATYPE_DIR}/start.sh \
+    && chmod a+x ${SONATYPE_DIR}/start.sh
+
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
@@ -69,4 +73,4 @@ USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
-CMD ["sh", "-c", "${NEXUS_HOME}/bin/nexus run"]
+CMD ["sh", "/opt/sonatype/start.sh"]
