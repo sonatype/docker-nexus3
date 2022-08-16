@@ -56,8 +56,8 @@ WORKDIR ${SONATYPE_DIR}
 
 RUN curl -L ${NEXUS_DOWNLOAD_URL} | tar -xz \
     && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
-    && groupadd -r nexus \
-    && useradd -r nexus -g nexus \
+    && groupadd --gid 200 -r nexus \
+    && useradd --uid 200 -r nexus -g nexus \
     && chown -R nexus:nexus ${SONATYPE_WORK} \
     && mkdir ${NEXUS_DATA} \
     && chown -R nexus:nexus ${NEXUS_DATA}
