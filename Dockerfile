@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.access.redhat.com/ubi8/ubi
+FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
@@ -48,26 +48,20 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20220111-153152.2b86c3a"
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
+RUN microdnf update -y \
+    && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y java-1.8.0-openjdk-headless tar \
+    && microdnf clean all
 
-ADD solo.json.erb /var/chef/solo.json.erb
+WORKDIR ${SONATYPE_DIR}
 
-# Install using chef-solo
-# Chef version locked to avoid needing to accept the EULA on behalf of whomever builds the image
-RUN yum install -y --disableplugin=subscription-manager hostname procps \
-    && curl -L https://omnitruck.chef.io/install.sh | bash -s -- -v 14.12.9 \
-    && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
-    && chef-solo \
-       --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
-       --json-attributes /var/chef/solo.json \
-    && rpm -qa *chef* | xargs rpm -e \
-    && rm -rf /etc/chef \
-    && rm -rf /opt/chefdk \
-    && rm -rf /var/cache/yum \
-    && rm -rf /var/chef \
-    && yum clean all
-    
+RUN curl -L ${NEXUS_DOWNLOAD_URL} | tar -xz \
+    && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
+    && groupadd -r nexus \
+    && useradd -r nexus -g nexus \
+    && chown -R nexus:nexus ${SONATYPE_WORK} \
+    && mkdir ${NEXUS_DATA} \
+    && chown -R nexus:nexus ${NEXUS_DATA}
+
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
@@ -75,4 +69,4 @@ USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
-CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]
+CMD ["sh", "-c", "${NEXUS_HOME}/bin/nexus run"]
