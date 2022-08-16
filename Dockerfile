@@ -48,6 +48,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
+# Install Java & tar
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y java-1.8.0-openjdk-headless tar \
     && microdnf clean all \
@@ -56,15 +57,12 @@ RUN microdnf update -y \
 
 WORKDIR ${SONATYPE_DIR}
 
+# Download nexus & setup directories
 RUN curl -L ${NEXUS_DOWNLOAD_URL} | tar -xz \
     && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
+    && chown -R nexus:nexus ${SONATYPE_WORK} \
     && mv ${SONATYPE_WORK}/nexus3 ${NEXUS_DATA} \
-    && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3 \
-    && chown -R nexus:nexus ${SONATYPE_WORK}
-
-RUN echo "cd ${SONATYPE_DIR}" >> ${SONATYPE_DIR}/start.sh \
-    && echo "./nexus/bin/nexus run" >> ${SONATYPE_DIR}/start.sh \
-    && chmod a+x ${SONATYPE_DIR}/start.sh
+    && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3
 
 VOLUME ${NEXUS_DATA}
 
@@ -73,4 +71,4 @@ USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
-CMD ["sh", "/opt/sonatype/start.sh"]
+ENTRYPOINT ["/opt/sonatype/nexus/bin/nexus", "run"]
