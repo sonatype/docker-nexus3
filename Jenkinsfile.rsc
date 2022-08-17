@@ -20,12 +20,12 @@ dockerizedBuildPipeline(
     }
   },
   buildAndTest: {
-      def gemInstallDirectory = getGemInstallDirectory()
-      withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
-        OsTools.runSafe(this, 'gem install --user-install rspec')
-        OsTools.runSafe(this, 'gem install --user-install serverspec')
-        OsTools.runSafe(this, 'gem install --user-install docker-api')
-        OsTools.runSafe(this, "IMAGE_ID=${imageId}:$VERSION rspec --backtrace spec/Dockerfile_spec.rb")
+//      def gemInstallDirectory = getGemInstallDirectory()
+//      withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
+//         OsTools.runSafe(this, 'gem install --user-install rspec')
+//         OsTools.runSafe(this, 'gem install --user-install serverspec')
+//         OsTools.runSafe(this, 'gem install --user-install docker-api')
+//         OsTools.runSafe(this, "IMAGE_ID=${imageId}:$VERSION rspec --backtrace spec/Dockerfile_spec.rb")
       }
   },
   skipVulnerabilityScan: true,
