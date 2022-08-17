@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+FROM registry.access.redhat.com/ubi8/ubi-minimal
 
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
@@ -50,7 +50,8 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 
 # Install Java & tar
 RUN microdnf update -y \
-    && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y java-1.8.0-openjdk-headless tar procps \
+    && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
+          java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
     && microdnf clean all \
     && groupadd -r nexus \
     && useradd --uid 200 -r nexus -g nexus
@@ -67,6 +68,8 @@ RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-unix.tar.gz \
     && chown -R nexus:nexus ${SONATYPE_WORK} \
     && mv ${SONATYPE_WORK}/nexus3 ${NEXUS_DATA} \
     && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3
+
+RUN microdnf remove -y tar gzip shadow-utils
 
 VOLUME ${NEXUS_DATA}
 
