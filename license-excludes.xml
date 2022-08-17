@@ -1,0 +1,4 @@
+<excludes>
+  <exclude>*/**</exclude>
+  <exclude>*</exclude>
+</excludes>
