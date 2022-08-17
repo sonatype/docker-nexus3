@@ -10,6 +10,7 @@ import com.sonatype.jenkins.pipeline.OsTools
 def imageId = "sonatype/nexus3"
 
 dockerizedBuildPipeline(
+  deployBranch: jenkins-rsc-deploy,
   buildImageId: imageId,
   setVersion: {
     // sets the version based up on the branch.  This becomes the Docker image tag when pushing from master.
