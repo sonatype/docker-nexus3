@@ -54,7 +54,7 @@ RUN microdnf update -y \
           java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
-    && useradd --uid 200 -r nexus -g nexus
+    && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
 WORKDIR ${SONATYPE_DIR}
 
