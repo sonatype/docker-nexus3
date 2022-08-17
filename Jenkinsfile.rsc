@@ -31,12 +31,12 @@ dockerizedBuildPipeline(
   },
   skipVulnerabilityScan: true,
   deploy: {
-    currentBuild.displayName = "#${currentBuild.id} ${imageName}:${env.VERSION}"
+    currentBuild.displayName = "#${currentBuild.id} ${imageId}:${env.VERSION}"
 
     withSonatypeDockerRegistry() {
-      sh """docker tag $DOCKER_IMAGE_ID ${sonatypeDockerRegistryId()}/${imageName}:$VERSION
-            docker push ${sonatypeDockerRegistryId()}/${imageName}:$VERSION
-            docker rmi ${sonatypeDockerRegistryId()}/${imageName}:$VERSION"""
+      sh """docker tag $DOCKER_IMAGE_ID ${sonatypeDockerRegistryId()}/${imageId}:$VERSION
+            docker push ${sonatypeDockerRegistryId()}/${imageId}:$VERSION
+            docker rmi ${sonatypeDockerRegistryId()}/${imageId}:$VERSION"""
     }
   }
 )
