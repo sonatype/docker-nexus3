@@ -48,24 +48,41 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION="release-0.5.20190212-155606.d1afdfe"
-ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL="https://github.com/sonatype/chef-nexus-repository-manager/releases/download/${NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION}/chef-nexus-repository-manager.tar.gz"
-
-ADD solo.json.erb /var/chef/solo.json.erb
-
-# Install using chef-solo
-RUN curl -L https://omnitruck.chef.io/install.sh | bash \
-    && /opt/chef/embedded/bin/erb /var/chef/solo.json.erb > /var/chef/solo.json \
-    && chef-solo \
-       --node_name nexus_repository_red_hat_docker_build \
-       --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
-       --json-attributes /var/chef/solo.json \
-    && rpm -qa *chef* | xargs rpm -e \
-    && rpm --rebuilddb \
-    && rm -rf /etc/chef \
-    && rm -rf /opt/chefdk \
+# Install java & setup user
+RUN yum install -y java-1.8.0-openjdk-headless \
+    && yum clean all \
     && rm -rf /var/cache/yum \
-    && rm -rf /var/chef
+    && groupadd --gid 200 -r nexus \
+    && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
+
+# Red Hat Certified Container commands
+COPY rh-docker /
+RUN usermod -a -G root nexus \
+    && chmod -R 0755 /licenses \
+    && chmod 0755 /help.1 \
+    && chmod 0755 /uid_entrypoint.sh \
+    && chmod 0755 /uid_template.sh \
+    && bash /uid_template.sh \
+    && chmod 0664 /etc/passwd
+
+WORKDIR ${SONATYPE_DIR}
+
+# Download nexus & setup directories
+RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-unix.tar.gz \
+    && echo "${NEXUS_DOWNLOAD_SHA256_HASH} nexus-${NEXUS_VERSION}-unix.tar.gz" > nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
+    && sha256sum -c nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
+    && tar -xvf nexus-${NEXUS_VERSION}-unix.tar.gz \
+    && rm -f nexus-${NEXUS_VERSION}-unix.tar.gz nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
+    && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
+    && chown -R nexus:nexus ${SONATYPE_WORK} \
+    && mv ${SONATYPE_WORK}/nexus3 ${NEXUS_DATA} \
+    && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3
+
+# Legacy start script
+RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+   && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+   && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+   && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh
 
 VOLUME ${NEXUS_DATA}
 
@@ -75,4 +92,4 @@ USER nexus
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
 ENTRYPOINT ["/uid_entrypoint.sh"]
-CMD ["sh", "-c", "${SONATYPE_DIR}/start-nexus-repository-manager.sh"]
+CMD ["/opt/sonatype/nexus/bin/nexus", "run"]
