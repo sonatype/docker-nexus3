@@ -21,7 +21,7 @@ Stops the installed container
 
 The container itself consists of:
     - Linux base image
-    - Oracle Java JDK
+    - Java OpenJDK
     - Nexus Repository Manager
     - Atomic help file
 
