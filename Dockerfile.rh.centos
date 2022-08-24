@@ -60,6 +60,7 @@ RUN curl -L https://omnitruck.chef.io/install.sh | bash -s -- -v 14.12.9 \
        --node_name nexus_repository_red_hat_docker_build \
        --recipe-url ${NEXUS_REPOSITORY_MANAGER_COOKBOOK_URL} \
        --json-attributes /var/chef/solo.json \
+       --chef-license accept\
     && rpm -qa *chef* | xargs rpm -e \
     && rpm --rebuilddb \
     && rm -rf /etc/chef \
