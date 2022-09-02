@@ -43,6 +43,6 @@ node('ubuntu-zion') {
   } finally {
     sh 'docker logout'
     sh 'docker system prune -a -f'
-    sh 'git clean -f && git reset --hard origin/master'
+    sh 'git clean -f && git reset --hard origin/main'
   }
 }

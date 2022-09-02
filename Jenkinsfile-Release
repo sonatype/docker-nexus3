@@ -41,7 +41,7 @@ node('ubuntu-zion') {
         "${pwd()}/Dockerfile.rh.ubi"
       ]
 
-      branch = checkoutDetails.GIT_BRANCH == 'origin/master' ? 'master' : checkoutDetails.GIT_BRANCH
+      branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
       commitId = checkoutDetails.GIT_COMMIT
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
 
@@ -144,7 +144,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'master' && !params.skip_push && !params.update_latest_only) {
+    if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
       input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
@@ -203,7 +203,7 @@ node('ubuntu-zion') {
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
-    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
+    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
   }
 }
 

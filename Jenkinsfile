@@ -24,7 +24,7 @@ node('ubuntu-zion') {
 
       def checkoutDetails = checkout scm
 
-      branch = checkoutDetails.GIT_BRANCH == 'origin/master' ? 'master' : checkoutDetails.GIT_BRANCH
+      branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
       commitId = checkoutDetails.GIT_COMMIT
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
 
@@ -77,7 +77,7 @@ node('ubuntu-zion') {
           iqApplication: 'docker-nexus3',
           iqScanPatterns: [[scanPattern: "container:${imageName}"]],
           failBuildOnNetworkError: true,
-        )}, (branch == 'master') ? 'build' : 'develop')
+        )}, (branch == 'main') ? 'build' : 'develop')
     }
 
     if (currentBuild.result == 'FAILURE') {
@@ -93,7 +93,7 @@ node('ubuntu-zion') {
   } finally {
     OsTools.runSafe(this, 'docker logout')
     OsTools.runSafe(this, 'docker system prune -a -f')
-    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/master')
+    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
   }
 }
 

@@ -34,7 +34,7 @@ A Dockerfile for Sonatype Nexus Repository Manager 3, starting with 3.18 the ima
 
 ## Contribution Guidelines
 
-Go read [our contribution guidelines](https://github.com/sonatype/docker-nexus3/blob/master/.github/CONTRIBUTING.md) to get a bit more familiar with how
+Go read [our contribution guidelines](https://github.com/sonatype/docker-nexus3/blob/main/.github/CONTRIBUTING.md) to get a bit more familiar with how
 we would like things to flow.
 
 ## Running
@@ -60,7 +60,7 @@ $ curl http://localhost:8081/
 
 ## Building the Nexus Repository Manager image
 
-To build a docker image from the [Dockerfile](https://github.com/sonatype/docker-nexus3/blob/master/Dockerfile) you can use this command:
+To build a docker image from the [Dockerfile](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile) you can use this command:
 
 ```
 $ docker build --rm=true --tag=sonatype/nexus3 .
@@ -88,7 +88,7 @@ We are using `rspec` as the test framework. `serverspec` provides a docker backe
 
 ## Red Hat Certified Image
 
-A Red Hat certified container image can be created using [Dockerfile.rh.ubi](https://github.com/sonatype/docker-nexus3/blob/master/Dockerfile.rh.ubi) which is built to be compliant with Red Hat certification.
+A Red Hat certified container image can be created using [Dockerfile.rh.ubi](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.ubi) which is built to be compliant with Red Hat certification.
 The image includes additional meta data to comform with Kubernetes and OpenShift standards, a directory with the
 licenses applicable to the software and a man file for help on how to use the software. It also uses an ENTRYPOINT
 script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. 
@@ -100,8 +100,8 @@ and qualified accounts can pull it from registry.connect.redhat.com.
 ## Other Red Hat Images
 
 In addition to the Universal Base Image, we can build images based on:
-* Red Hat Enterprise Linux: [Dockerfile.rh.el](https://github.com/sonatype/docker-nexus3/blob/master/Dockerfile.rh.el)
-* CentOS: [Dockerfile.rh.centos](https://github.com/sonatype/docker-nexus3/blob/master/Dockerfile.rh.centos)
+* Red Hat Enterprise Linux: [Dockerfile.rh.el](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.el)
+* CentOS: [Dockerfile.rh.centos](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.centos)
 
 ## Notes
 
