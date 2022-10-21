@@ -31,12 +31,10 @@ set -e # stop execution on the first failed command
 DOCKERFILE=Dockerfile.rh.ubi
 
 # from config/scanning page at red hat
-PROJECT_ID=p725060002a684d7b4fb1475f224f6c26bc3b23998
-# from url of project at red hat
 CERT_PROJECT_ID=5e61d90a38776799eb517bd2
 
 REPOSITORY="quay.io"
-IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${PROJECT_ID}:${VERSION}"
+IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}"
 
 AUTHFILE="${HOME}/.docker/config.json"
 
