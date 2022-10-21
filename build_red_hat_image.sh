@@ -46,7 +46,7 @@ docker login "${REPOSITORY}" \
        -u "${REGISTRY_LOGIN}" \
        --password "${REGISTRY_PASSWORD}"
 
-docker push "${IMAGE_TAG}
+docker push "${IMAGE_TAG}"
 
 preflight check container \
           "${IMAGE_TAG}" \
