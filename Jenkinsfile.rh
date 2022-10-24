@@ -24,18 +24,19 @@ node('ubuntu-zion') {
       sh 'docker system prune -a -f'
       sh '''
         wget -q -O preflight \
-          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.4.0/preflight-linux-amd64
+          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.4.1/preflight-linux-amd64
         chmod 755 preflight
       '''
     }
     stage('Build') {
       withCredentials([
+        usernamePassword(
+            credentialsId: 'red-hat-quay-nexus-repository-manager',
+            usernameVariable: 'REGISTRY_LOGIN',
+            passwordVariable: 'REGISTRY_PASSWORD'),
         string(
-          credentialsId: 'red-hat-scan-registry-password-nexus-repository-manager',
-          variable: 'REGISTRY_PASSWORD'),
-        string(
-          credentialsId: 'red-hat-api-token',
-          variable: 'API_TOKEN'),
+            credentialsId: 'red-hat-api-token',
+            variable: 'API_TOKEN')
       ]) {
         sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image.sh'
       }
