@@ -75,7 +75,8 @@ RUN sed -i '/^-Xms/d;/^-Xmx/d;/^-XX:MaxDirectMemorySize/d' $NEXUS_HOME/bin/nexus
 RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh
+   && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+   && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
 RUN microdnf remove -y tar gzip shadow-utils
 
