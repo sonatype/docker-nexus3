@@ -173,6 +173,13 @@ node('ubuntu-zion-legacy') {
               acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
               requestBody: "{ \"full_description\": \"${readme}\" }",
               url: "https://hub.docker.com/v2/repositories/${organization}/${dockerHubRepository}/"
+
+          // push to internal repos
+          withSonatypeDockerRegistry() {
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+            sh "docker pull docker-internal.rsc-proxy.ci.sonatype.dev/sonatype-internal/${dockerHubRepository}:${version}"
+          }
         }
       }
       stage('Push tags') {
