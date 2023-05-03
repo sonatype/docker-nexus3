@@ -178,7 +178,6 @@ node('ubuntu-zion-legacy') {
           withSonatypeDockerRegistry() {
             sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-            sh "docker pull docker-internal.rsc-proxy.ci.sonatype.dev/sonatype-internal/${dockerHubRepository}:${version}"
           }
         }
       }
