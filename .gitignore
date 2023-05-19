@@ -23,3 +23,9 @@ target/
 atlassian-ide-plugin.xml
 dependency-reduced-pom.xml
 out
+
+#License file
+*.lic
+*.crt
+*.key
+*.pfx

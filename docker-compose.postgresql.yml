@@ -1,0 +1,82 @@
+version: "3"
+services:
+  # HTTPS proxy
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:alpine
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Keep the dhparams (Should generate on the first run)
+      - dhparam:/etc/nginx/dhparam
+
+      # Push the certs to nginx
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./etc_nginx_certs:/etc/nginx/certs
+      - ./var_log_nginx:/var/log/nginx
+      - ./etc_nginx_conf.d/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+
+    depends_on:
+      - nexus
+  # Artifact storage
+  nexus:
+    container_name: nexus
+    environment:
+      VIRTUAL_HOST: "nexus-new.fields.local"
+      VIRTUAL_PORT: "8081"
+    build:
+       context: .
+       dockerfile: Dockerfile.rh.postgresql.centos
+       args:
+         LICENSE: sonatype-repository-manager-trial.lic
+         POSTGRES_USER: nexus3
+         POSTGRES_PASSWORD: REDACTED
+         POSTGRES_DB: nexus3
+    ports:
+      - "8081"
+
+    restart: always
+    stop_grace_period: 2m
+    volumes:
+        - nexus-data:/nexus-data
+    depends_on:
+        - postgres
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    environment:
+      VIRTUAL_HOST: "adminer.fields.local"
+      VIRTUAL_PORT: "8080"
+      ADMINER_DEFAULT_SERVER: postgresql
+    ports:
+      - "8080"
+    depends_on:
+        - postgres
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:latest
+    container_name: postgresql
+    restart: always
+    ports:
+      - "5432"
+    environment:
+        POSTGRES_USER: nexus3
+        POSTGRES_PASSWORD: REDACTED
+        POSTGRES_DB: nexus3
+    volumes:
+        - pgdata:/var/lib/postgresql/data
+
+volumes:
+  nexus-data:
+  pgdata:
+  dhparam:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
