@@ -17,7 +17,7 @@ properties([
   ])
 ])
 
-node('ubuntu-zion-legacy') {
+node('ubuntu-zion') {
   def commitId, commitDate, version, imageId, branch, dockerFileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
