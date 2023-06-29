@@ -229,16 +229,6 @@ def getShortVersion(version) {
   return version.split('-')[0]
 }
 
-def getGemInstallDirectory() {
-  def content = OsTools.runSafe(this, "gem env")
-  for (line in content.split('\n')) {
-    if (line.startsWith('  - USER INSTALLATION DIRECTORY: ')) {
-      return line.substring(33)
-    }
-  }
-  error 'Could not determine user gem install directory.'
-}
-
 def updateRepositoryManagerVersion(dockerFileLocation) {
   def dockerFile = readFile(file: dockerFileLocation)
 
