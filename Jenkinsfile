@@ -56,10 +56,8 @@ node('ubuntu-zion') {
       gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
 
       validateExpectations([
-        new Expectation('Has nexus group present',
-            'grep', '^nexus: /etc/group', 'nexus:x:200:'),
-        new Expectation('Has nexus user present',
-            'grep', '^nexus: /etc/passwd', 'nexus:x:200:200:Nexus Repository Manager user:/opt/sonatype/nexus:/bin/false'),
+        new Expectation('Has user nexus in group nexus present',
+            'id', '-ng nexus', 'nexus'),
         new Expectation('Has nexus user java process present',
             'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
       ])
