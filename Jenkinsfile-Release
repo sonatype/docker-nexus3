@@ -6,6 +6,7 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
+import com.sonatype.jenkins.shared.Expectation
 
 properties([
   parameters([
@@ -17,7 +18,7 @@ properties([
   ])
 ])
 
-node('ubuntu-zion-legacy') {
+node('ubuntu-zion') {
   def commitId, commitDate, version, imageId, branch, dockerFileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
@@ -87,13 +88,12 @@ node('ubuntu-zion-legacy') {
     stage('Test') {
       gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
 
-      def gemInstallDirectory = getGemInstallDirectory()
-      withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
-        OsTools.runSafe(this, "gem install --user-install rspec")
-        OsTools.runSafe(this, "gem install --user-install serverspec")
-        OsTools.runSafe(this, "gem install --user-install docker-api")
-        OsTools.runSafe(this, "IMAGE_ID=${imageId} rspec --backtrace spec/Dockerfile_spec.rb")
-      }
+      validateExpectations([
+        new Expectation('Has user nexus in group nexus present',
+            'id', '-ng nexus', 'nexus'),
+        new Expectation('Has nexus user java process present',
+            'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
+      ])
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
@@ -225,16 +225,6 @@ def readVersion() {
 
 def getShortVersion(version) {
   return version.split('-')[0]
-}
-
-def getGemInstallDirectory() {
-  def content = OsTools.runSafe(this, "gem env")
-  for (line in content.split('\n')) {
-    if (line.startsWith('  - USER INSTALLATION DIRECTORY: ')) {
-      return line.substring(33)
-    }
-  }
-  error 'Could not determine user gem install directory.'
 }
 
 def updateRepositoryManagerVersion(dockerFileLocation) {
