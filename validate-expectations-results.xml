@@ -1,0 +1,5 @@
+<testsuite name="validate-expectations" tests="2" ><testcase name="Has user nexus in group nexus present" classname="validate.expectations" assertions="1"><error message="Unable to invoke command 'id -ng nexus'.  
+See console log for details.">
+            <![CDATA[script returned exit code 1]]>
+          </error></testcase><testcase name="Has nexus user java process present" classname="validate.expectations" assertions="1"><system-out><![CDATA[0
+]]></system-out></testcase></testsuite>
