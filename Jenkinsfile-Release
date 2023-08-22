@@ -147,51 +147,17 @@ node('ubuntu-zion') {
     if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
       input 'Push image and tags?'
       stage('Push image') {
-        def dockerhubApiToken
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
-            usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
-          OsTools.runSafe(this, """
-            docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
-          """)
-          OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
-
-          response = OsTools.runSafe(this, """
-            curl -X POST https://hub.docker.com/v2/users/login/ \
-              -H 'cache-control: no-cache' -H 'content-type: application/json' \
-              -d '{ "username": "${env.DOCKERHUB_API_USERNAME}", "password": "${env.DOCKERHUB_API_PASSWORD}" }'
-          """)
-          token = readJSON text: response
-          dockerhubApiToken = token.token
-
-          def readme = readFile file: 'README.md', encoding: 'UTF-8'
-          readme = readme.replaceAll("(?s)<!--.*?-->", "")
-          readme = readme.replace("\"", "\\\"")
-          readme = readme.replace("\n", "\\n")
-          response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
-              acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
-              requestBody: "{ \"full_description\": \"${readme}\" }",
-              url: "https://hub.docker.com/v2/repositories/${organization}/${dockerHubRepository}/"
+        
 
           // push to internal repos
           withSonatypeDockerRegistry() {
             sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
           }
-        }
+        
       }
       stage('Push tags') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                          usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-          OsTools.runSafe(this, "git tag ${version}")
-          OsTools.runSafe(this, """
-            git push \
-            https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git \
-              ${version}
-          """)
-        }
-        OsTools.runSafe(this, "git tag -d ${version}")
+        
       }
     }
     else if(params.update_latest_only) {
