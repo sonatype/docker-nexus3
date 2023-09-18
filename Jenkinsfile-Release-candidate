@@ -13,7 +13,7 @@ properties([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
     string(defaultValue: '', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
-    booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: '`scan_for_policy_violations`'),
+    booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations'),
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
   ])
 ])
