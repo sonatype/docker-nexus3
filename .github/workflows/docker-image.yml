@@ -36,4 +36,4 @@ jobs:
         file: ./Dockerfile
         platforms: linux/arm64,linux/amd64
         push: true
-        tags: sonatypecommunity/nexus3:latest , sonatypecommunity/nexus3:${{ env.NXIQ_VERSION }}
+        tags: sonatypecommunity/nexus3:latest , sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}
