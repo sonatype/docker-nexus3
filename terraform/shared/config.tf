@@ -6,7 +6,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "paidy-terraform-state-shared-artifacts"
-    key    = "microservices/shared/mcp-tool"
+    key    = "microservices/shared/docker-nexus3"
     region = "ap-northeast-1"
   }
 }
