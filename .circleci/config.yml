@@ -12,8 +12,8 @@ push_image: &push_image
       ignore: "/.*/"
     tags:
       only:
-        - "/^v\\d+(\\.\\d+){3}/"
-        - "/^v\\d+(\\.\\d+){3}/"
+        - "/^v\\d+(\\.\\d+){2}/"
+        - "/^v\\d+(\\.\\d+){2}/"
 
 workflows:
   build:
