@@ -49,10 +49,10 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     DOCKER_TYPE='rh-docker'
 
 # Install Java & tar
-RUN microdnf update -y \
-    && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
+RUN dnf update -y \
+    && dnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
           java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
-    && microdnf clean all \
+    && dnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
@@ -78,7 +78,7 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-RUN microdnf remove -y gzip shadow-utils
+RUN dnf remove -y shadow-utils
 
 VOLUME ${NEXUS_DATA}
 
