@@ -1,0 +1,61 @@
+version: 2.1
+
+orbs:
+  paidy-infra: paidy/circleci-infra-orb@2
+
+service-name: &service-name "docker-nexus3"
+repo-name: &repo-name "nexus3"
+
+push_image: &push_image
+  filters:
+    branches:
+      ignore: "/.*/"
+    tags:
+      only:
+        - "/^v\\d+(\\.\\d+){2}/"
+        - "/^v\\d+(\\.\\d+){2}/"
+
+workflows:
+  build:
+    jobs:
+      - paidy-infra/default-build-image:
+          name: build-image
+          context: shared-circleci
+          repo: *repo-name
+          tag: '$CIRCLE_SHA1'
+          save-image: false
+
+  build_push:
+    jobs:
+      - paidy-infra/create-ecr-repo:
+          name: create-ecr-repo
+          context: shared-circleci
+          role-name: shared-artifacts
+          role-session-name: *service-name
+          <<: [ *push_image ]
+
+      - paidy-infra/build-push-multiarch-image:
+          name: build-push-multiarch-image-<<matrix.resource_class>>
+          matrix:
+            parameters:
+              resource_class: [ medium, arm.medium ]
+          context: shared-circleci
+          role-name: shared-artifacts
+          role-session-name: *service-name
+          repo: *repo-name
+          requires:
+            - create-ecr-repo
+          tag: '$CIRCLE_TAG,$CIRCLE_SHA1'
+          <<: [ *push_image ]
+
+      - paidy-infra/push-manifest:
+          name: push-manifest
+          context: shared-circleci
+          role-name: shared-artifacts
+          role-session-name: *service-name
+          repo: *repo-name
+          tag: '$CIRCLE_TAG,$CIRCLE_SHA1'
+          requires:
+            - build-push-multiarch-image-medium
+            - build-push-multiarch-image-arm.medium
+          <<: [ *push_image ]
