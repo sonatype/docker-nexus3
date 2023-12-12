@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.6.0" name="nexus-datastore-mybatis">
+    <feature name="nexus-datastore-mybatis" description="org.sonatype.nexus:nexus-datastore-mybatis" install="featureFlag:nexus.datastore.enabled" version="3.62.0.01">
+        <details>org.sonatype.nexus:nexus-datastore-mybatis</details>
+        <bundle>mvn:org.sonatype.nexus/nexus-datastore-mybatis/3.62.0-01</bundle>
+        <bundle>mvn:org.sonatype.nexus/nexus-datastore/3.62.0-01</bundle>
+        <bundle>mvn:org.sonatype.nexus/nexus-crypto/3.62.0-01</bundle>
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-databind/2.15.0</bundle>
+        <bundle>mvn:com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.15.0</bundle>
+        <bundle>mvn:org.mybatis/mybatis/3.5.7</bundle>
+        <bundle>mvn:com.zaxxer/HikariCP/4.0.3</bundle>
+        <bundle>mvn:com.h2database/h2/2.2.224</bundle>
+        <bundle>mvn:org.postgresql/postgresql/42.6.0</bundle>
+    </feature>
+</features>

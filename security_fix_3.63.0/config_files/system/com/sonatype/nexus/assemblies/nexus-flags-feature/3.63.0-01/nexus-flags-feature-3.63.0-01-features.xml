@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.6.0" name="nexus-flags-feature">
+    <feature name="nexus-flags-feature" description="com.sonatype.nexus.assemblies:nexus-flags-feature" version="3.63.0.01">
+        <details>com.sonatype.nexus.assemblies:nexus-flags-feature</details>
+        <feature version="3.63.0.01">nexus-datastore-mybatis</feature>
+        <feature version="3.63.0.01">nexus-datastore-clustering</feature>
+        <feature version="3.63.0.01">nexus-cma-extra</feature>
+        <feature version="3.63.0.01">nexus-hazelcast-plugin</feature>
+        <feature version="3.63.0.01">nexus-ossindex-plugin</feature>
+        <feature version="3.63.0.01">nexus-group-deploy</feature>
+        <feature version="3.63.0.01" prerequisite="false" dependency="false">nexus-repository-bower</feature>
+        <feature version="3.63.0.01" prerequisite="false" dependency="false">nexus-repository-yum</feature>
+    </feature>
+    <feature name="nexus-datastore-mybatis" description="org.sonatype.nexus:nexus-datastore-mybatis" install="featureFlag:nexus.datastore.enabled" version="3.63.0.01">
+        <details>org.sonatype.nexus:nexus-datastore-mybatis</details>
+        <bundle>mvn:org.sonatype.nexus/nexus-datastore-mybatis/3.63.0-01</bundle>
+        <bundle>mvn:org.sonatype.nexus/nexus-datastore/3.63.0-01</bundle>
+        <bundle>mvn:org.sonatype.nexus/nexus-crypto/3.63.0-01</bundle>
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-databind/2.15.0</bundle>
+        <bundle>mvn:com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.15.0</bundle>
+        <bundle>mvn:org.mybatis/mybatis/3.5.7</bundle>
+        <bundle>mvn:com.zaxxer/HikariCP/4.0.3</bundle>
+        <bundle>mvn:com.h2database/h2/2.2.224</bundle>
+        <bundle>mvn:org.postgresql/postgresql/42.6.0</bundle>
+    </feature>
+    <feature name="nexus-cma-extra" description="com.sonatype.nexus.assemblies:nexus-cma-extra" install="featureFlag:enabledByDefault:nexus.orient.enabled" version="3.63.0.01">
+        <details>com.sonatype.nexus.assemblies:nexus-cma-extra</details>
+        <feature version="3.63.0.01">nexus-repository-bower</feature>
+        <feature version="3.63.0.01" prerequisite="false" dependency="false">nexus-repository-yum</feature>
+    </feature>
+    <feature name="nexus-repository-bower" description="com.sonatype.nexus.plugins:nexus-repository-bower" version="3.63.0.01">
+        <details>com.sonatype.nexus.plugins:nexus-repository-bower</details>
+        <bundle>mvn:com.sonatype.nexus.plugins/nexus-repository-bower/3.63.0-01</bundle>
+    </feature>
+    <feature name="nexus-repository-yum" description="com.sonatype.nexus.plugins:nexus-repository-yum" version="3.63.0.01">
+        <details>com.sonatype.nexus.plugins:nexus-repository-yum</details>
+        <feature prerequisite="true" dependency="false">wrap</feature>
+        <bundle>mvn:com.sonatype.nexus.plugins/nexus-repository-yum/3.63.0-01</bundle>
+        <bundle>wrap:mvn:org.redline-rpm/redline/1.2.5</bundle>
+        <bundle>mvn:org.apache.commons/commons-compress/1.24.0</bundle>
+        <bundle>mvn:org.tukaani/xz/1.9</bundle>
+        <bundle>wrap:mvn:org.jdom/jdom2/2.0.6.1</bundle>
+    </feature>
+    <feature name="nexus-hazelcast-plugin" description="com.sonatype.nexus.plugins:nexus-hazelcast-plugin" install="pro:featureFlag:nexus.clustered" version="3.63.0.01">
+        <details>com.sonatype.nexus.plugins:nexus-hazelcast-plugin</details>
+        <bundle start-level="1000000">mvn:com.hazelcast/hazelcast/5.3.6</bundle>
+        <bundle>mvn:com.sonatype.nexus.plugins/nexus-hazelcast-plugin/3.63.0-01</bundle>
+        <bundle>mvn:com.orientechnologies/orientdb-distributed/2.2.37</bundle>
+        <bundle>mvn:com.hazelcast/hazelcast-aws/2.4</bundle>
+        <bundle>mvn:javax.transaction/javax.transaction-api/1.2</bundle>
+        <bundle>mvn:javax.interceptor/javax.interceptor-api/1.2</bundle>
+    </feature>
+    <feature name="nexus-datastore-clustering" description="com.sonatype.nexus.plugins:nexus-datastore-clustering" install="pro:featureFlag:nexus.datastore.clustered.enabled" version="3.63.0.01">
+        <details>com.sonatype.nexus.plugins:nexus-datastore-clustering</details>
+        <bundle start-level="80">mvn:com.sonatype.nexus.plugins/nexus-datastore-clustering/3.63.0-01</bundle>
+        <bundle start-level="80">mvn:com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.15.0</bundle>
+        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/2.15.0</bundle>
+    </feature>
+    <feature name="nexus-ossindex-plugin" description="com.sonatype.nexus.plugins:nexus-ossindex-plugin" install="oss:featureFlag:enabledByDefault:nexus.ossindex.plugin.enabled" version="3.63.0.01">
+        <details>com.sonatype.nexus.plugins:nexus-ossindex-plugin</details>
+        <feature prerequisite="true" dependency="false">wrap</feature>
+        <bundle>mvn:com.sonatype.nexus.plugins/nexus-ossindex-plugin/3.63.0-01</bundle>
+        <bundle>mvn:org.sonatype.nexus/nexus-common/3.63.0-01</bundle>
+        <bundle>mvn:org.eclipse.aether/aether-util/1.1.0</bundle>
+        <bundle>mvn:org.eclipse.aether/aether-api/1.1.0</bundle>
+        <bundle>mvn:com.google.errorprone/error_prone_annotations/2.21.1</bundle>
+        <bundle>mvn:com.google.guava/guava/32.1.1-jre</bundle>
+        <bundle>mvn:com.google.guava/failureaccess/1.0.1</bundle>
+        <bundle>mvn:org.eclipse.sisu/org.eclipse.sisu.inject/0.3.5</bundle>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-inject/1_2</bundle>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
+        <bundle>mvn:com.google.inject/guice/6.0.0</bundle>
+        <bundle>mvn:jakarta.inject/jakarta.inject-api/2.0.1</bundle>
+        <bundle>mvn:com.google.inject.extensions/guice-assistedinject/6.0.0</bundle>
+        <bundle>mvn:javax.enterprise/cdi-api/1.2</bundle>
+        <bundle>mvn:javax.el/javax.el-api/3.0.0</bundle>
+        <bundle>mvn:javax.interceptor/javax.interceptor-api/1.2</bundle>
+        <bundle>wrap:mvn:org.codehaus.mojo/animal-sniffer-annotations/1.19</bundle>
+        <bundle>mvn:org.sonatype.goodies/goodies-common/2.3.7</bundle>
+        <bundle>wrap:mvn:org.sonatype.gossip/gossip-support/1.8</bundle>
+        <bundle>wrap:mvn:org.sonatype.gossip/gossip-bootstrap/1.8</bundle>
+        <bundle>mvn:org.sonatype.goodies/goodies-lifecycle/2.3.7</bundle>
+        <bundle>mvn:joda-time/joda-time/2.10.6</bundle>
+        <bundle>mvn:org.codehaus.groovy/groovy-all/2.4.17</bundle>
+        <bundle>mvn:commons-cli/commons-cli/1.5.0</bundle>
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-core/2.15.0</bundle>
+        <bundle>mvn:com.fasterxml.jackson.datatype/jackson-datatype-joda/2.15.0</bundle>
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-annotations/2.15.0</bundle>
+        <bundle>mvn:commons-lang/commons-lang/2.6</bundle>
+        <bundle>mvn:org.sonatype.nexus/nexus-task-logging/3.63.0-01</bundle>
+        <bundle>mvn:commons-io/commons-io/2.13.0</bundle>
+        <bundle>wrap:mvn:org.sonatype.ossindex/ossindex-service-client/1.3.0</bundle>
+        <bundle>wrap:mvn:org.sonatype.ossindex/ossindex-service-api/1.3.0</bundle>
+        <bundle>mvn:com.sonatype.nexus.plugins/nexus-healthcheck-base/3.63.0-01</bundle>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xpp3/1.1.4c_7</bundle>
+        <bundle>mvn:com.sonatype.clm/com.sonatype.clm.dto.model/1.57.0-01</bundle>
+        <bundle>wrap:mvn:com.sonatype.insight.scan/insight-scanner-core/2.36.66-01</bundle>
+        <bundle>wrap:mvn:com.sonatype.insight.scan/insight-scanner-model/2.36.66-01</bundle>
+        <bundle>wrap:mvn:com.sonatype.insight.scan/insight-scanner-model-io/2.36.66-01</bundle>
+        <bundle>mvn:com.thoughtworks.xstream/xstream/1.4.20</bundle>
+        <bundle>wrap:mvn:xpp3/xpp3_min/1.1.4c</bundle>
+        <bundle>wrap:mvn:com.sonatype.insight.brain/insight-rm-common/1.168.0-01</bundle>
+        <bundle>mvn:org.sonatype.nexus/nexus-upgrade/3.63.0-01</bundle>
+        <bundle>wrap:mvn:org.codehaus.plexus/plexus-utils/3.5.1</bundle>
+        <bundle>mvn:org.flywaydb/flyway-core/8.5.5</bundle>
+    </feature>
+    <feature name="nexus-group-deploy" description="com.sonatype.nexus.plugins:nexus-group-deploy" install="pro:featureFlag:enabledByDefault:nexus.group.writable" version="3.63.0.01">
+        <details>com.sonatype.nexus.plugins:nexus-group-deploy</details>
+        <bundle>mvn:com.sonatype.nexus.plugins/nexus-group-deploy/3.63.0-01</bundle>
+        <bundle>mvn:commons-lang/commons-lang/2.6</bundle>
+    </feature>
+</features>
