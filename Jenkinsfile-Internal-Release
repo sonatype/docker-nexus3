@@ -1,0 +1,164 @@
+/*
+ * Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/nexus/attributions.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
+@Library(['private-pipeline-library', 'jenkins-shared']) _
+import com.sonatype.jenkins.pipeline.GitHub
+import com.sonatype.jenkins.pipeline.OsTools
+import com.sonatype.jenkins.shared.Expectation
+
+properties([
+    parameters([
+        string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
+        string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
+        string(defaultValue: '', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
+        booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
+    ])
+])
+
+node('ubuntu-zion') {
+  def commitId, commitDate, version, imageId, branch
+  def organization = 'sonatype',
+      gitHubRepository = 'docker-nexus3',
+      credentialsId = 'integrations-github-api',
+      imageName = 'sonatype/nexus3',
+      archiveName = 'docker-nexus3'
+  GitHub gitHub
+
+  try {
+    stage('Preparation') {
+      deleteDir()
+      OsTools.runSafe(this, "docker system prune -a -f")
+
+      def checkoutDetails = checkout scm
+
+      branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
+      commitId = checkoutDetails.GIT_COMMIT
+      commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
+
+      OsTools.runSafe(this, 'git config --global user.email sonatype-ci@sonatype.com')
+      OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
+
+      version = readVersion()
+
+      def apiToken
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
+                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+        apiToken = env.GITHUB_API_PASSWORD
+      }
+      //gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
+
+      if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
+        stage('Update Repository Manager Version') {
+          OsTools.runSafe(this, "git checkout ${branch}")
+          updateRepositoryManagerVersion("${pwd()}/Dockerfile")
+          version = getShortVersion(params.nexus_repository_manager_version)
+        }
+      }
+    }
+    stage('Build') {
+      //gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
+
+      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
+      imageId = hash.split(':')[1]
+
+      if (currentBuild.result == 'FAILURE') {
+        //gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
+        return
+      } else {
+        //gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
+        echo 'build successful'
+      }
+    }
+    stage('Test') {
+      //gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
+
+      validateExpectations([
+          new Expectation('Has user nexus in group nexus present',
+              'id', '-ng nexus', 'nexus'),
+          new Expectation('Has nexus user java process present',
+              'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
+      ])
+
+      if (currentBuild.result == 'FAILURE') {
+        //gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
+        return
+      } else {
+        //gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
+        echo 'test ok'
+      }
+    }
+
+    if (params.scan_for_policy_violations) {
+      stage('Evaluate Policies') {
+        runEvaluation({ stage ->
+          nexusPolicyEvaluation(
+              iqStage: stage,
+              iqApplication: 'docker-nexus3',
+              iqScanPatterns: [[scanPattern: "container:${imageName}"]],
+              failBuildOnNetworkError: true,
+          )}, 'release')
+      }
+    }
+
+    if (currentBuild.result == 'FAILURE') {
+      return
+    }
+    stage('Archive') {
+      dir('build/target') {
+        OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
+        archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
+      }
+    }
+    if (branch == 'NEXUS-40270-internal-release') {
+      stage('Push image to RSC') {
+        withSonatypeDockerRegistry() {
+          //sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+          //sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+          sh "docker tag ${imageId} docker2.stage.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+          sh "docker push docker2.stage.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+        }
+      }
+    }
+  } finally {
+    OsTools.runSafe(this, "docker logout")
+    OsTools.runSafe(this, "docker system prune -a -f")
+    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
+  }
+}
+
+def readVersion() {
+  def content = readFile 'Dockerfile'
+  for (line in content.split('\n')) {
+    if (line.startsWith('ARG NEXUS_VERSION=')) {
+      return getShortVersion(line.substring(18))
+    }
+  }
+  error 'Could not determine version.'
+}
+
+def getShortVersion(version) {
+  return version.split('-')[0]
+}
+
+def updateRepositoryManagerVersion(dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+
+  def metaVersionRegex = /(version=")(\d\.\d{1,3}\.\d\-\d{2})(" \\)/
+  def metaShortVersionRegex = /(release=")(\d\.\d{1,3}\.\d)(" \\)/
+
+  def versionRegex = /(ARG NEXUS_VERSION=)(\d\.\d{1,3}\.\d\-\d{2})/
+  def shaRegex = /(ARG NEXUS_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
+
+  def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
+
+  dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
+  dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
+      "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
+  dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
+  dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
+  dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
+
+  writeFile(file: dockerFileLocation, text: dockerFile)
+}
