@@ -161,7 +161,4 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
 
   writeFile(file: dockerFileLocation, text: dockerFile)
-  echo '====='
-  echo dockerFile
-  echo '====='
 }
