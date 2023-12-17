@@ -4,9 +4,7 @@
  * "Sonatype" is a trademark of Sonatype, Inc.
  */
 @Library(['private-pipeline-library', 'jenkins-shared']) _
-import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
-import com.sonatype.jenkins.shared.Expectation
 
 properties([
     parameters([
@@ -19,12 +17,8 @@ properties([
 
 node('ubuntu-zion') {
   def commitId, commitDate, version, imageId, branch
-  def organization = 'sonatype',
-      gitHubRepository = 'docker-nexus3',
-      credentialsId = 'integrations-github-api',
-      imageName = 'sonatype/nexus3',
+  def imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3'
-  GitHub gitHub
 
   try {
     stage('Preparation') {
@@ -42,13 +36,6 @@ node('ubuntu-zion') {
 
       version = readVersion()
 
-      //def apiToken
-      //withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-      //                  usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-      //  apiToken = env.GITHUB_API_PASSWORD
-      //}
-      //gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
-
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
@@ -58,18 +45,8 @@ node('ubuntu-zion') {
       }
     }
     stage('Build') {
-      //gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
-
       def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
       imageId = hash.split(':')[1]
-
-      if (currentBuild.result == 'FAILURE') {
-        //gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
-        return
-      } else {
-        //gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
-        echo 'build successful'
-      }
     }
     if (params.scan_for_policy_violations) {
       stage('Evaluate Policies') {
@@ -82,7 +59,6 @@ node('ubuntu-zion') {
           )}, 'release')
       }
     }
-
     if (currentBuild.result == 'FAILURE') {
       return
     }
@@ -97,8 +73,8 @@ node('ubuntu-zion') {
         withSonatypeDockerRegistry() {
           //sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
           //sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-          sh "docker tag ${imageId} docker2.stage.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-          sh "docker push docker2.stage.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+          sh "docker tag ${imageId} docker2.stage.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker push docker2.stage.repo.sonatype.com/sonatype-internal/nexus3:${version}"
         }
       }
     }
