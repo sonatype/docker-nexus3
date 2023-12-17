@@ -10,9 +10,9 @@ import com.sonatype.jenkins.shared.Expectation
 
 properties([
     parameters([
-        string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
-        string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
-        string(defaultValue: '', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
+        string(defaultValue: '3.63.0-01', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
+        string(defaultValue: 'e804d57656494a769473bb2b8cb241b1acdda22992a0cef15ef2f4066d8c12d3', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
+        string(defaultValue: 'https://jenkins.ci.sonatype.dev/job/nxrm/job/nxrm3/job/release/lastSuccessfulBuild/artifact/target/dist/nexus-3.63.0-01-unix.tar.gz', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
         booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
     ])
 ])
