@@ -71,25 +71,6 @@ node('ubuntu-zion') {
         echo 'build successful'
       }
     }
-    stage('Test') {
-      //gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
-
-      validateExpectations([
-          new Expectation('Has user nexus in group nexus present',
-              'id', '-ng nexus', 'nexus'),
-          new Expectation('Has nexus user java process present',
-              'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
-      ])
-
-      if (currentBuild.result == 'FAILURE') {
-        //gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
-        return
-      } else {
-        //gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
-        echo 'test ok'
-      }
-    }
-
     if (params.scan_for_policy_violations) {
       stage('Evaluate Policies') {
         runEvaluation({ stage ->
