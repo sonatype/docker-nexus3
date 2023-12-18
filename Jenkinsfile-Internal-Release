@@ -41,6 +41,7 @@ node('ubuntu-zion') {
           OsTools.runSafe(this, "git checkout ${branch}")
           updateRepositoryManagerVersion("${pwd()}/Dockerfile")
           version = getShortVersion(params.nexus_repository_manager_version)
+          echo 'new version', version
         }
       }
     }
@@ -116,4 +117,8 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
 
   writeFile(file: dockerFileLocation, text: dockerFile)
+
+  echo '====='
+  echo dockerFile
+  echo '-----'
 }
