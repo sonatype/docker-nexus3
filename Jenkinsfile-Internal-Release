@@ -82,7 +82,7 @@ node('ubuntu-zion') {
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
-    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
+    // OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
   }
 }
 
@@ -122,6 +122,10 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
 
   def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
 
+  echo "before"
+  echo dockerFile
+  echo "---"
+
   dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
   dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
       "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
@@ -131,6 +135,8 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
 
   writeFile(file: dockerFileLocation, text: dockerFile)
 
+  echo "after"
   echo dockerFile
+  echo "***"
 
 }
