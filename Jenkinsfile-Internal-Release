@@ -39,7 +39,7 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          updateRepositoryManagerVersion("${pwd()}/Dockerfile-Internal-Release")
+          updateRepositoryManagerVersion("${pwd()}/Dockerfile")
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
@@ -71,10 +71,8 @@ node('ubuntu-zion') {
     if (branch == 'origin/NEXUS-40270-internal-release') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
-          //sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-          //sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-          sh "docker tag ${imageId} docker2.stage.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker push docker2.stage.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-dev/nexus3:${version}"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-dev/nexus3:${version}"
         }
       }
     }
