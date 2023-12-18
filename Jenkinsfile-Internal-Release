@@ -45,6 +45,7 @@ node('ubuntu-zion') {
       }
     }
     stage('Build') {
+      printUrl()
       def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
       imageId = hash.split(':')[1]
     }
@@ -91,6 +92,16 @@ def readVersion() {
     }
   }
   error 'Could not determine version.'
+}
+
+def printUrl() {
+  def content = readFile 'Dockerfile'
+  for (line in content.split('\n')) {
+    if (line.startsWith('ARG NEXUS_DOWNLOAD_URL=')) {
+      echo "URL ARG ${line}"
+    }
+  }
+  error 'Could not determine URL.'
 }
 
 def getShortVersion(version) {
