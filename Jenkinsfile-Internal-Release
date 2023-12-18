@@ -99,6 +99,7 @@ def printUrl() {
   for (line in content.split('\n')) {
     if (line.startsWith('ARG NEXUS_DOWNLOAD_URL=')) {
       echo "URL ARG ${line}"
+      return
     }
   }
   error 'Could not determine URL.'
