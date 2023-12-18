@@ -10,7 +10,7 @@ properties([
     parameters([
         string(defaultValue: '3.63.0-01', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
         string(defaultValue: 'e804d57656494a769473bb2b8cb241b1acdda22992a0cef15ef2f4066d8c12d3', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
-        string(defaultValue: 'https://download-staging.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-${NEXUS_BUILD_NUM}-unix.tar.gz', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
+        string(defaultValue: 'https://download-staging.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
         booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
     ])
 ])
