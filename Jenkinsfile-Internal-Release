@@ -43,12 +43,6 @@ node('ubuntu-zion') {
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
-      if (params.nexus_repository_manager_url) {
-        stage('Update Repository Manager URL') {
-          OsTools.runSafe(this, "git checkout ${branch}")
-          updateRepositoryManagerUrl("${pwd()}/Dockerfile")
-        }
-      }
     }
     stage('Build') {
       def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
@@ -118,16 +112,10 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
 
-  writeFile(file: dockerFileLocation, text: dockerFile)
-
-}
-
-def updateRepositoryManagerUrl(dockerFileLocation) {
-  def dockerFile = readFile(file: dockerFileLocation)
-
-  def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
-
-  dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
+  if (params.nexus_repository_manager_url) {
+    def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
+    dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
+  }
 
   writeFile(file: dockerFileLocation, text: dockerFile)
 
