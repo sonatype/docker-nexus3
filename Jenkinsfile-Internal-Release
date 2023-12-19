@@ -68,7 +68,8 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'origin/NEXUS-40270-internal-release') {
+    //todo: change branch name
+    if (branch == 'origin/NEXUS-40270-release-job') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-dev/nexus3:${version}"
