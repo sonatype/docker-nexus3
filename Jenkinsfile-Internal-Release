@@ -9,7 +9,6 @@ import com.sonatype.jenkins.pipeline.OsTools
 properties([
     parameters([
         string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
-        string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
         string(defaultValue: '', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
         booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
     ])
@@ -36,7 +35,7 @@ node('ubuntu-zion') {
 
       version = readVersion()
 
-      if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
+      if (params.nexus_repository_manager_version) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
           updateRepositoryManagerVersion("${pwd()}/Dockerfile")
@@ -112,11 +111,29 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
 
+  def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
+  def nexusUrl = params.nexus_repository_manager_url
   if (params.nexus_repository_manager_url) {
-    def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
     dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
+  }
+  else {
+    // default URL
+    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS-VERSION\}\.unix\.tar\.gz/
+    dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
+
+    def normalizedUrl = "a".replaceAll(/./, "${defaultUrl}")
+    nexusUrl = normalizedUrl.replace("\${NEXUS-VERSION}", params.nexus_repository_manager_version)
   }
 
   writeFile(file: dockerFileLocation, text: dockerFile)
 
+}
+
+def getSha(url) {
+  def sha = sh (
+      script: "curl -s -L ${url} | shasum -a 256 | cut -d' ' -f1",
+      returnStdout: true
+  ).trim()
+  echo "sha is ${sha}"
+  return sha
 }
