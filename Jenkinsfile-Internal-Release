@@ -9,7 +9,7 @@ import com.sonatype.jenkins.pipeline.OsTools
 properties([
     parameters([
         string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
-        string(defaultValue: '', description: 'New Nexus Repository Manager URL', name: 'nexus_repository_manager_url'),
+        string(defaultValue: '', description: 'New Nexus Repository Manager URL (Optional)', name: 'nexus_repository_manager_url'),
         booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
     ])
 ])
@@ -118,12 +118,15 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   }
   else {
     // default URL
-    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS-VERSION\}\.unix\.tar\.gz/
-    dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
+    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-unix\.tar\.gz/
+    dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${defaultUrl}")
 
     def normalizedUrl = "a".replaceAll(/./, "${defaultUrl}")
-    nexusUrl = normalizedUrl.replace("\${NEXUS-VERSION}", params.nexus_repository_manager_version)
+    nexusUrl = normalizedUrl.replace("\${NEXUS_VERSION}", params.nexus_repository_manager_version)
   }
+  def sha = getSha(nexusUrl)
+
+  dockerFile = dockerFile.replaceAll(shaRegex, "\$1${sha}")
 
   writeFile(file: dockerFileLocation, text: dockerFile)
 
@@ -134,6 +137,5 @@ def getSha(url) {
       script: "curl -s -L ${url} | shasum -a 256 | cut -d' ' -f1",
       returnStdout: true
   ).trim()
-  echo "sha is ${sha}"
   return sha
 }
