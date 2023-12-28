@@ -67,7 +67,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'origin/main') {
+    if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
