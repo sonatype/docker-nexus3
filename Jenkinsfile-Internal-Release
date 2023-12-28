@@ -109,7 +109,6 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
       "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
   dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
-  dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
 
   def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
   def nexusUrl = params.nexus_repository_manager_url
