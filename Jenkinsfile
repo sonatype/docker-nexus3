@@ -34,8 +34,8 @@ node('ubuntu-zion') {
 
       def apiToken
       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-        apiToken = env.GITHUB_API_PASSWORD
+                        usernameVariable: 'GITHUB_APP', passwordVariable: 'GITHUB_ACCESS_TOKEN']]) {
+        apiToken = env.GITHUB_ACCESS_TOKEN
       }
       gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
     }
