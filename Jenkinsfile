@@ -33,8 +33,9 @@ node('ubuntu-zion') {
       OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
 
       def apiToken
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                        usernameVariable: 'GITHUB_APP', passwordVariable: 'GITHUB_ACCESS_TOKEN']]) {
+     withCredentials([usernamePassword(credentialsId: 'githubapp-jenkins',
+                                               usernameVariable: 'GITHUB_APP',
+                                               passwordVariable: 'GITHUB_ACCESS_TOKEN')]) {
         apiToken = env.GITHUB_ACCESS_TOKEN
       }
       gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
