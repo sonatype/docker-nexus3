@@ -12,7 +12,7 @@ node('ubuntu-zion') {
   def commitId, commitDate, imageId, branch
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
-      credentialsId = 'integrations-github-api',
+      credentialsId = 'jenkins-github',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
       dockerHubRepository = 'nexus3'
