@@ -22,7 +22,7 @@ node('ubuntu-zion') {
   def commitId, commitDate, version, imageId, branch, dockerFileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
-      credentialsId = 'integrations-github-api',
+      credentialsId = 'jenkins-github',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
       dockerHubRepository = 'nexus3'
@@ -119,7 +119,7 @@ node('ubuntu-zion') {
     if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha
           || params.nexus_repository_manager_cookbook_version) {
       stage('Commit Automated Code Update') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'integrations-github-api',
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-github',
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
           def commitMessage = [
             params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha ?
