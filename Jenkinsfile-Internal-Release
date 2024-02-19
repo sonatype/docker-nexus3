@@ -77,15 +77,21 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    println('ForTest branch ' + branch)
-    if (branch == 'main') {
+    //if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}"
+          if (params.java_version == OPENJDK11) {
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java11"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java11"
+          } else {
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java8"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java8"
+          }
         }
       }
-    }
+    //}
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
