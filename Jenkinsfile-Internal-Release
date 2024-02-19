@@ -6,9 +6,9 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.OsTools
 
-String OPENJDK8 = 'OpenJDK 8'
-String OPENJDK11 = 'OpenJDK 11'
-List<String> javaVersions = [OPENJDK8, OPENJDK11]
+def OPENJDK8 = 'OpenJDK 8'
+def OPENJDK11 = 'OpenJDK 11'
+def javaVersions = [OPENJDK8, OPENJDK11]
 
 properties([
     parameters([
