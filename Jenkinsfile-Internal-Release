@@ -8,14 +8,10 @@ import com.sonatype.jenkins.pipeline.OsTools
 
 properties([
     parameters([
-        string(defaultValue: '', description: 'New Nexus Repository Manager Version', name:
-            'nexus_repository_manager_version'),
-        string(defaultValue: '', description: 'New Nexus Repository Manager URL (Optional)', name:
-            'nexus_repository_manager_url'),
-        choice(name: 'java_version', choices: ['OpenJDK 8', 'OpenJDK 11'], description: 'Java version to run Nexus ' +
-            'Repository Manager'),
-        booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name:
-            'scan_for_policy_violations')
+        string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
+        string(defaultValue: '', description: 'New Nexus Repository Manager URL (Optional)', name: 'nexus_repository_manager_url'),
+        choice(name: 'java_version', choices: ['OpenJDK 8', 'OpenJDK 11'], description: 'Java version to run Nexus Repository Manager'),
+        booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
     ])
 ])
 
@@ -48,7 +44,6 @@ node('ubuntu-zion') {
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
-    }
     }
     stage('Build') {
       def dockerfilePath = 'Dockerfile'
