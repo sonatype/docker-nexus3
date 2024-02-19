@@ -6,11 +6,15 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.OsTools
 
+String OPENJDK8 = 'OpenJDK 8'
+String OPENJDK11 = 'OpenJDK 11'
+List<String> javaVersions = [OPENJDK8, OPENJDK11]
+
 properties([
     parameters([
         string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
         string(defaultValue: '', description: 'New Nexus Repository Manager URL (Optional)', name: 'nexus_repository_manager_url'),
-        choice(name: 'java_version', choices: ['OpenJDK 8', 'OpenJDK 11'], description: 'Java version to run Nexus Repository Manager'),
+        choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager'),
         booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
     ])
 ])
@@ -47,9 +51,10 @@ node('ubuntu-zion') {
     }
     stage('Build') {
       def dockerfilePath = 'Dockerfile'
-      if (params.java_version == 'OpenJDK 11') {
+      if (params.java_version == OPENJDK11) {
         dockerfilePath = 'Dockerfile.Java11'
       }
+      println('ForTest will be used ' + dockerfilePath)
       def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
     }
