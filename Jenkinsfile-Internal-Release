@@ -44,7 +44,7 @@ node('ubuntu-zion') {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
           updateRepositoryManagerVersion("${pwd()}/Dockerfile")
-          updateRepositoryManagerVersion("${pwd()}/Dockerfile.Java11")
+          updateRepositoryManagerVersion("${pwd()}/Dockerfile.java11")
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
@@ -52,7 +52,7 @@ node('ubuntu-zion') {
     stage('Build') {
       def dockerfilePath = 'Dockerfile'
       if (params.java_version == OPENJDK11) {
-        dockerfilePath = 'Dockerfile.Java11'
+        dockerfilePath = 'Dockerfile.java11'
       }
       def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
