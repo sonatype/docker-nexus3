@@ -81,13 +81,13 @@ node('ubuntu-zion') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           if (params.java_version == OPENJDK11) {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java11"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java11"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
           } else {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}"
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java8"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal-test/nexus3:${version}-java8"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8"
           }
         }
       }
