@@ -77,7 +77,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    //if (branch == 'main') {
+    if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           if (params.java_version == OPENJDK11) {
@@ -91,7 +91,7 @@ node('ubuntu-zion') {
           }
         }
       }
-    //}
+    }
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
