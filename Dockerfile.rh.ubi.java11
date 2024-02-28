@@ -38,8 +38,8 @@ LABEL name="Nexus Repository Manager" \
 
 ARG NEXUS_VERSION=3.65.0-02
 ARG JAVA_VERSION=java11
-ARG NEXUS_DOWNLOAD_URL=https://wml9k43.localto.net/repository/raw-hosted/nexus-3.67.0-SNAPSHOT-java11-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=b931210848f32042cd326c596a1443d8e9894e0952408085d51d746f84beff51
+ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz
+ARG NEXUS_DOWNLOAD_SHA256_HASH=bae697af1771e8c08fedf3cd8defa2cf6a0b7bf54e5452bbe194f835189d6ad9
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype

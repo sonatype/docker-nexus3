@@ -41,3 +41,16 @@ AUTHFILE="${HOME}/.docker/config.json"
 
 docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
 docker tag "${IMAGE_TAG}"
+
+docker login "${REPOSITORY}" \
+       -u "${REGISTRY_LOGIN}" \
+       --password "${REGISTRY_PASSWORD}"
+
+docker push "${IMAGE_TAG}"
+
+preflight check container \
+          "${IMAGE_TAG}" \
+          --docker-config="${AUTHFILE}" \
+          --submit \
+          --certification-project-id="${CERT_PROJECT_ID}" \
+          --pyxis-api-token="${API_TOKEN}"
