@@ -5,12 +5,14 @@
  */
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 
+String OPENJDK8 = 'OpenJDK 8'
+String OPENJDK11 = 'OpenJDK 11'
+List<String> javaVersions = [OPENJDK8, OPENJDK11]
+
 properties([
   parameters([
-    string(
-      name: 'version',
-      description: 'Version tag to apply to the image, like 3.41.0-ubi-1.'
-    ),
+    string(name: 'version', description: 'Version tag to apply to the image, like 3.41.0-ubi-1.'),
+    choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager')
   ]),
 ])
 
@@ -38,7 +40,11 @@ node('ubuntu-zion') {
             credentialsId: 'red-hat-api-token',
             variable: 'API_TOKEN')
       ]) {
-        sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image.sh'
+        if (params.java_version == OPENJDK11) {
+          sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image_for_java11.sh'
+        } else {
+          sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image.sh'
+        }
       }
     }
   } finally {

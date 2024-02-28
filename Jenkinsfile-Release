@@ -24,7 +24,7 @@ properties([
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId, branch, dockerFileLocations
+  def commitId, commitDate, version, imageId, branch, dockerFileLocations, dockerJava11FileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
       credentialsId = 'jenkins-github',
@@ -49,6 +49,11 @@ node('ubuntu-zion') {
         "${pwd()}/Dockerfile.rh.ubi"
       ]
 
+      dockerJava11FileLocations = [
+          "${pwd()}/Dockerfile.java11",
+          "${pwd()}/Dockerfile.rh.ubi.java11"
+      ]
+
       branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
       commitId = checkoutDetails.GIT_COMMIT
       commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
@@ -70,7 +75,7 @@ node('ubuntu-zion') {
           OsTools.runSafe(this, "git checkout ${branch}")
 
           if (params.java_version == OPENJDK11) {
-            updateRepositoryManagerVersion("${pwd()}/Dockerfile.java11")
+            dockerJava11FileLocations.each { updateRepositoryManagerVersion(it) }
           } else {
             dockerFileLocations.each { updateRepositoryManagerVersion(it) }
           }
@@ -81,7 +86,7 @@ node('ubuntu-zion') {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
           if (params.java_version == OPENJDK11) {
-            updateRepositoryCookbookVersion("${pwd()}/Dockerfile.java11")
+            dockerJava11FileLocations.each { updateRepositoryCookbookVersion(it) }
           } else {
             dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
           }
