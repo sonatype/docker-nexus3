@@ -8,24 +8,31 @@ import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 import com.sonatype.jenkins.shared.Expectation
 
+String OPENJDK8 = 'OpenJDK 8'
+String OPENJDK11 = 'OpenJDK 11'
+List<String> javaVersions = [OPENJDK8, OPENJDK11]
+
 properties([
   parameters([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
+    choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager'),
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
     booleanParam(defaultValue: false, description: 'Only update the latest tag', name: 'update_latest_only')
   ])
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId, branch, dockerFileLocations
+  def commitId, commitDate, version, imageId, branch, dockerFileLocations, dockerJava11FileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
       credentialsId = 'jenkins-github',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
-      dockerHubRepository = 'nexus3'
+      dockerHubRepository = 'nexus3',
+      java8 = 'java8',
+      java11 = 'java11'
   GitHub gitHub
 
   try {
@@ -40,6 +47,11 @@ node('ubuntu-zion') {
         "${pwd()}/Dockerfile.rh.centos",
         "${pwd()}/Dockerfile.rh.el",
         "${pwd()}/Dockerfile.rh.ubi"
+      ]
+
+      dockerJava11FileLocations = [
+          "${pwd()}/Dockerfile.java11",
+          "${pwd()}/Dockerfile.rh.ubi.java11"
       ]
 
       branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
@@ -61,21 +73,34 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerFileLocations.each { updateRepositoryManagerVersion(it) }
+
+          if (params.java_version == OPENJDK11) {
+            dockerJava11FileLocations.each { updateRepositoryManagerVersion(it) }
+          } else {
+            dockerFileLocations.each { updateRepositoryManagerVersion(it) }
+          }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
+          if (params.java_version == OPENJDK11) {
+            dockerJava11FileLocations.each { updateRepositoryCookbookVersion(it) }
+          } else {
+            dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
+          }
         }
       }
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
+      def dockerfilePath = 'Dockerfile'
+      if (params.java_version == OPENJDK11) {
+        dockerfilePath = 'Dockerfile.java11'
+      }
+      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
 
       if (currentBuild.result == 'FAILURE') {
@@ -150,8 +175,13 @@ node('ubuntu-zion') {
         def dockerhubApiToken
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
             usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+          if (params.java_version == OPENJDK11) {
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${java11}")
+          } else {
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${java8}")
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+          }
           OsTools.runSafe(this, """
             docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
           """)
@@ -176,8 +206,15 @@ node('ubuntu-zion') {
 
           // push to internal repos
           withSonatypeDockerRegistry() {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+            if (params.java_version == OPENJDK11) {
+              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java11}"
+              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+            } else {
+              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java8}"
+              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java8}"
+            }
           }
         }
       }

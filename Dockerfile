@@ -37,7 +37,8 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
 ARG NEXUS_VERSION=3.66.0-02
-ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
+ARG JAVA_VERSION=java8
+ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz
 ARG NEXUS_DOWNLOAD_SHA256_HASH=9bfad380ce69b42537d91aedd6f3c9a62516bd458f6c088eaa51601dfc7ef31e
 
 # configure nexus runtime
@@ -59,11 +60,11 @@ RUN microdnf update -y \
 WORKDIR ${SONATYPE_DIR}
 
 # Download nexus & setup directories
-RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-unix.tar.gz \
-    && echo "${NEXUS_DOWNLOAD_SHA256_HASH} nexus-${NEXUS_VERSION}-unix.tar.gz" > nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
-    && sha256sum -c nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
-    && tar -xvf nexus-${NEXUS_VERSION}-unix.tar.gz \
-    && rm -f nexus-${NEXUS_VERSION}-unix.tar.gz nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
+RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz \
+    && echo "${NEXUS_DOWNLOAD_SHA256_HASH} nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz" > nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
+    && sha256sum -c nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
+    && tar -xvf nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz \
+    && rm -f nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
     && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
     && chown -R nexus:nexus ${SONATYPE_WORK} \
     && mv ${SONATYPE_WORK}/nexus3 ${NEXUS_DATA} \

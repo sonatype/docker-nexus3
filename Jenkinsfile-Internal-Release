@@ -6,10 +6,15 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.OsTools
 
+String OPENJDK8 = 'OpenJDK 8'
+String OPENJDK11 = 'OpenJDK 11'
+List<String> javaVersions = [OPENJDK8, OPENJDK11]
+
 properties([
     parameters([
         string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
         string(defaultValue: '', description: 'New Nexus Repository Manager URL (Optional)', name: 'nexus_repository_manager_url'),
+        choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager'),
         booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
     ])
 ])
@@ -39,12 +44,17 @@ node('ubuntu-zion') {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
           updateRepositoryManagerVersion("${pwd()}/Dockerfile")
+          updateRepositoryManagerVersion("${pwd()}/Dockerfile.java11")
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
     }
     stage('Build') {
-      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
+      def dockerfilePath = 'Dockerfile'
+      if (params.java_version == OPENJDK11) {
+        dockerfilePath = 'Dockerfile.java11'
+      }
+      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
     }
     if (params.scan_for_policy_violations) {
@@ -70,8 +80,15 @@ node('ubuntu-zion') {
     if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          if (params.java_version == OPENJDK11) {
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
+          } else {
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8"
+          }
         }
       }
     }
