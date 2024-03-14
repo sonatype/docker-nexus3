@@ -134,11 +134,16 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   }
   else {
     // default URL
-    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-unix\.tar\.gz/
+    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-\$\{JAVA_VERSION\}-unix\.tar\.gz/
     dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${defaultUrl}")
 
     def normalizedUrl = "a".replaceAll(/./, "${defaultUrl}")
     nexusUrl = normalizedUrl.replace("\${NEXUS_VERSION}", params.nexus_repository_manager_version)
+    if (params.java_version == OPENJDK11) {
+      nexusUrl = nexusUrl.replace("\${JAVA_VERSION}", 'java11')
+    } else {
+      nexusUrl = nexusUrl.replace("\${JAVA_VERSION}", 'java8')
+    }
   }
   def sha = getSha(nexusUrl)
 
