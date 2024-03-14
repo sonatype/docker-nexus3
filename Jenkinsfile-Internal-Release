@@ -43,8 +43,8 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          updateRepositoryManagerVersion("${pwd()}/Dockerfile")
-          updateRepositoryManagerVersion("${pwd()}/Dockerfile.java11")
+          updateRepositoryManagerVersion("${pwd()}/Dockerfile", 'java8')
+          updateRepositoryManagerVersion("${pwd()}/Dockerfile.java11", 'java11')
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
@@ -113,7 +113,7 @@ def getShortVersion(version) {
   return version.split('-')[0]
 }
 
-def updateRepositoryManagerVersion(dockerFileLocation) {
+def updateRepositoryManagerVersion(dockerFileLocation, javaVersion) {
   def dockerFile = readFile(file: dockerFileLocation)
 
   def metaVersionRegex = /(version=")(\d\.\d{1,3}\.\d\-\d{2})(" \\)/
@@ -134,11 +134,12 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
   }
   else {
     // default URL
-    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-unix\.tar\.gz/
+    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-\$\{JAVA_VERSION\}-unix\.tar\.gz/
     dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${defaultUrl}")
 
     def normalizedUrl = "a".replaceAll(/./, "${defaultUrl}")
     nexusUrl = normalizedUrl.replace("\${NEXUS_VERSION}", params.nexus_repository_manager_version)
+    nexusUrl = nexusUrl.replace("\${JAVA_VERSION}", javaVersion)
   }
   def sha = getSha(nexusUrl)
 
