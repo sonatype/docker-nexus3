@@ -57,7 +57,7 @@ RUN apt-get update \
 
 WORKDIR ${SONATYPE_DIR}
 
-# Download nexus & setup directories
+# Download nexus & setup directories 
 RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-unix.tar.gz \
     && echo "${NEXUS_DOWNLOAD_SHA256_HASH} nexus-${NEXUS_VERSION}-unix.tar.gz" > nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
     && sha256sum -c nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
