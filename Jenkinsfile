@@ -6,12 +6,12 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
+import com.sonatype.jenkins.shared.Expectation
 
 node('ubuntu-zion') {
   def commitId, commitDate, imageId, branch
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
-      credentialsId = 'integrations-github-api',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
       dockerHubRepository = 'nexus3'
@@ -32,9 +32,10 @@ node('ubuntu-zion') {
       OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
 
       def apiToken
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-        apiToken = env.GITHUB_API_PASSWORD
+     withCredentials([usernamePassword(credentialsId: 'jenkins-github',
+                                               usernameVariable: 'GITHUB_APP',
+                                               passwordVariable: 'GITHUB_ACCESS_TOKEN')]) {
+        apiToken = env.GITHUB_ACCESS_TOKEN
       }
       gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
     }
@@ -54,13 +55,12 @@ node('ubuntu-zion') {
     stage('Test') {
       gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
 
-      def gemInstallDirectory = getGemInstallDirectory()
-      withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
-        OsTools.runSafe(this, 'gem install --user-install rspec')
-        OsTools.runSafe(this, 'gem install --user-install serverspec')
-        OsTools.runSafe(this, 'gem install --user-install docker-api')
-        OsTools.runSafe(this, "IMAGE_ID=${imageId} rspec --backtrace spec/Dockerfile_spec.rb")
-      }
+      validateExpectations([
+        new Expectation('Has user nexus in group nexus present',
+            'id', '-ng nexus', 'nexus'),
+        new Expectation('Has nexus user java process present',
+            'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
+      ])
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
@@ -95,14 +95,4 @@ node('ubuntu-zion') {
     OsTools.runSafe(this, 'docker system prune -a -f')
     OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
   }
-}
-
-def getGemInstallDirectory() {
-  def content = OsTools.runSafe(this, 'gem env')
-  for (line in content.split('\n')) {
-    if (line.startsWith('  - USER INSTALLATION DIRECTORY: ')) {
-      return line.substring(33)
-    }
-  }
-  error 'Could not determine user gem install directory.'
 }

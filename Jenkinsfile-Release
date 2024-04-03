@@ -6,25 +6,33 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
+import com.sonatype.jenkins.shared.Expectation
+
+String OPENJDK8 = 'OpenJDK 8'
+String OPENJDK11 = 'OpenJDK 11'
+List<String> javaVersions = [OPENJDK8, OPENJDK11]
 
 properties([
   parameters([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
+    choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager'),
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
     booleanParam(defaultValue: false, description: 'Only update the latest tag', name: 'update_latest_only')
   ])
 ])
 
-node('ubuntu-zion-legacy') {
-  def commitId, commitDate, version, imageId, branch, dockerFileLocations
+node('ubuntu-zion') {
+  def commitId, commitDate, version, imageId, branch, dockerFileLocations, dockerJava11FileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
-      credentialsId = 'integrations-github-api',
+      credentialsId = 'jenkins-github',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
-      dockerHubRepository = 'nexus3'
+      dockerHubRepository = 'nexus3',
+      java8 = 'java8',
+      java11 = 'java11'
   GitHub gitHub
 
   try {
@@ -39,6 +47,11 @@ node('ubuntu-zion-legacy') {
         "${pwd()}/Dockerfile.rh.centos",
         "${pwd()}/Dockerfile.rh.el",
         "${pwd()}/Dockerfile.rh.ubi"
+      ]
+
+      dockerJava11FileLocations = [
+          "${pwd()}/Dockerfile.java11",
+          "${pwd()}/Dockerfile.rh.ubi.java11"
       ]
 
       branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
@@ -60,21 +73,34 @@ node('ubuntu-zion-legacy') {
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerFileLocations.each { updateRepositoryManagerVersion(it) }
+
+          if (params.java_version == OPENJDK11) {
+            dockerJava11FileLocations.each { updateRepositoryManagerVersion(it) }
+          } else {
+            dockerFileLocations.each { updateRepositoryManagerVersion(it) }
+          }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
+          if (params.java_version == OPENJDK11) {
+            dockerJava11FileLocations.each { updateRepositoryCookbookVersion(it) }
+          } else {
+            dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
+          }
         }
       }
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
+      def dockerfilePath = 'Dockerfile'
+      if (params.java_version == OPENJDK11) {
+        dockerfilePath = 'Dockerfile.java11'
+      }
+      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
 
       if (currentBuild.result == 'FAILURE') {
@@ -87,13 +113,12 @@ node('ubuntu-zion-legacy') {
     stage('Test') {
       gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
 
-      def gemInstallDirectory = getGemInstallDirectory()
-      withEnv(["PATH+GEMS=${gemInstallDirectory}/bin"]) {
-        OsTools.runSafe(this, "gem install --user-install rspec")
-        OsTools.runSafe(this, "gem install --user-install serverspec")
-        OsTools.runSafe(this, "gem install --user-install docker-api")
-        OsTools.runSafe(this, "IMAGE_ID=${imageId} rspec --backtrace spec/Dockerfile_spec.rb")
-      }
+      validateExpectations([
+        new Expectation('Has user nexus in group nexus present',
+            'id', '-ng nexus', 'nexus'),
+        new Expectation('Has nexus user java process present',
+            'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
+      ])
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
@@ -119,7 +144,7 @@ node('ubuntu-zion-legacy') {
     if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha
           || params.nexus_repository_manager_cookbook_version) {
       stage('Commit Automated Code Update') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'integrations-github-api',
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-github',
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
           def commitMessage = [
             params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha ?
@@ -150,8 +175,13 @@ node('ubuntu-zion-legacy') {
         def dockerhubApiToken
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
             usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+          if (params.java_version == OPENJDK11) {
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${java11}")
+          } else {
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${java8}")
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+          }
           OsTools.runSafe(this, """
             docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
           """)
@@ -173,6 +203,19 @@ node('ubuntu-zion-legacy') {
               acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
               requestBody: "{ \"full_description\": \"${readme}\" }",
               url: "https://hub.docker.com/v2/repositories/${organization}/${dockerHubRepository}/"
+
+          // push to internal repos
+          withSonatypeDockerRegistry() {
+            if (params.java_version == OPENJDK11) {
+              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java11}"
+              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+            } else {
+              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java8}"
+              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java8}"
+            }
+          }
         }
       }
       stage('Push tags') {
@@ -219,16 +262,6 @@ def readVersion() {
 
 def getShortVersion(version) {
   return version.split('-')[0]
-}
-
-def getGemInstallDirectory() {
-  def content = OsTools.runSafe(this, "gem env")
-  for (line in content.split('\n')) {
-    if (line.startsWith('  - USER INSTALLATION DIRECTORY: ')) {
-      return line.substring(33)
-    }
-  }
-  error 'Could not determine user gem install directory.'
 }
 
 def updateRepositoryManagerVersion(dockerFileLocation) {

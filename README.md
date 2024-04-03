@@ -16,15 +16,15 @@
 
 -->
 
-# Sonatype Nexus3 Docker: sonatype/nexus3
+# Sonatype Nexus Repository Docker: sonatype/nexus3
 
 [![Join the chat at https://gitter.im/sonatype/nexus-developers](https://badges.gitter.im/sonatype/nexus-developers.svg)](https://gitter.im/sonatype/nexus-developers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A Dockerfile for Sonatype Nexus Repository Manager 3, starting with 3.18 the image is based on the [Red Hat Universal Base Image](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image) while earlier versions used CentOS.
+A Dockerfile for Sonatype Nexus Repository 3, starting with 3.18 the image is based on the [Red Hat Universal Base Image](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image) while earlier versions used CentOS.
 
 * [Contribution Guidlines](#contribution-guidelines)
 * [Running](#running)
-* [Building the Nexus Repository Manager image](#building-the-nexus-repository-manager-image)
+* [Building the Sonatype Nexus Repository image](#building-the-nexus-repository-manager-image)
 * [Chef Solo for Runtime and Application](#chef-solo-for-runtime-and-application)
 * [Testing the Dockerfile](#testing-the-dockerfile)
 * [Red Hat Certified Image](#red-hat-certified-image)
@@ -58,7 +58,7 @@ To test:
 $ curl http://localhost:8081/
 ```
 
-## Building the Nexus Repository Manager image
+## Building the Sonatype Nexus Repository image
 
 To build a docker image from the [Dockerfile](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile) you can use this command:
 
@@ -68,9 +68,9 @@ $ docker build --rm=true --tag=sonatype/nexus3 .
 
 The following optional variables can be used when building the image:
 
-- NEXUS_VERSION: Version of the Nexus Repository Manager
-- NEXUS_DOWNLOAD_URL: Download URL for Nexus Repository, alternative to using `NEXUS_VERSION` to download from Sonatype
-- NEXUS_DOWNLOAD_SHA256_HASH: Sha256 checksum for the downloaded Nexus Repository Manager archive. Required if `NEXUS_VERSION`
+- NEXUS_VERSION: Version of the Sonatype Nexus Repository
+- NEXUS_DOWNLOAD_URL: Download URL for Sonatype Nexus Repository, alternative to using `NEXUS_VERSION` to download from Sonatype
+- NEXUS_DOWNLOAD_SHA256_HASH: Sha256 checksum for the downloaded Sonatype Nexus Repository archive. Required if `NEXUS_VERSION`
  or `NEXUS_DOWNLOAD_URL` is provided
 
 ## Chef Solo for Runtime and Application
@@ -132,7 +132,7 @@ process, which runs as UID 200.
   ```
 
   Of particular note, `-Djava.util.prefs.userRoot=/some-other-dir` can be set to a persistent path, which will maintain
-  the installed Nexus Repository License if the container is restarted.
+  the installed Sonatype Nexus Repository License if the container is restarted.
   
   Be sure to check the [memory requirements](https://help.sonatype.com/display/NXRM3/System+Requirements#SystemRequirements-MemoryRequirements) when deciding how much heap and direct memory to allocate.
 
@@ -177,8 +177,8 @@ Looking to contribute to our Docker image but need some help? There's a few ways
 * Chat with us on [Gitter](https://gitter.im/sonatype/nexus-developers)
 * File an issue [on our public JIRA](https://issues.sonatype.org/projects/NEXUS/)
 * Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
-* Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
+* Check out the [Sonatype Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
 
 ## License Disclaimer
 
-_Nexus Repository OSS is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work._
+_Sonatype Nexus Repository OSS is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work._
