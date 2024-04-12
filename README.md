@@ -175,7 +175,6 @@ for additional information.
 Looking to contribute to our Docker image but need some help? There's a few ways to get information or our attention:
 
 * Chat with us on [Gitter](https://gitter.im/sonatype/nexus-developers)
-* File an issue [on our public JIRA](https://issues.sonatype.org/projects/NEXUS/)
 * Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
 * Check out the [Sonatype Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
 
