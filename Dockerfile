@@ -15,26 +15,26 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
 
 LABEL name="Nexus Repository Manager" \
-      maintainer="Sonatype <support@sonatype.com>" \
-      vendor=Sonatype \
-      version="3.67.1-01" \
-      release="3.67.1" \
-      url="https://sonatype.com" \
-      summary="The Nexus Repository Manager server \
-          with universal support for popular component formats." \
-      description="The Nexus Repository Manager server \
-          with universal support for popular component formats." \
-      run="docker run -d --name NAME \
-          -p 8081:8081 \
-          IMAGE" \
-      stop="docker stop NAME" \
-      com.sonatype.license="Apache License, Version 2.0" \
-      com.sonatype.name="Nexus Repository Manager base image" \
-      io.k8s.description="The Nexus Repository Manager server \
-          with universal support for popular component formats." \
-      io.k8s.display-name="Nexus Repository Manager" \
-      io.openshift.expose-services="8081:8081" \
-      io.openshift.tags="Sonatype,Nexus,Repository Manager"
+    maintainer="Sonatype <support@sonatype.com>" \
+    vendor=Sonatype \
+    version="3.67.1-01" \
+    release="3.67.1" \
+    url="https://sonatype.com" \
+    summary="The Nexus Repository Manager server \
+    with universal support for popular component formats." \
+    description="The Nexus Repository Manager server \
+    with universal support for popular component formats." \
+    run="docker run -d --name NAME \
+    -p 8081:8081 \
+    IMAGE" \
+    stop="docker stop NAME" \
+    com.sonatype.license="Apache License, Version 2.0" \
+    com.sonatype.name="Nexus Repository Manager base image" \
+    io.k8s.description="The Nexus Repository Manager server \
+    with universal support for popular component formats." \
+    io.k8s.display-name="Nexus Repository Manager" \
+    io.openshift.expose-services="8081:8081" \
+    io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
 ARG NEXUS_VERSION=3.67.1-01
 ARG JAVA_VERSION=java8
@@ -52,7 +52,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 # Install Java & tar
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
+    java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
@@ -74,12 +74,12 @@ RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-${JAVA_VERSION
 RUN sed -i '/^-Xms/d;/^-Xmx/d;/^-XX:MaxDirectMemorySize/d' $NEXUS_HOME/bin/nexus.vmoptions
 
 RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
+    && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-RUN microdnf remove -y gzip shadow-utils
+#RUN microdnf remove -y gzip shadow-utils
 
 VOLUME ${NEXUS_DATA}
 
