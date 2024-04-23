@@ -8,7 +8,8 @@ import com.sonatype.jenkins.pipeline.OsTools
 
 String OPENJDK8 = 'OpenJDK 8'
 String OPENJDK11 = 'OpenJDK 11'
-List<String> javaVersions = [OPENJDK8, OPENJDK11]
+String OPENJDK17 = 'OpenJDK 17'
+List<String> javaVersions = [OPENJDK8, OPENJDK11, OPENJDK17]
 
 properties([
     parameters([
@@ -45,6 +46,7 @@ node('ubuntu-zion') {
           OsTools.runSafe(this, "git checkout ${branch}")
           updateRepositoryManagerVersion("${pwd()}/Dockerfile", 'java8')
           updateRepositoryManagerVersion("${pwd()}/Dockerfile.java11", 'java11')
+          updateRepositoryManagerVersion("${pwd()}/Dockerfile.java17", 'java17')
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
@@ -53,6 +55,8 @@ node('ubuntu-zion') {
       def dockerfilePath = 'Dockerfile'
       if (params.java_version == OPENJDK11) {
         dockerfilePath = 'Dockerfile.java11'
+      } else if (params.java_version == OPENJDK17) {
+        dockerfilePath = 'Dockerfile.java17'
       }
       def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
@@ -83,6 +87,9 @@ node('ubuntu-zion') {
           if (params.java_version == OPENJDK11) {
             sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
+          } else if (params.java_version == OPENJDK17) {
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17"
           } else {
             sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
