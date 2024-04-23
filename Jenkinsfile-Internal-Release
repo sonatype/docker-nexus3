@@ -58,7 +58,7 @@ node('ubuntu-zion') {
       } else if (params.java_version == OPENJDK17) {
         dockerfilePath = 'Dockerfile.java17'
       }
-      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
+      def hash = OsTools.runSafe(this, "docker build --progress=plain --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
     }
     if (params.scan_for_policy_violations) {
