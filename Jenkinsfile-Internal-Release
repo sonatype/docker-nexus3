@@ -9,6 +9,7 @@ import com.sonatype.jenkins.pipeline.OsTools
 String OPENJDK8 = 'OpenJDK 8'
 String OPENJDK11 = 'OpenJDK 11'
 List<String> javaVersions = [OPENJDK8, OPENJDK11]
+String RED_HAT_REGISTRY = "registry.access.redhat.com"
 
 properties([
     parameters([
@@ -54,7 +55,13 @@ node('ubuntu-zion') {
       if (params.java_version == OPENJDK11) {
         dockerfilePath = 'Dockerfile.java11'
       }
-      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
+      def baseImage = extractBaseImage(dockerfilePath)
+      OsTools.runSafe(this, "docker pull ${baseImage}")
+      def baseImageRef = getRedHatCatalogReference(baseImage, RED_HAT_REGISTRY)
+      if (baseImageRef == null) {
+        baseImageRef = baseImage
+      }
+      def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageRef}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
     }
     if (params.scan_for_policy_violations) {
@@ -155,4 +162,78 @@ def getSha(url) {
       returnStdout: true
   ).trim()
   return sha
+}
+
+def extractBaseImage (dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+  def baseImageRegex = "FROM\\s+([^\\s]+)"
+  def usedImages = dockerFile =~ baseImageRegex
+
+  return usedImages[0][1]
+}
+
+def getRedHatCatalogReference(baseImage, registryName) {
+  def repoName = extractRedHatRepoName(baseImage, registryName)
+  def dockerImageId = getDockerImageId(baseImage)
+  if(repoName == null || dockerImageId == null) {
+    return null
+  }
+
+  def imageId = getRedHatImageId(dockerImageId)
+  def repoId = getRedHatRepoId(repoName, registryName)
+  if(imageId == null || repoId == null) {
+    return "Base Image: ${baseImage} - Docker Image ID: ${dockerImageId}"
+  }
+
+  def imageArch = sh (
+      script: "docker image inspect ${baseImage} | jq -r '.[0].Architecture' ",
+      returnStdout: true
+  ).trim()
+  imageArch == "null" ? null : imageArch
+
+  if (imageArch != null) {
+    return "https://catalog.redhat.com/software/containers/${repoName}/${repoId}?architecture=${imageArch}&image=${imageId}"
+  } else {
+    return "https://catalog.redhat.com/software/containers/${repoName}/${repoId}?image=${imageId}"
+  }
+}
+
+def extractRedHatRepoName(baseImage, registryName) {
+  if(!baseImage.contains(registryName)) {
+    return null
+  }
+  def repositoryRegex = "${registryName}\\/(.*)"
+  def repository = (baseImage =~ repositoryRegex)[0][1]
+  return repository
+}
+
+def getDockerImageId(baseImage) {
+  def dockerImageId = sh (
+      script: "docker image inspect ${baseImage} | jq -r '.[0].Id' ",
+      returnStdout: true
+  ).trim()
+
+  return dockerImageId == "null" ? null : dockerImageId
+}
+
+def getRedHatImageId (dockerImageId) {
+  def imageSearchUrl =
+      "https://catalog.redhat.com/api/containers/v1/images?filter=docker_image_id==\"${dockerImageId}\""
+  def imageId = sh (
+      script: "curl -s -L ${imageSearchUrl} | jq -r '.data[0]._id' ",
+      returnStdout: true
+  ).trim()
+
+  return imageId == "null" ? null : imageId
+}
+
+def getRedHatRepoId (repoName, registryName) {
+  def repoSearchUrl =
+      "https://catalog.redhat.com/api/containers/v1/repositories/registry/${registryName}/repository/${repoName}"
+  def repoId = sh (
+      script: "curl -s -L ${repoSearchUrl} | jq -r '._id' ",
+      returnStdout: true
+  ).trim()
+
+  return repoId == "null" ? null : repoId
 }
