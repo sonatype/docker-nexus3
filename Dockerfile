@@ -79,7 +79,7 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-RUN microdnf remove -y gzip shadow-utils
+RUN microdnf remove -y shadow-utils
 
 VOLUME ${NEXUS_DATA}
 
