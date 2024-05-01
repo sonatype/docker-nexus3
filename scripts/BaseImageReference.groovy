@@ -3,6 +3,7 @@
  * Includes the third-party code listed at http://links.sonatype.com/products/nexus/attributions.
  * "Sonatype" is a trademark of Sonatype, Inc.
  */
+
 interface BaseImageReference
 {
   String getReference()
@@ -14,13 +15,13 @@ class DefaultBaseImageReference
     implements BaseImageReference
 {
   private String baseImage
+
   private DockerImageHelper dockerImageHelper
 
   DefaultBaseImageReference(String baseImage, DockerImageHelper dockerImageHelper) {
     this.baseImage = baseImage
     this.dockerImageHelper = dockerImageHelper
   }
-
 
   String getReference(String registryName = null) {
     def imageDigest = dockerImageHelper.getImageFirstRepoDigest(baseImage)
@@ -37,7 +38,9 @@ class RedHatBaseImageReference
   final static RED_HAT_REGISTRY = "registry.access.redhat.com"
 
   private String baseImage
+
   private DockerImageHelper dockerImageHelper
+
   private steps
 
   RedHatBaseImageReference(String baseImage, DockerImageHelper dockerImageHelper, steps) {
@@ -108,6 +111,7 @@ class DockerImageHelper
   DockerImageHelper(steps) {
     this.steps = steps
   }
+
   def getImageId(baseImage) {
     pullImage(baseImage)
     def dockerImageId = steps.sh(
