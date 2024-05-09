@@ -12,7 +12,6 @@ node('ubuntu-zion') {
   def commitId, commitDate, imageId, branch
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
-      credentialsId = 'integrations-github-api',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
       dockerHubRepository = 'nexus3'
@@ -33,9 +32,10 @@ node('ubuntu-zion') {
       OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
 
       def apiToken
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-        apiToken = env.GITHUB_API_PASSWORD
+     withCredentials([usernamePassword(credentialsId: 'jenkins-github',
+                                               usernameVariable: 'GITHUB_APP',
+                                               passwordVariable: 'GITHUB_ACCESS_TOKEN')]) {
+        apiToken = env.GITHUB_ACCESS_TOKEN
       }
       gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
     }
