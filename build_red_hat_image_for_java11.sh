@@ -28,7 +28,6 @@
 set -x # log commands as they execute
 set -e # stop execution on the first failed command
 
-DOCKERFILE=Dockerfile.rh.ubi.java11
 JAVA_VERSION="java11"
 
 # from config/scanning page at red hat
@@ -39,7 +38,7 @@ IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${J
 
 AUTHFILE="${HOME}/.docker/config.json"
 
-docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
+docker build -f "${DOCKERFILE}" --label base-image-ref=${BASE_IMG_REF} -t "${IMAGE_TAG}" .
 docker tag "${IMAGE_TAG}"
 
 docker login "${REPOSITORY}" \

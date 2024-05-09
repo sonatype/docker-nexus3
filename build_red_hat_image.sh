@@ -28,8 +28,6 @@
 set -x # log commands as they execute
 set -e # stop execution on the first failed command
 
-DOCKERFILE=Dockerfile.rh.ubi
-
 # from config/scanning page at red hat
 CERT_PROJECT_ID=5e61d90a38776799eb517bd2
 
@@ -39,7 +37,7 @@ IMAGE_LATEST="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:latest"
 
 AUTHFILE="${HOME}/.docker/config.json"
 
-docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
+docker build -f "${DOCKERFILE}" --label base-image-ref=${BASE_IMG_REF} -t "${IMAGE_TAG}" .
 docker tag "${IMAGE_TAG}" "${IMAGE_LATEST}"
 
 docker login "${REPOSITORY}" \
