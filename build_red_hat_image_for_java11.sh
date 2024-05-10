@@ -20,6 +20,8 @@
 #   * https://github.com/redhat-openshift-ecosystem/openshift-preflight
 #   * https://podman.io/
 # * environment variables:
+#   * DOCKERFILE to be built
+#   * BASE_IMG_REF to add as a label to the image
 #   * VERSION of the docker image  to build for the red hat registry
 #   * REGISTRY_LOGIN from Red Hat config page for image
 #   * REGISTRY_PASSWORD from Red Hat config page for image
@@ -41,22 +43,15 @@ AUTHFILE="${HOME}/.docker/config.json"
 docker build -f "${DOCKERFILE}" --label base-image-ref=${BASE_IMG_REF} -t "${IMAGE_TAG}" .
 docker tag "${IMAGE_TAG}" "${IMAGE_TAG}"
 
-echo "##### CHECK HERE IF THE PRODUCED IMAGE CONTAINS A VALID VALUE OF base-image-ref IN LABELS ######"
-sleep 5
+docker login "${REPOSITORY}" \
+       -u "${REGISTRY_LOGIN}" \
+       --password "${REGISTRY_PASSWORD}"
 
-docker inspect ${IMAGE_TAG}
+docker push "${IMAGE_TAG}"
 
-#docker login "${REPOSITORY}" \
-#       -u "${REGISTRY_LOGIN}" \
-#       --password "${REGISTRY_PASSWORD}"
-#
-#docker push "${IMAGE_TAG}"
-#
-#preflight check container \
-#          "${IMAGE_TAG}" \
-#          --docker-config="${AUTHFILE}" \
-#          --submit \
-#          --certification-project-id="${CERT_PROJECT_ID}" \
-#          --pyxis-api-token="${API_TOKEN}"
-
-echo "FINISHING"
+preflight check container \
+          "${IMAGE_TAG}" \
+          --docker-config="${AUTHFILE}" \
+          --submit \
+          --certification-project-id="${CERT_PROJECT_ID}" \
+          --pyxis-api-token="${API_TOKEN}"

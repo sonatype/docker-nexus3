@@ -32,15 +32,15 @@ node('ubuntu-zion') {
       '''
     }
     stage('Build') {
-      //withCredentials([
-      //  usernamePassword(
-      //      credentialsId: 'red-hat-quay-nexus-repository-manager',
-      //      usernameVariable: 'REGISTRY_LOGIN',
-      //      passwordVariable: 'REGISTRY_PASSWORD'),
-      //  string(
-      //      credentialsId: 'red-hat-api-token',
-      //      variable: 'API_TOKEN')
-      //]) {
+      withCredentials([
+        usernamePassword(
+            credentialsId: 'red-hat-quay-nexus-repository-manager',
+            usernameVariable: 'REGISTRY_LOGIN',
+            passwordVariable: 'REGISTRY_PASSWORD'),
+        string(
+            credentialsId: 'red-hat-api-token',
+            variable: 'API_TOKEN')
+      ]) {
         def dockerfilePath = 'Dockerfile.rh.ubi'
         if (params.java_version == OPENJDK11) {
           dockerfilePath = 'Dockerfile.rh.ubi.java11'
@@ -55,7 +55,7 @@ node('ubuntu-zion') {
         } else {
           sh "PATH=\$PATH:. VERSION='${version}' DOCKERFILE='${dockerfilePath}' BASE_IMG_REF='${baseImageReferenceStr}' ./build_red_hat_image.sh"
         }
-      //}
+      }
     }
   } finally {
     sh 'docker logout'
