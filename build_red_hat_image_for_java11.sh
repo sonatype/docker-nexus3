@@ -39,13 +39,12 @@ IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${J
 AUTHFILE="${HOME}/.docker/config.json"
 
 docker build -f "${DOCKERFILE}" --label base-image-ref=${BASE_IMG_REF} -t "${IMAGE_TAG}" .
-docker tag "${IMAGE_TAG}"
+docker tag "${IMAGE_TAG}" "${IMAGE_TAG}"
 
-echo "SLEEPING BEFORE PROCEEDING WITH THE TEST"
+echo "##### CHECK HERE IF THE PRODUCED IMAGE CONTAINS A VALID VALUE OF base-image-ref IN LABELS ######"
 sleep 5
 
 docker inspect ${IMAGE_TAG}
-docker inspect ${IMAGE_LATEST}
 
 #docker login "${REPOSITORY}" \
 #       -u "${REGISTRY_LOGIN}" \
