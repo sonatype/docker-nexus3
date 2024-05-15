@@ -71,14 +71,14 @@ node('ubuntu-zion') {
 
       version = readVersion()
 
-      def apiToken
-      withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                        credentialsId: credentialsId,
-                        usernameVariable: 'GITHUB_API_USERNAME',
-                        passwordVariable: 'GITHUB_API_PASSWORD']]) {
-        apiToken = env.GITHUB_API_PASSWORD
-      }
-      gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
+      //def apiToken
+      //withCredentials([[$class: 'UsernamePasswordMultiBinding',
+      //                  credentialsId: credentialsId,
+      //                  usernameVariable: 'GITHUB_API_USERNAME',
+      //                  passwordVariable: 'GITHUB_API_PASSWORD']]) {
+      //  apiToken = env.GITHUB_API_PASSWORD
+      //}
+      //gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
 
       def dockerfileLocationsMap = [
           (OPENJDK8): dockerFileLocations,
@@ -87,110 +87,123 @@ node('ubuntu-zion') {
       ]
       def chosenDockerfileLocations = dockerfileLocationsMap.get(params.java_version)
 
-      if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
+      //if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          chosenDockerfileLocations.each { updateRepositoryManagerVersion(it) }
+          chosenDockerfileLocations.each {
+            echo "Jenkinsfile-Release > update repo manager version it ::"
+            echo it
+            //updateRepositoryManagerVersion(it)
+          }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
-      }
-      if (params.nexus_repository_manager_cookbook_version) {
+      //}
+      //if (params.nexus_repository_manager_cookbook_version) {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          chosenDockerfileLocations.each { updateRepositoryCookbookVersion(it) }
+          chosenDockerfileLocations.each {
+            echo "Jenkinsfile-Release > update repo manager cookbook version it ::"
+            echo it
+            //updateRepositoryCookbookVersion(it)
+          }
         }
-      }
+      //}
     }
     stage('Build') {
-      gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
+      //gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
       def dockerfilesMap = [
           (OPENJDK8): 'Dockerfile',
           (OPENJDK11): 'Dockerfile.java11',
           (OPENJDK17): 'Dockerfile.java17'
       ]
       def dockerfilePath = dockerfilesMap.get(params.java_version)
-      def baseImage = extractBaseImage(dockerfilePath)
-      def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
-      def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
-      def baseImageReferenceStr = baseImageReference.getReference()
-      def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
-      imageId = hash.split(':')[1]
 
-      if (currentBuild.result == 'FAILURE') {
-        gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
-        return
-      } else {
-        gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
-      }
-    }
-    stage('Test') {
-      gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
+      echo "Jenkinsfile-Release > dockerfilePath ::"
+      echo dockerfilePath
 
-      validateExpectations([
-        new Expectation('Has user nexus in group nexus present',
-            'id', '-ng nexus', 'nexus'),
-        new Expectation('Has nexus user java process present',
-            'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
-      ])
+      //def baseImage = extractBaseImage(dockerfilePath)
+      //def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
+      //def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
+      //def baseImageReferenceStr = baseImageReference.getReference()
+      //def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
+      //imageId = hash.split(':')[1]
+      //
+      //if (currentBuild.result == 'FAILURE') {
+      //  gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
+      //  return
+      //} else {
+      //  gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
+      //}
+    }
+    //stage('Test') {
+    //  gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
+    //
+    //  validateExpectations([
+    //    new Expectation('Has user nexus in group nexus present',
+    //        'id', '-ng nexus', 'nexus'),
+    //    new Expectation('Has nexus user java process present',
+    //        'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
+    //  ])
+    //
+    //  if (currentBuild.result == 'FAILURE') {
+    //    gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
+    //    return
+    //  } else {
+    //    gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
+    //  }
+    //}
 
-      if (currentBuild.result == 'FAILURE') {
-        gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
-        return
-      } else {
-        gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
-      }
-    }
+    //stage('Evaluate Policies') {
+    //  runEvaluation({ stage ->
+    //    nexusPolicyEvaluation(
+    //      iqStage: stage,
+    //      iqApplication: 'docker-nexus3',
+    //      iqScanPatterns: [[scanPattern: "container:${imageName}"]],
+    //      failBuildOnNetworkError: true,
+    //    )}, 'release')
+    //}
 
-    stage('Evaluate Policies') {
-      runEvaluation({ stage ->
-        nexusPolicyEvaluation(
-          iqStage: stage,
-          iqApplication: 'docker-nexus3',
-          iqScanPatterns: [[scanPattern: "container:${imageName}"]],
-          failBuildOnNetworkError: true,
-        )}, 'release')
-    }
-
-    if (currentBuild.result == 'FAILURE') {
-      return
-    }
-    if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha
-          || params.nexus_repository_manager_cookbook_version) {
-      stage('Commit Automated Code Update') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-github',
-                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-          def commitMessage = [
-            params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha ?
-                "Update Repository Manager to ${params.nexus_repository_manager_version}." : "",
-            params.nexus_repository_manager_cookbook_version ?
-                "Update Repository Manager Cookbook to ${params.nexus_repository_manager_cookbook_version}." : ""
-          ].findAll({ it }).join(' ')
-
-          if (!params.update_latest_only) {
-            OsTools.runSafe(this, """
-              git add .
-              git commit -m '${commitMessage}'
-              git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git ${branch}
-            """)
-          }
-        }
-      }
-    }
-    stage('Archive') {
-      dir('build/target') {
-        OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
-        archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
-      }
-    }
-    if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
-      input 'Push image and tags?'
+    //if (currentBuild.result == 'FAILURE') {
+    //  return
+    //}
+    //if (params.nexus_repository_manager_version &&
+    //    params.nexus_repository_manager_version_sha ||
+    //    params.nexus_repository_manager_cookbook_version) {
+    //  stage('Commit Automated Code Update') {
+    //    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-github',
+    //                    usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+    //      def commitMessage = [
+    //        params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha ?
+    //            "Update Repository Manager to ${params.nexus_repository_manager_version}." : "",
+    //        params.nexus_repository_manager_cookbook_version ?
+    //            "Update Repository Manager Cookbook to ${params.nexus_repository_manager_cookbook_version}." : ""
+    //      ].findAll({ it }).join(' ')
+    //
+    //      if (!params.update_latest_only) {
+    //        OsTools.runSafe(this, """
+    //          git add .
+    //          git commit -m '${commitMessage}'
+    //          git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git ${branch}
+    //        """)
+    //      }
+    //    }
+    //  }
+    //}
+    //stage('Archive') {
+    //  dir('build/target') {
+    //    OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
+    //    archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
+    //  }
+    //}
+    //if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
+      //input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
 
-        withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                          credentialsId: 'docker-hub-credentials',
-                          usernameVariable: 'DOCKERHUB_API_USERNAME',
-                          passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
+        //withCredentials([[$class: 'UsernamePasswordMultiBinding',
+        //                  credentialsId: 'docker-hub-credentials',
+        //                  usernameVariable: 'DOCKERHUB_API_USERNAME',
+        //                  passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
           def javaVersionSuffixesMap = [
               (OPENJDK8): JAVA_8,
               (OPENJDK11): JAVA_11,
@@ -198,15 +211,26 @@ node('ubuntu-zion') {
           ]
           def javaVersionSuffix = javaVersionSuffixesMap.get(params.java_version)
 
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}")
+          echo "Jenkinsfile-Release > javaVersionSuffix ::"
+          echo javaVersionSuffix
+
+          echo "Jenkinsfile-Release > dockerhub docker tag ::"
+          echo "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+
+          //OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}")
+
           if (params.java_version == OPENJDK8) {
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+            echo "Jenkinsfile-Release > dockerhub docker tag ::"
+            echo "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}"
+            echo "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest"
+
+            //OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
+            //OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
           }
 
-          OsTools.runSafe(this, """
-            docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
-          """)
+          //OsTools.runSafe(this, """
+          //  docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
+          //""")
 
           def dockerPushCmdsMap = [
               (OPENJDK8): "docker push --all-tags ${organization}/${dockerHubRepository}",
@@ -215,66 +239,81 @@ node('ubuntu-zion') {
           ]
           def dockerPushCmd = dockerPushCmdsMap.get(params.java_version)
 
-          OsTools.runSafe(this, dockerPushCmd)
+          echo "Jenkinsfile-Release > dockerhub docker push ::"
+          echo dockerPushCmd
 
-          response = OsTools.runSafe(this, """
-            curl -X POST https://hub.docker.com/v2/users/login/ \
-              -H 'cache-control: no-cache' -H 'content-type: application/json' \
-              -d '{ "username": "${env.DOCKERHUB_API_USERNAME}", "password": "${env.DOCKERHUB_API_PASSWORD}" }'
-          """)
-          token = readJSON text: response
-          dockerhubApiToken = token.token
+          //OsTools.runSafe(this, dockerPushCmd)
 
-          def readme = readFile file: 'README.md', encoding: 'UTF-8'
-          readme = readme.replaceAll("(?s)<!--.*?-->", "")
-          readme = readme.replace("\"", "\\\"")
-          readme = readme.replace("\n", "\\n")
-          response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
-              acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
-              requestBody: "{ \"full_description\": \"${readme}\" }",
-              url: "https://hub.docker.com/v2/repositories/${organization}/${dockerHubRepository}/"
+          //response = OsTools.runSafe(this, """
+          //  curl -X POST https://hub.docker.com/v2/users/login/ \
+          //    -H 'cache-control: no-cache' -H 'content-type: application/json' \
+          //    -d '{ "username": "${env.DOCKERHUB_API_USERNAME}", "password": "${env.DOCKERHUB_API_PASSWORD}" }'
+          //""")
+          //token = readJSON text: response
+          //dockerhubApiToken = token.token
+          //
+          //def readme = readFile file: 'README.md', encoding: 'UTF-8'
+          //readme = readme.replaceAll("(?s)<!--.*?-->", "")
+          //readme = readme.replace("\"", "\\\"")
+          //readme = readme.replace("\n", "\\n")
+          //response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
+          //    acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
+          //    requestBody: "{ \"full_description\": \"${readme}\" }",
+          //    url: "https://hub.docker.com/v2/repositories/${organization}/${dockerHubRepository}/"
 
           // push to internal repos
-          withSonatypeDockerRegistry() {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+          //withSonatypeDockerRegistry() {
+            echo "Jenkinsfile-Release > sonatype docker tag ::"
+            echo "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+
+            echo "Jenkinsfile-Release > sonatype docker push ::"
+            echo "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+
+            //sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+            //sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
 
             if (params.java_version == OPENJDK8) {
-              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+              echo "Jenkinsfile-Release > sonatype docker tag ::"
+              echo "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+
+              echo "Jenkinsfile-Release > sonatype docker push ::"
+              echo "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+
+              //sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+              //sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
             }
-          }
-        }
+          //}
+        //}
       }
-      stage('Push tags') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                          credentialsId: credentialsId,
-                          usernameVariable: 'GITHUB_API_USERNAME',
-                          passwordVariable: 'GITHUB_API_PASSWORD']]) {
-          OsTools.runSafe(this, "git tag ${version}")
-          OsTools.runSafe(this, """
-            git push \
-            https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git \
-              ${version}
-          """)
-        }
-        OsTools.runSafe(this, "git tag -d ${version}")
-      }
-    }
-    else if(params.update_latest_only) {
-      stage('Push tags') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                          credentialsId: 'docker-hub-credentials',
-                          usernameVariable: 'DOCKERHUB_API_USERNAME',
-                          passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
-          OsTools.runSafe(this, """
-            docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
-          """)
-          OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
-        }
-      }
-    }
+      //stage('Push tags') {
+      //  withCredentials([[$class: 'UsernamePasswordMultiBinding',
+      //                    credentialsId: credentialsId,
+      //                    usernameVariable: 'GITHUB_API_USERNAME',
+      //                    passwordVariable: 'GITHUB_API_PASSWORD']]) {
+      //    OsTools.runSafe(this, "git tag ${version}")
+      //    OsTools.runSafe(this, """
+      //      git push \
+      //      https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git \
+      //        ${version}
+      //    """)
+      //  }
+      //  OsTools.runSafe(this, "git tag -d ${version}")
+      //}
+    //}
+    //else if(params.update_latest_only) {
+    //  stage('Push tags') {
+    //    withCredentials([[$class: 'UsernamePasswordMultiBinding',
+    //                      credentialsId: 'docker-hub-credentials',
+    //                      usernameVariable: 'DOCKERHUB_API_USERNAME',
+    //                      passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
+    //      OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+    //      OsTools.runSafe(this, """
+    //        docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
+    //      """)
+    //      OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
+    //    }
+    //  }
+    //}
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")

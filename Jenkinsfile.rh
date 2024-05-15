@@ -36,15 +36,13 @@ node('ubuntu-zion') {
       '''
     }
     stage('Build') {
-      withCredentials([
-        usernamePassword(
-            credentialsId: 'red-hat-quay-nexus-repository-manager',
-            usernameVariable: 'REGISTRY_LOGIN',
-            passwordVariable: 'REGISTRY_PASSWORD'),
-        string(
-            credentialsId: 'red-hat-api-token',
-            variable: 'API_TOKEN')
-      ]) {
+      //withCredentials([
+      //  usernamePassword(
+      //      credentialsId: 'red-hat-quay-nexus-repository-manager',
+      //      usernameVariable: 'REGISTRY_LOGIN',
+      //      passwordVariable: 'REGISTRY_PASSWORD'),
+      //      string(credentialsId: 'red-hat-api-token', variable: 'API_TOKEN')
+      //]) {
         def javaVersionsMap = [
             (OPENJDK8): JAVA_8,
             (OPENJDK11): JAVA_11,
@@ -52,11 +50,18 @@ node('ubuntu-zion') {
         ]
         def javaVersion = javaVersionsMap.get(params.java_version)
 
+        echo "Jenkinsfile.rh > javaVersion ::"
+        echo javaVersion
+
         def buildRedhatImageShCmd = 'PATH="$PATH:." VERSION=$version ' +
             "JAVA_VERSION=${javaVersion} " +
             './build_red_hat_image.sh'
+
+        echo "Jenkinsfile.rh > buildRedhatImageShCmd ::"
+        echo buildRedhatImageShCmd
+
         sh buildRedhatImageShCmd
-      }
+      //}
     }
   } finally {
     sh 'docker logout'

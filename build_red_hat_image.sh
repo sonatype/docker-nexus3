@@ -41,7 +41,7 @@ IMAGE_LATEST="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:latest"
 IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}"
 DOCKER_TAG_CMD="${IMAGE_TAG} ${IMAGE_LATEST}"
 
-if [[ "${JAVA_VERSION}" != "${JAVA_8}" ]]; then
+if [[ $JAVA_VERSION != $JAVA_8 ]]; then
   DOCKERFILE="Dockerfile.rh.ubi.${JAVA_VERSION}"
   IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${JAVA_VERSION}"
   DOCKER_TAG_CMD="${IMAGE_TAG}"
@@ -49,22 +49,34 @@ fi
 
 AUTHFILE="${HOME}/.docker/config.json"
 
-docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
-docker tag "${DOCKER_TAG_CMD}"
+echo "build_red_hat_image.sh > IMAGE_LATEST ::"
+echo "$IMAGE_LATEST"
 
-docker login "${REPOSITORY}" \
-       -u "${REGISTRY_LOGIN}" \
-       --password "${REGISTRY_PASSWORD}"
+echo "build_red_hat_image.sh > DOCKERFILE ::"
+echo "$DOCKERFILE"
 
-docker push "${IMAGE_TAG}"
+echo "build_red_hat_image.sh > IMAGE_TAG ::"
+echo "$IMAGE_TAG"
 
-if [[ "${JAVA_VERSION}" == "${JAVA_8}" ]]; then
-  docker push "${IMAGE_LATEST}"
-fi
+echo "build_red_hat_image.sh > DOCKER_TAG_CMD ::"
+echo "$DOCKER_TAG_CMD"
 
-preflight check container \
-          "${IMAGE_TAG}" \
-          --docker-config="${AUTHFILE}" \
-          --submit \
-          --certification-project-id="${CERT_PROJECT_ID}" \
-          --pyxis-api-token="${API_TOKEN}"
+#docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
+#docker tag "${DOCKER_TAG_CMD}"
+#
+#docker login "${REPOSITORY}" \
+#       -u "${REGISTRY_LOGIN}" \
+#       --password "${REGISTRY_PASSWORD}"
+#
+#docker push "${IMAGE_TAG}"
+#
+#if [[ $JAVA_VERSION == $JAVA_8 ]]; then
+#  docker push "${IMAGE_LATEST}"
+#fi
+#
+#preflight check container \
+#          "${IMAGE_TAG}" \
+#          --docker-config="${AUTHFILE}" \
+#          --submit \
+#          --certification-project-id="${CERT_PROJECT_ID}" \
+#          --pyxis-api-token="${API_TOKEN}"
