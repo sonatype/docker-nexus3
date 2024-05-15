@@ -31,11 +31,12 @@ node('ubuntu-zion') {
       credentialsId = 'jenkins-github',
       imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3',
-      dockerHubRepository = 'nexus3',
-      java8 = 'java8',
-      java11 = 'java11',
-      java17 = 'java17'
+      dockerHubRepository = 'nexus3'
   GitHub gitHub
+
+  def JAVA_8 = 'java8'
+  def JAVA_11 = 'java11'
+  def JAVA_17 = 'java17'
 
   try {
     stage('Preparation') {
@@ -71,48 +72,43 @@ node('ubuntu-zion') {
       version = readVersion()
 
       def apiToken
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                        usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+      withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                        credentialsId: credentialsId,
+                        usernameVariable: 'GITHUB_API_USERNAME',
+                        passwordVariable: 'GITHUB_API_PASSWORD']]) {
         apiToken = env.GITHUB_API_PASSWORD
       }
       gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
 
+      def dockerfileLocationsMap = [
+          (OPENJDK8): dockerFileLocations,
+          (OPENJDK11): dockerJava11FileLocations,
+          (OPENJDK17): dockerJava17FileLocations
+      ]
+      def chosenDockerfileLocations = dockerfileLocationsMap.get(params.java_version)
+
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-
-          if (params.java_version == OPENJDK11) {
-            dockerJava11FileLocations.each { updateRepositoryManagerVersion(it) }
-          } else if (params.java_version == OPENJDK17) {
-            dockerJava17FileLocations.each { updateRepositoryManagerVersion(it) }
-          } else {
-            dockerFileLocations.each { updateRepositoryManagerVersion(it) }
-          }
+          chosenDockerfileLocations.each { updateRepositoryManagerVersion(it) }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          if (params.java_version == OPENJDK11) {
-            dockerJava11FileLocations.each { updateRepositoryCookbookVersion(it) }
-          } else if (params.java_version == OPENJDK17) {
-            dockerJava17FileLocations.each { updateRepositoryCookbookVersion(it) }
-          } else {
-            dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
-          }
+          chosenDockerfileLocations.each { updateRepositoryCookbookVersion(it) }
         }
       }
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
-
-      def dockerfilePath = 'Dockerfile'
-      if (params.java_version == OPENJDK11) {
-        dockerfilePath = 'Dockerfile.java11'
-      } else if (params.java_version == OPENJDK17) {
-        dockerfilePath = 'Dockerfile.java17'
-      }
+      def dockerfilesMap = [
+          (OPENJDK8): 'Dockerfile',
+          (OPENJDK11): 'Dockerfile.java11',
+          (OPENJDK17): 'Dockerfile.java17'
+      ]
+      def dockerfilePath = dockerfilesMap.get(params.java_version)
       def baseImage = extractBaseImage(dockerfilePath)
       def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
@@ -190,27 +186,36 @@ node('ubuntu-zion') {
       input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
-            usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-          if (params.java_version == OPENJDK11) {
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${java11}")
-          } else  if (params.java_version == OPENJDK17) {
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${java17}")
-          } else {
+
+        withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                          credentialsId: 'docker-hub-credentials',
+                          usernameVariable: 'DOCKERHUB_API_USERNAME',
+                          passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
+          def javaVersionSuffixesMap = [
+              (OPENJDK8): JAVA_8,
+              (OPENJDK11): JAVA_11,
+              (OPENJDK17): JAVA_17
+          ]
+          def javaVersionSuffix = javaVersionSuffixesMap.get(params.java_version)
+
+          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}")
+          if (params.java_version == OPENJDK8) {
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${java8}")
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
           }
+
           OsTools.runSafe(this, """
             docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
           """)
-          if (params.java_version == OPENJDK11) {
-            OsTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:${version}-${java11}")
-          } else if (params.java_version == OPENJDK17) {
-            OsTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:${version}-${java17}")
-          } else {
-            OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
-          }
+
+          def dockerPushCmdsMap = [
+              (OPENJDK8): "docker push --all-tags ${organization}/${dockerHubRepository}",
+              (OPENJDK11): "docker push ${organization}/${dockerHubRepository}-${JAVA_11}",
+              (OPENJDK17): "docker push ${organization}/${dockerHubRepository}-${JAVA_17}"
+          ]
+          def dockerPushCmd = dockerPushCmdsMap.get(params.java_version)
+
+          OsTools.runSafe(this, dockerPushCmd)
 
           response = OsTools.runSafe(this, """
             curl -X POST https://hub.docker.com/v2/users/login/ \
@@ -231,24 +236,21 @@ node('ubuntu-zion') {
 
           // push to internal repos
           withSonatypeDockerRegistry() {
-            if (params.java_version == OPENJDK11) {
-              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java11}"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java11}"
-            } else if (params.java_version == OPENJDK17) {
-              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java17}"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java17}"
-            } else {
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+
+            if (params.java_version == OPENJDK8) {
               sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
               sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java8}"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${java8}"
             }
           }
         }
       }
       stage('Push tags') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentialsId,
-                          usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                          credentialsId: credentialsId,
+                          usernameVariable: 'GITHUB_API_USERNAME',
+                          passwordVariable: 'GITHUB_API_PASSWORD']]) {
           OsTools.runSafe(this, "git tag ${version}")
           OsTools.runSafe(this, """
             git push \
@@ -261,8 +263,10 @@ node('ubuntu-zion') {
     }
     else if(params.update_latest_only) {
       stage('Push tags') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
-            usernameVariable: 'DOCKERHUB_API_USERNAME', passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                          credentialsId: 'docker-hub-credentials',
+                          usernameVariable: 'DOCKERHUB_API_USERNAME',
+                          passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
           OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
           OsTools.runSafe(this, """
             docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
