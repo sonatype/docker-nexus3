@@ -15,31 +15,31 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
 
 LABEL name="Nexus Repository Manager" \
-    maintainer="Sonatype <support@sonatype.com>" \
-    vendor=Sonatype \
-    version="3.67.1-01" \
-    release="3.67.1" \
-    url="https://sonatype.com" \
-    summary="The Nexus Repository Manager server \
-    with universal support for popular component formats." \
-    description="The Nexus Repository Manager server \
-    with universal support for popular component formats." \
-    run="docker run -d --name NAME \
-    -p 8081:8081 \
-    IMAGE" \
-    stop="docker stop NAME" \
-    com.sonatype.license="Apache License, Version 2.0" \
-    com.sonatype.name="Nexus Repository Manager base image" \
-    io.k8s.description="The Nexus Repository Manager server \
-    with universal support for popular component formats." \
-    io.k8s.display-name="Nexus Repository Manager" \
-    io.openshift.expose-services="8081:8081" \
-    io.openshift.tags="Sonatype,Nexus,Repository Manager"
+      maintainer="Sonatype <support@sonatype.com>" \
+      vendor=Sonatype \
+      version="3.68.0-04" \
+      release="3.68.0" \
+      url="https://sonatype.com" \
+      summary="The Nexus Repository Manager server \
+          with universal support for popular component formats." \
+      description="The Nexus Repository Manager server \
+          with universal support for popular component formats." \
+      run="docker run -d --name NAME \
+          -p 8081:8081 \
+          IMAGE" \
+      stop="docker stop NAME" \
+      com.sonatype.license="Apache License, Version 2.0" \
+      com.sonatype.name="Nexus Repository Manager base image" \
+      io.k8s.description="The Nexus Repository Manager server \
+          with universal support for popular component formats." \
+      io.k8s.display-name="Nexus Repository Manager" \
+      io.openshift.expose-services="8081:8081" \
+      io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.67.1-01
+ARG NEXUS_VERSION=3.68.0-04
 ARG JAVA_VERSION=java8
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=c1530ec125cb5078a6e16c5fcd52b6a830e7495566027aeb3fbe3ca1406c6273
+ARG NEXUS_DOWNLOAD_SHA256_HASH=230e73725063d694e09154b7602685593d15e74de2b6cc8dd227beb4d27093db
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -79,6 +79,7 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
     && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
     && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
+RUN microdnf remove -y shadow-utils
 #RUN microdnf remove -y gzip shadow-utils
 
 VOLUME ${NEXUS_DATA}

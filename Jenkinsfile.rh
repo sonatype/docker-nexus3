@@ -7,7 +7,8 @@
 
 String OPENJDK8 = 'OpenJDK 8'
 String OPENJDK11 = 'OpenJDK 11'
-List<String> javaVersions = [OPENJDK8, OPENJDK11]
+String OPENJDK17 = 'OpenJDK 17'
+List<String> javaVersions = [OPENJDK8, OPENJDK11, OPENJDK17]
 
 properties([
   parameters([
@@ -26,7 +27,7 @@ node('ubuntu-zion') {
       sh 'docker system prune -a -f'
       sh '''
         wget -q -O preflight \
-          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.4.1/preflight-linux-amd64
+          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.9.4/preflight-linux-amd64
         chmod 755 preflight
       '''
     }
