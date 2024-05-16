@@ -39,18 +39,16 @@ CERT_PROJECT_ID=5e61d90a38776799eb517bd2
 REPOSITORY="quay.io"
 IMAGE_LATEST="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:latest"
 IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}"
-DOCKER_TAG_CMD="${IMAGE_TAG} ${IMAGE_LATEST}"
 
 if [[ $JAVA_VERSION != $JAVA_8 ]]; then
   DOCKERFILE="Dockerfile.rh.ubi.${JAVA_VERSION}"
   IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${JAVA_VERSION}"
-  DOCKER_TAG_CMD="${IMAGE_TAG}"
 fi
 
 AUTHFILE="${HOME}/.docker/config.json"
 
 docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
-docker tag "${DOCKER_TAG_CMD}"
+docker tag "${IMAGE_TAG}" "${IMAGE_LATEST}"
 
 docker login "${REPOSITORY}" \
        -u "${REGISTRY_LOGIN}" \
