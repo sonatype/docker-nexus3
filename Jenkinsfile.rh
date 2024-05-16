@@ -18,6 +18,10 @@ properties([
 ])
 
 node('ubuntu-zion') {
+  def JAVA_8 = 'java8'
+  def JAVA_11 = 'java11'
+  def JAVA_17 = 'java17'
+
   try {
     stage('Preparation') {
       deleteDir()
@@ -41,11 +45,17 @@ node('ubuntu-zion') {
             credentialsId: 'red-hat-api-token',
             variable: 'API_TOKEN')
       ]) {
-        if (params.java_version == OPENJDK11) {
-          sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image_for_java11.sh'
-        } else {
-          sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image.sh'
-        }
+        def javaVersionsMap = [
+            (OPENJDK8): JAVA_8,
+            (OPENJDK11): JAVA_11,
+            (OPENJDK17): JAVA_17
+        ]
+        def javaVersion = javaVersionsMap.get(params.java_version)
+
+        def buildRedhatImageShCmd = 'PATH="$PATH:." VERSION=$version ' +
+            "JAVA_VERSION=${javaVersion} " +
+            './build_red_hat_image.sh'
+        sh buildRedhatImageShCmd
       }
     }
   } finally {
