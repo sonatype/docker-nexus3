@@ -42,7 +42,7 @@ node('ubuntu-zion') {
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
 
-      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} .")
+      def hash = OsTools.runSafe(this, "docker build --no-cache --tag ${imageName} .")
       imageId = hash.split(':')[1]
 
       if (currentBuild.result == 'FAILURE') {
