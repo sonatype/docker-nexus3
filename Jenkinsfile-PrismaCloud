@@ -1,0 +1,179 @@
+@Library(['private-pipeline-library', 'jenkins-shared']) _
+
+import com.sonatype.jenkins.pipeline.OsTools
+import groovy.json.JsonSlurper
+
+IQ_URL_BASE = "https://sonatype.sonatype.app/platform"
+PRISMA_CLOUD_ADDRESS = 'https://us-west1.cloud.twistlock.com/us-4-161054503'
+CYCLONEDX_VERSION = "1.5"
+
+properties([
+    parameters([
+        string(name: 'BRANCH_TO_BUILD', defaultValue: '',
+            description: 'Branch the script will be loaded from'),
+        string(name: 'DOCKER_IMAGE_TAG', defaultValue: 'latest',
+            description: 'Tag of the Docker image to be scanned'),
+        string(name: 'NXRM_Version', defaultValue: '',
+            description: 'Nexus Repository Manager Version. The result SBOMs will be tagged with this version.')
+    ])
+])
+
+def getComponentSbom(String componentName, String componentVersion, String buildDir) {
+    def componentInfo = getComponentInfo(componentName)
+    def componentId = componentInfo.applications[0].id
+
+    withCredentials([
+        usernamePassword(
+            credentialsId: 'jenkins-saas-service-acct',
+            usernameVariable: 'IQ_USER',
+            passwordVariable: 'IQ_PASSWORD')
+    ]) {
+        // Get CycloneDx
+        sh "curl -L -u \$IQ_USER:\$IQ_PASSWORD -o '${buildDir}/cyclonedx/${componentName}-${componentVersion}-cyclonedx.json' -X GET \
+        -H 'Accept: application/json' '${IQ_URL_BASE}/api/v2/cycloneDx/${CYCLONEDX_VERSION}/${componentId}/stages/release'"
+    }
+}
+
+def getComponentInfo(String componentName) {
+    def jsonSlurper = new JsonSlurper()
+    def response = null
+
+    withCredentials([
+        usernamePassword(
+            credentialsId: 'jenkins-saas-service-acct',
+            usernameVariable: 'IQ_USER',
+            passwordVariable: 'IQ_PASSWORD')
+    ]) {
+        def rawResponse = sh(returnStdout: true, script: "curl -s -u \$IQ_USER:\$IQ_PASSWORD -X GET '${IQ_URL_BASE}/api/v2/applications?publicId=${componentName}'")
+        response = jsonSlurper.parseText(rawResponse)
+    }
+    return response
+}
+
+pipeline {
+    agent any
+    environment {
+        buildDir = "./.sbom-build/job-${env.BUILD_NUMBER}"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: params.BRANCH_TO_BUILD, url: 'https://github.com/sonatype/docker-nexus3.git'
+            }
+        }
+        stage('Build Image') {
+            steps {
+                script {
+                    runSafely("docker build -t docker-nexus3:${params.DOCKER_IMAGE_TAG} .")
+                }
+            }
+        }
+        stage('Analyze Image with Prisma Cloud') {
+            steps {
+                script {
+                    prismaCloudScanImage(
+                        ca: '',
+                        cert: '',
+                        dockerAddress: 'unix:///var/run/docker.sock',
+                        ignoreImageBuildTime: true,
+                        image: "docker-nexus3:${params.DOCKER_IMAGE_TAG}",
+                        key: '',
+                        logLevel: 'debug',
+                        podmanPath: '',
+                        project: '',
+                        resultsFile: 'prisma-cloud-scan-results.json'
+                    )
+                }
+            }
+        }
+        stage('Analyze Image with IQ') {
+            steps {
+                script {
+                    nexusPolicyEvaluation(
+                        iqApplication: 'docker-nexus3',
+                        iqStage: 'release',
+                        iqScanPatterns: [[scanPattern: "container:docker-nexus3:${params.DOCKER_IMAGE_TAG}"]],
+                        failBuildOnNetworkError: true,
+                        serverUrl: IQ_URL_BASE,
+                        credentialsId: 'nexus_iq_credentials'
+                    )
+                }
+            }
+        }
+        stage('Download SBOM') {
+            steps {
+                script {
+                    sh "mkdir -p ${buildDir}/cyclonedx"
+
+                    // Get docker-nexus3 SBOM
+                    getComponentSbom("docker-nexus3", params.nexus_repository_manager_version, buildDir)
+
+                    sh "echo 'Available CycloneDx SBOMS' && ls ${buildDir}/cyclonedx"
+                }
+            }
+        }
+        stage('Compare Red Hat Patched Versions') {
+            steps {
+                script {
+                    // Pull latest Red Hat UBI image
+                    def redHatImage = "registry.access.redhat.com/ubi8/ubi-minimal:8.9-1161.1715068733"
+                    sh "docker pull ${redHatImage}"
+
+                    // Inspect the image to get the list of installed packages
+                    def redHatPackages = sh(script: "docker run --rm ${redHatImage} rpm -qa --queryformat '%{NAME} %{VERSION}-%{RELEASE}\n'", returnStdout: true).trim().split('\n').collectEntries {
+                        def parts = it.split(' ')
+                        [(parts[0]): parts[1]]
+                    }
+
+                    // Read the Prisma Cloud scan results
+                    def prismaReportPath = "prisma-cloud-scan-results.json"
+                    def prismaReportContent = readFile(file: prismaReportPath)
+                    def prismaReport = new JsonSlurper().parseText(prismaReportContent)
+
+                    // Collect package names and versions from the Prisma Cloud report
+                    def prismaPackages = prismaReport.results[0].entityInfo.packages.findAll { it.pkgsType == 'package' }[0].pkgs.collectEntries {
+                        [(it.name): it.version ?: "unknown"]
+                    }
+
+                    // Compare with Red Hat patched versions and amend to report
+                    def mismatchedDependencies = []
+                    redHatPackages.each { name, version ->
+                        def prismaVersion = prismaPackages.get(name, "unknown")
+                        def match = prismaVersion == version
+                        mismatchedDependencies << [
+                            name: name,
+                            redHatVersion: version,
+                            prismaVersion: prismaVersion,
+                            match: match
+                        ]
+                    }
+
+                    // JSON format
+                    def mismatchedReportJson = mismatchedDependencies.collect { dep ->
+                        """{
+    "name": "${dep.name}",
+    "redHatVersion": "${dep.redHatVersion}",
+    "prismaVersion": "${dep.prismaVersion}",
+    "match": ${dep.match}
+}"""
+                    }.join(',\n')
+
+                    def mismatchedReportPath = "${buildDir}/mismatched_report.json"
+                    writeFile(file: mismatchedReportPath, text: mismatchedReportJson)
+
+                    sh "echo 'Mismatched Lifecycle Report' && cat ${mismatchedReportPath}"
+                }
+            }
+        }
+    }
+    post {
+        always {
+            prismaCloudPublish resultsFilePattern: 'prisma-cloud-scan-results.json'
+            archiveArtifacts artifacts: "prisma-cloud-scan-results.json", fingerprint: true
+            archiveArtifacts artifacts: ".sbom-build/job-${env.BUILD_NUMBER}/mismatched_report.json", fingerprint: true
+            script {
+                OsTools.runSafe(this, "rm -rf '${buildDir}'")
+            }
+        }
+    }
+}
