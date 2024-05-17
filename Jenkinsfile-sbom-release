@@ -14,6 +14,7 @@ TARGET_REPO_NAME = "sonatype-sboms"
 REDHAT_SBOM_REPO_URL_BASE = "https://access.redhat.com/security/data/sbom/beta"
 REDHAT_CONTAINER_API_URL_BASE = "https://catalog.redhat.com/api/containers/v1"
 CYCLONEDX_VERSION = "1.5"
+SPDXMERGE_VERSION_TAG = "v0.2.0"
 
 properties([
     parameters([
@@ -106,7 +107,7 @@ def mergeSpdxComponents(String buildDir, String finalComponentName, String final
 
   sh """#!/bin/bash
         if ! [ -d "${buildDir}/SPDXMerge" ]; then
-          git clone https://github.com/philips-software/SPDXMerge.git '${buildDir}/SPDXMerge'
+          git clone --branch '${SPDXMERGE_VERSION_TAG}' https://github.com/philips-software/SPDXMerge.git '${buildDir}/SPDXMerge'
         fi
       """
 
