@@ -1,6 +1,10 @@
-@Library(['private-pipeline-library', 'jenkins-shared']) _
+/*
+ * Copyright (c) 2011-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/clm/attributions.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
 
-import com.sonatype.jenkins.pipeline.OsTools
+@Library(['private-pipeline-library', 'jenkins-shared']) _
 
 import groovy.json.JsonSlurper
 
@@ -17,103 +21,6 @@ properties([
             description: 'Nexus Repository Manager Version. The result SBOMs will be tagged with this version.')
     ])
 ])
-
-
-node('ubuntu-zion') {
-  def buildDir = "./.sbom-build/job-${env.BUILD_NUMBER}"
-  def ubiImageName = ''
-  def ubiImageVersion = ''
-  def nexusVersion = ''
-  def dockerImageVersion = ''
-  def ubiSbomAvailable = true
-
-  try {
-    stage('Inspect Release Image') {
-      // Get RedHat UBI version
-      sh "docker pull sonatype/nexus3:${params.docker_nexus3_tag}"
-
-      nexusVersion = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
-          | jq -r '.[0].Config.Labels.version' ",
-          returnStdout: true).trim()
-      dockerImageVersion = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
-          | jq -r '.[0].Config.Labels.release' ",
-          returnStdout: true).trim()
-
-      def ubiImageId = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
-          | jq -r '.[0].Config.Labels.\"base-image-ref\"' \
-          | sed -En 's/^.+image=(.+)\$/\\1/p'",
-        returnStdout: true).trim()
-
-      ubiImageName = sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${ubiImageId}' -H 'accept: application/json' \
-          | jq -r '.brew.build' \
-          | sed -En 's/(ubi[0-9]+-minimal)-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1-\\2/p'",
-        returnStdout: true).trim()
-
-      ubiImageVersion = sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${ubiImageId}' -H 'accept: application/json' \
-          | jq -r '.brew.build' \
-          | sed -En 's/ubi[0-9]+-minimal-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1/p'",
-        returnStdout: true).trim()
-    }
-    stage('Download SBOMs') {
-      sh "mkdir -p ${buildDir}/spdx && mkdir -p ${buildDir}/cyclonedx"
-
-      // Get nexus-internal SBOM
-      getComponentSbom(buildDir, "nexus-internal", nexusVersion)
-      // Get nxrm-db-migrator SBOM
-      getComponentSbom(buildDir, "nxrm-db-migrator", nexusVersion)
-      // Get docker-nexus3 SBOM
-      getComponentSbom(buildDir, "docker-nexus3", dockerImageVersion)
-      // Get UBI Minimal SBOM
-      ubiSbomAvailable = getUbiImageSbom(buildDir, ubiImageName, ubiImageVersion)
-
-      sh "echo 'Available SPDX SBOMS' && ls ${buildDir}/spdx"
-      sh "echo 'Available CycloneDx SBOMS' && ls ${buildDir}/cyclonedx"
-    }
-
-    stage('Merge supported sboms') {
-      def pythonEnvDir = "${buildDir}/.spdxmerge"
-
-      sh """#!/bin/bash
-        if ! [ -d "${buildDir}/SPDXMerge" ]; then
-          git clone https://github.com/philips-software/SPDXMerge.git '${buildDir}/SPDXMerge'
-        fi
-      """
-
-      sh """#!/bin/bash
-      if mkdir -p '${pythonEnvDir}' && python3 -m venv '${pythonEnvDir}' && ls '${pythonEnvDir}' && . '${pythonEnvDir}/bin/activate'; then
-        if python3 -m pip install -r '${buildDir}/SPDXMerge/requirements.txt' \
-            && python3 -m pip install setuptools \
-            && python3 '${buildDir}/SPDXMerge/spdxmerge/SPDXMerge.py' --docpath '${buildDir}/spdx' --outpath '${buildDir}/' \
-                --name "docker-nexus3-aggregate" --mergetype "1" --author "Sonatype Inc." --email "support@sonatype.com" \
-                --docnamespace "https://sonatype.sonatype.app/platform/ui/links/application/docker-nexus3/report/b0c5f7f12ac84b439ded3ff255bd5eef" \
-                --filetype J \
-            && mv '${buildDir}/merged-SBoM-deep.json' '${buildDir}/spdx/docker-nexus3-aggregate-${dockerImageVersion}-spdx.json'; then
-          echo 'Merge completed!'
-        else
-        echo 'Merge failed!'
-          FAILED=1
-        fi
-
-        deactivate
-      fi
-
-      exit \${FAILED:-0}
-      """
-    }
-
-    stage('Publish SBOMs') {
-      if (ubiSbomAvailable) {
-        publishComponent(buildDir, "ubi-minimal", ubiImageVersion, false)
-      }
-      publishComponent(buildDir, "nexus-internal", nexusVersion)
-      publishComponent(buildDir, "nxrm-db-migrator", nexusVersion)
-      publishComponent(buildDir, "docker-nexus3", dockerImageVersion)
-      publishComponent(buildDir, "docker-nexus3-aggregate", dockerImageVersion, false)
-    }
-  } finally {
-    OsTools.runSafe(this, "rm -rf '${buildDir}'")
-  }
-}
 
 def getComponentSbom(String buildDir, String componentName, String componentVersion) {
   def componentInfo = getComponentInfo(componentName)
@@ -193,3 +100,95 @@ def publishComponent(String buildDir, String componentName, String componentVers
     sh(publishCommand)
   }
 }
+
+def mergeSpdxComponents(String buildDir, String finalComponentName, String finalComponentVersion, String finalNamespace) {
+  def pythonEnvDir = "${buildDir}/.spdxmerge"
+
+  sh """#!/bin/bash
+        if ! [ -d "${buildDir}/SPDXMerge" ]; then
+          git clone https://github.com/philips-software/SPDXMerge.git '${buildDir}/SPDXMerge'
+        fi
+      """
+
+  sh """#!/bin/bash
+    if mkdir -p '${pythonEnvDir}' && python3 -m venv '${pythonEnvDir}' && ls '${pythonEnvDir}' && . '${pythonEnvDir}/bin/activate'; then
+      if python3 -m pip install -r '${buildDir}/SPDXMerge/requirements.txt' \
+          && python3 -m pip install setuptools \
+          && python3 '${buildDir}/SPDXMerge/spdxmerge/SPDXMerge.py' --docpath '${buildDir}/spdx' --outpath '${buildDir}/' \
+              --name "docker-nexus3-aggregate" --mergetype "1" --author "Sonatype Inc." --email "support@sonatype.com" \
+              --docnamespace "${finalNamespace}" \
+              --filetype J \
+          && mv '${buildDir}/merged-SBoM-deep.json' '${buildDir}/spdx/${finalComponentName}-${finalComponentVersion}-spdx.json'; then
+        echo 'Merge completed!'
+      else
+      echo 'Merge failed!'
+        FAILED=1
+      fi
+
+      deactivate
+    fi
+
+    exit \${FAILED:-0}
+    """
+}
+
+dockerizedRunPipeline(
+    skipVulnerabilityScan: true,
+    pathToDockerfile: "./build-images/Dockerfile.sbom-deployer",
+    prepare: {
+      withSonatypeDockerRegistry() {
+        sh "docker pull sonatype/nexus3:${params.docker_nexus3_tag}"
+        env['nexusVersion'] = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
+            | jq -r '.[0].Config.Labels.version' ",
+          returnStdout: true).trim()
+        env['dockerImageVersion'] = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
+            | jq -r '.[0].Config.Labels.release' ",
+          returnStdout: true).trim()
+        env['ubiImageId'] = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
+            | jq -r '.[0].Config.Labels.\"base-image-ref\"' \
+            | sed -En 's/^.+image=(.+)\$/\\1/p'",
+          returnStdout: true).trim()
+      }
+    },
+    run: {
+      def buildDir = "./.sbom-build/job-${env.BUILD_NUMBER}"
+      def ubiImageName = sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${env.ubiImageId}' -H 'accept: application/json' \
+          | jq -r '.brew.build' \
+          | sed -En 's/(ubi[0-9]+-minimal)-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1-\\2/p'",
+          returnStdout: true).trim()
+      def ubiImageVersion = sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${env.ubiImageId}' -H 'accept: application/json' \
+          | jq -r '.brew.build' \
+          | sed -En 's/ubi[0-9]+-minimal-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1/p'",
+          returnStdout: true).trim()
+
+      // Download SBOMs
+      sh "mkdir -p ${buildDir}/spdx && mkdir -p ${buildDir}/cyclonedx"
+
+      // Get nexus-internal SBOM
+      getComponentSbom(buildDir, "nexus-internal", env.nexusVersion)
+      // Get nxrm-db-migrator SBOM
+      getComponentSbom(buildDir, "nxrm-db-migrator", env.nexusVersion)
+      // Get docker-nexus3 SBOM
+      getComponentSbom(buildDir, "docker-nexus3", env.dockerImageVersion)
+      // Get UBI Minimal SBOM
+      def ubiSbomAvailable = getUbiImageSbom(buildDir, ubiImageName, ubiImageVersion)
+
+      sh "echo 'Available SPDX SBOMS' && ls ${buildDir}/spdx"
+      sh "echo 'Available CycloneDx SBOMS' && ls ${buildDir}/cyclonedx"
+
+      // Merge supported sboms
+      def dockerImageNamespace = sh(script: "cat ${buildDir}/spdx/docker-nexus3-${env.dockerImageVersion}-spdx.json | jq -r '.documentNamespace'", returnStdout: true).trim()
+      mergeSpdxComponents(buildDir, "docker-nexus3-aggregate", env.dockerImageVersion, dockerImageNamespace)
+
+      // Publish SBOMs
+      if (ubiSbomAvailable) {
+        publishComponent(buildDir, "ubi-minimal", ubiImageVersion, false)
+      }
+      publishComponent(buildDir, "nexus-internal", env.nexusVersion)
+      publishComponent(buildDir, "nxrm-db-migrator", env.nexusVersion)
+      publishComponent(buildDir, "docker-nexus3", env.dockerImageVersion)
+      publishComponent(buildDir, "docker-nexus3-aggregate", env.dockerImageVersion, false)
+
+      sh "rm -rf '${buildDir}'"
+    }
+)

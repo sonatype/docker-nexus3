@@ -1,6 +1,11 @@
 <!--
 
-	Copyright (c) 2016-present Sonatype, Inc.
+    Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+    Includes the third-party code listed at http://links.sonatype.com/products/nxrm/attributions.
+    "Sonatype" is a trademark of Sonatype, Inc.
+
+-->
+<!--
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -13,6 +18,8 @@
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
+
+-->
 
 -->
 A lot of awesome people have contributed to this project! Here they are:
