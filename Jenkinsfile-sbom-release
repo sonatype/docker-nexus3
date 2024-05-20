@@ -24,22 +24,14 @@ properties([
 ])
 
 def getComponentSbom(String buildDir, String componentName, String componentVersion) {
-  def componentInfo = getComponentInfo(componentName)
-  def componentId = componentInfo.applications[0].id
-
-  withCredentials([
-      usernamePassword(
-          credentialsId: 'jenkins-saas-service-acct',
-          usernameVariable: 'IQ_USER',
-          passwordVariable: 'IQ_PASSWORD')
-  ]) {
-    // Get SPDX
-    sh "curl -s -L -w 'Status: %{http_code}' -u \$IQ_USER:\$IQ_PASSWORD -o '${buildDir}/spdx/${componentName}-${componentVersion}-spdx.json' -X GET \
-      -H 'Accept: application/json' '${IQ_URL_BASE}/api/v2/spdx/${componentId}/stages/release?format=json'"
-    // Get CycloneDx
-    sh "curl -s -L -w 'Status: %{http_code}' -u \$IQ_USER:\$IQ_PASSWORD -o '${buildDir}/cyclonedx/${componentName}-${componentVersion}-cyclonedx.json' -X GET \
-      -H 'Accept: application/json' '${IQ_URL_BASE}/api/v2/cycloneDx/${CYCLONEDX_VERSION}/${componentId}/stages/release'"
-  }
+    def componentId = getComponentInfo(componentName).applications[0].id
+    withCredentials([usernamePassword(credentialsId: 'jenkins-saas-service-acct', usernameVariable: 'IQ_USER', passwordVariable: 'IQ_PASSWORD')]) {
+        def formats = ['spdx', 'cyclonedx']
+        formats.each { format ->
+            def urlPath = format == 'spdx' ? "spdx/${componentId}/stages/release?format=json" : "cycloneDx/${CYCLONEDX_VERSION}/${componentId}/stages/release"
+            sh "curl -s -L -u \$IQ_USER:\$IQ_PASSWORD -o '${buildDir}/${format}/${componentName}-${componentVersion}-${format}.json' -X GET -H 'Accept: application/json' '${IQ_URL_BASE}/api/v2/${urlPath}'"
+        }
+    }
 }
 
 def getUbiImageSbom(String buildDir, String ubiMinimalName, String ubiMinimalVersion) {
