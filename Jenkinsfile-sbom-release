@@ -19,7 +19,7 @@ SPDXMERGE_VERSION_TAG = "v0.2.0"
 properties([
     parameters([
         string(name: 'docker_nexus3_tag', defaultValue: '',
-            description: 'Nexus Repository Manager Version. The result SBOMs will be tagged with this version.')
+            description: 'NXRM Docker image tag. The result SBOMs will be tagged with this version.')
     ])
 ])
 
