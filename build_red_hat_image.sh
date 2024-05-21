@@ -20,6 +20,8 @@
 #   * https://github.com/redhat-openshift-ecosystem/openshift-preflight
 #   * https://podman.io/
 # * environment variables:
+#   * DOCKERFILE to be built
+#   * BASE_IMG_REF to add as a label to the image
 #   * VERSION of the docker image  to build for the red hat registry
 #   * REGISTRY_LOGIN from Red Hat config page for image
 #   * REGISTRY_PASSWORD from Red Hat config page for image
@@ -31,8 +33,6 @@ set -e # stop execution on the first failed command
 
 JAVA_8="java8"
 
-DOCKERFILE="Dockerfile.rh.ubi"
-
 # from config/scanning page at red hat
 CERT_PROJECT_ID=5e61d90a38776799eb517bd2
 
@@ -41,13 +41,13 @@ IMAGE_LATEST="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:latest"
 IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}"
 
 if [[ $JAVA_VERSION != $JAVA_8 ]]; then
-  DOCKERFILE="Dockerfile.rh.ubi.${JAVA_VERSION}"
+  DOCKERFILE="${DOCKERFILE}.${JAVA_VERSION}"
   IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${JAVA_VERSION}"
 fi
 
 AUTHFILE="${HOME}/.docker/config.json"
 
-docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
+docker build -f "${DOCKERFILE}" --label base-image-ref=${BASE_IMG_REF} -t "${IMAGE_TAG}" .
 docker tag "${IMAGE_TAG}" "${IMAGE_LATEST}"
 
 docker login "${REPOSITORY}" \
