@@ -86,6 +86,27 @@ pipeline {
                 }
             }
         }
+        stage('Analyze UBI Image with Prisma Cloud') {
+            steps {
+                script {
+                    def ubiImage = "registry.access.redhat.com/ubi8/ubi-minimal:8.9-1161.1715068733"
+                    sh "docker pull ${ubiImage}"
+                    
+                    prismaCloudScanImage(
+                        ca: '',
+                        cert: '',
+                        dockerAddress: 'unix:///var/run/docker.sock',
+                        ignoreImageBuildTime: true,
+                        image: ubiImage,
+                        key: '',
+                        logLevel: 'debug',
+                        podmanPath: '',
+                        project: '',
+                        resultsFile: 'ubi-prisma-cloud-scan-results.json'
+                    )
+                }
+            }
+        }
         stage('Analyze Image with IQ') {
             steps {
                 script {
