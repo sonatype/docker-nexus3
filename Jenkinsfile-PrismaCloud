@@ -4,7 +4,8 @@ import com.sonatype.jenkins.pipeline.OsTools
 import groovy.json.JsonSlurper
 
 IQ_URL_BASE = "https://sonatype.sonatype.app/platform"
-PRISMA_CLOUD_ADDRESS = 'https://us-west1.cloud.twistlock.com/us-4-161054503'
+REPO_BASE_URL = "https://repo.sonatype.com/service/rest"
+TARGET_REPO_NAME = "sonatype-sboms"
 CYCLONEDX_VERSION = "1.5"
 
 properties([
@@ -14,23 +15,22 @@ properties([
         string(name: 'DOCKER_IMAGE_TAG', defaultValue: 'latest',
             description: 'Tag of the Docker image to be scanned'),
         string(name: 'NXRM_Version', defaultValue: '',
-            description: 'Nexus Repository Manager Version. The result SBOMs will be tagged with this version.')
+            description: 'Nexus Repository Manager Version. The result SBOMs will be tagged with this version.'),
+        string(name: 'UBI_IMAGE_TAG', defaultValue: 'latest',
+            description: 'Tag of the UBI image to be scanned')
     ])
 ])
 
-def getComponentSbom(String componentName, String componentVersion, String buildDir) {
-    def componentInfo = getComponentInfo(componentName)
-    def componentId = componentInfo.applications[0].id
-
-    withCredentials([
-        usernamePassword(
-            credentialsId: 'jenkins-saas-service-acct',
-            usernameVariable: 'IQ_USER',
-            passwordVariable: 'IQ_PASSWORD')
-    ]) {
-        // Get CycloneDx
-        sh "curl -L -u \$IQ_USER:\$IQ_PASSWORD -o '${buildDir}/cyclonedx/${componentName}-${componentVersion}-cyclonedx.json' -X GET \
-        -H 'Accept: application/json' '${IQ_URL_BASE}/api/v2/cycloneDx/${CYCLONEDX_VERSION}/${componentId}/stages/release'"
+def getComponentSbom(String buildDir, String componentName, String componentVersion) {
+    def componentId = getComponentInfo(componentName).applications[0].id
+    withCredentials([usernamePassword(credentialsId: 'jenkins-saas-service-acct', usernameVariable: 'IQ_USER', passwordVariable: 'IQ_PASSWORD')]) {
+        def formats = ['spdx', 'cyclonedx']
+        formats.each { format ->
+            def urlPath = format == 'spdx' ? "spdx/${componentId}/stages/release?format=json" : "cycloneDx/${CYCLONEDX_VERSION}/${componentId}/stages/release"
+            sh "curl -s -L -u \$IQ_USER:\$IQ_PASSWORD -o '${buildDir}/${format}/${componentName}-${componentVersion}-${format}.json' -X GET -H 'Accept: application/json' '${IQ_URL_BASE}/api/v2/${urlPath}'"
+            sh "jq . ${buildDir}/${format}/${componentName}-${componentVersion}-${format}.json > ${buildDir}/${format}/${componentName}-${componentVersion}-${format}-formatted.json"
+            sh "mv ${buildDir}/${format}/${componentName}-${componentVersion}-${format}-formatted.json ${buildDir}/${format}/${componentName}-${componentVersion}-${format}.json"
+        }
     }
 }
 
@@ -48,6 +48,42 @@ def getComponentInfo(String componentName) {
         response = jsonSlurper.parseText(rawResponse)
     }
     return response
+}
+
+def publishComponent(String buildDir, String componentName, String componentVersion) {
+    def publishCommand = """
+    curl -v -u \$NXRM_USER:\$NXRM_PASSWORD -X POST '${REPO_BASE_URL}/v1/components?repository=${TARGET_REPO_NAME}' \
+    -F 'raw.directory=/PrismaCloud/${componentName}/${componentVersion}/' \
+    -F 'raw.asset1=@${buildDir}/${componentName}-prisma-cloud-scan-results.json' \
+    -F 'raw.asset1.filename=${componentName}-${componentVersion}-prisma-cloud-scan-results.json'
+    """
+    withCredentials([
+        usernamePassword(
+            credentialsId: 'sonatype-sbom-deployer',
+            usernameVariable: 'NXRM_USER',
+            passwordVariable: 'NXRM_PASSWORD')
+    ]) {
+        sh(publishCommand)
+    }
+}
+
+def scanAndCopyResults(String image, String resultsFileName) {
+    prismaCloudScanImage(
+        ca: '',
+        cert: '',
+        dockerAddress: 'unix:///var/run/docker.sock',
+        ignoreImageBuildTime: true,
+        image: image,
+        key: '',
+        logLevel: 'debug',
+        podmanPath: '',
+        project: '',
+        resultsFile: "${env.buildDir}/${resultsFileName}"
+    )
+    sh "jq . ${env.buildDir}/${resultsFileName} > ${env.buildDir}/${resultsFileName}-formatted.json"
+    sh "mv ${env.buildDir}/${resultsFileName}-formatted.json ${env.buildDir}/${resultsFileName}"
+    sh "cp ${env.buildDir}/${resultsFileName} ${resultsFileName}"
+    sh "ls -la ${env.buildDir}"
 }
 
 pipeline {
@@ -68,132 +104,41 @@ pipeline {
                 }
             }
         }
-        stage('Analyze Image with Prisma Cloud') {
+        stage('Analyze Images with Prisma Cloud') {
             steps {
                 script {
-                    prismaCloudScanImage(
-                        ca: '',
-                        cert: '',
-                        dockerAddress: 'unix:///var/run/docker.sock',
-                        ignoreImageBuildTime: true,
-                        image: "docker-nexus3:${params.DOCKER_IMAGE_TAG}",
-                        key: '',
-                        logLevel: 'debug',
-                        podmanPath: '',
-                        project: '',
-                        resultsFile: 'prisma-cloud-scan-results.json'
-                    )
-                }
-            }
-        }
-        stage('Analyze UBI Image with Prisma Cloud') {
-            steps {
-                script {
-                    def ubiImage = "registry.access.redhat.com/ubi8/ubi-minimal:8.9-1161.1715068733"
+                    sh "mkdir -p ${env.buildDir}/spdx && mkdir -p ${env.buildDir}/cyclonedx"
+                    echo "Analyzing docker-nexus3 image with Prisma Cloud"
+                    scanAndCopyResults("docker-nexus3:${params.DOCKER_IMAGE_TAG}", "docker-nexus3-prisma-cloud-scan-results.json")
+
+                    def ubiImage = "registry.access.redhat.com/ubi8/ubi-minimal:${params.UBI_IMAGE_TAG}"
                     sh "docker pull ${ubiImage}"
-                    
-                    prismaCloudScanImage(
-                        ca: '',
-                        cert: '',
-                        dockerAddress: 'unix:///var/run/docker.sock',
-                        ignoreImageBuildTime: true,
-                        image: ubiImage,
-                        key: '',
-                        logLevel: 'debug',
-                        podmanPath: '',
-                        project: '',
-                        resultsFile: 'ubi-prisma-cloud-scan-results.json'
-                    )
+                    echo "Analyzing UBI image with Prisma Cloud"
+                    scanAndCopyResults(ubiImage, "ubi-minimal-prisma-cloud-scan-results.json")
                 }
             }
         }
-        stage('Analyze Image with IQ') {
+        stage('Publish Scan Results') {
             steps {
                 script {
-                    nexusPolicyEvaluation(
-                        iqApplication: 'docker-nexus3',
-                        iqStage: 'release',
-                        iqScanPatterns: [[scanPattern: "container:docker-nexus3:${params.DOCKER_IMAGE_TAG}"]],
-                        failBuildOnNetworkError: true,
-                        serverUrl: IQ_URL_BASE,
-                        credentialsId: 'nexus_iq_credentials'
-                    )
-                }
-            }
-        }
-        stage('Download SBOM') {
-            steps {
-                script {
-                    sh "mkdir -p ${buildDir}/cyclonedx"
-
-                    // Get docker-nexus3 SBOM
-                    getComponentSbom("docker-nexus3", params.nexus_repository_manager_version, buildDir)
-
-                    sh "echo 'Available CycloneDx SBOMS' && ls ${buildDir}/cyclonedx"
-                }
-            }
-        }
-        stage('Compare Red Hat Patched Versions') {
-            steps {
-                script {
-                    // Pull latest Red Hat UBI image
-                    def redHatImage = "registry.access.redhat.com/ubi8/ubi-minimal:8.9-1161.1715068733"
-                    sh "docker pull ${redHatImage}"
-
-                    // Inspect the image to get the list of installed packages
-                    def redHatPackages = sh(script: "docker run --rm ${redHatImage} rpm -qa --queryformat '%{NAME} %{VERSION}-%{RELEASE}\n'", returnStdout: true).trim().split('\n').collectEntries {
-                        def parts = it.split(' ')
-                        [(parts[0]): parts[1]]
-                    }
-
-                    // Read the Prisma Cloud scan results
-                    def prismaReportPath = "prisma-cloud-scan-results.json"
-                    def prismaReportContent = readFile(file: prismaReportPath)
-                    def prismaReport = new JsonSlurper().parseText(prismaReportContent)
-
-                    // Collect package names and versions from the Prisma Cloud report
-                    def prismaPackages = prismaReport.results[0].entityInfo.packages.findAll { it.pkgsType == 'package' }[0].pkgs.collectEntries {
-                        [(it.name): it.version ?: "unknown"]
-                    }
-
-                    // Compare with Red Hat patched versions and amend to report
-                    def mismatchedDependencies = []
-                    redHatPackages.each { name, version ->
-                        def prismaVersion = prismaPackages.get(name, "unknown")
-                        def match = prismaVersion == version
-                        mismatchedDependencies << [
-                            name: name,
-                            redHatVersion: version,
-                            prismaVersion: prismaVersion,
-                            match: match
-                        ]
-                    }
-
-                    // JSON format
-                    def mismatchedReportJson = mismatchedDependencies.collect { dep ->
-                        """{
-    "name": "${dep.name}",
-    "redHatVersion": "${dep.redHatVersion}",
-    "prismaVersion": "${dep.prismaVersion}",
-    "match": ${dep.match}
-}"""
-                    }.join(',\n')
-
-                    def mismatchedReportPath = "${buildDir}/mismatched_report.json"
-                    writeFile(file: mismatchedReportPath, text: mismatchedReportJson)
-
-                    sh "echo 'Mismatched Lifecycle Report' && cat ${mismatchedReportPath}"
+                    publishComponent(env.buildDir, "docker-nexus3", params.DOCKER_IMAGE_TAG)
+                    publishComponent(env.buildDir, "ubi-minimal", params.UBI_IMAGE_TAG)
                 }
             }
         }
     }
     post {
         always {
-            prismaCloudPublish resultsFilePattern: 'prisma-cloud-scan-results.json'
-            archiveArtifacts artifacts: "prisma-cloud-scan-results.json", fingerprint: true
-            archiveArtifacts artifacts: ".sbom-build/job-${env.BUILD_NUMBER}/mismatched_report.json", fingerprint: true
+            prismaCloudPublish resultsFilePattern: "${env.buildDir}/docker-nexus3-prisma-cloud-scan-results.json"
+            prismaCloudPublish resultsFilePattern: "${env.buildDir}/ubi-minimal-prisma-cloud-scan-results.json"
+
+            prismaCloudPublish resultsFilePattern: 'docker-nexus3-prisma-cloud-scan-results.json'
+            prismaCloudPublish resultsFilePattern: 'ubi-minimal-prisma-cloud-scan-results.json'
+            archiveArtifacts artifacts: "docker-nexus3-prisma-cloud-scan-results.json", fingerprint: true
+            archiveArtifacts artifacts: "ubi-minimal-prisma-cloud-scan-results.json", fingerprint: true
+
             script {
-                OsTools.runSafe(this, "rm -rf '${buildDir}'")
+                OsTools.runSafe(this, "rm -rf '${env.buildDir}'")
             }
         }
     }
