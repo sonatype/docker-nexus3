@@ -12,12 +12,10 @@ properties([
     parameters([
         string(name: 'BRANCH_TO_BUILD', defaultValue: '',
             description: 'Branch the script will be loaded from'),
-        string(name: 'DOCKER_IMAGE_TAG', defaultValue: 'latest',
-            description: 'Tag of the Docker image to be scanned'),
-        string(name: 'NXRM_Version', defaultValue: '',
-            description: 'Nexus Repository Manager Version. The result SBOMs will be tagged with this version.'),
-        string(name: 'UBI_IMAGE_TAG', defaultValue: 'latest',
-            description: 'Tag of the UBI image to be scanned')
+        string(name: 'IMAGE_VERSION', defaultValue: '',
+            description: 'Version for the Docker image and NXRM. The result SBOMs will be tagged with this version.'),
+        string(name: 'UBI_IMAGE_TAG', defaultValue: '',
+            description: 'Tag of the UBI image to be scanned. ('https://catalog.redhat.com/software/containers/ubi8/ubi-minimal/')
     ])
 ])
 
@@ -54,7 +52,7 @@ def publishComponent(String buildDir, String componentName, String componentVers
     def publishCommand = """
     curl -v -u \$NXRM_USER:\$NXRM_PASSWORD -X POST '${REPO_BASE_URL}/v1/components?repository=${TARGET_REPO_NAME}' \
     -F 'raw.directory=/PrismaCloud/${componentName}/${componentVersion}/' \
-    -F 'raw.asset1=@${buildDir}/${componentName}-prisma-cloud-scan-results.json' \
+    -F 'raw.asset1=@${buildDir}/${componentName}-${componentVersion}-prisma-cloud-scan-results.json' \
     -F 'raw.asset1.filename=${componentName}-${componentVersion}-prisma-cloud-scan-results.json'
     """
     withCredentials([
@@ -65,6 +63,14 @@ def publishComponent(String buildDir, String componentName, String componentVers
     ]) {
         sh(publishCommand)
     }
+    // Publish the latest version tag
+    def latestPublishCommand = """
+    curl -v -u \$NXRM_USER:\$NXRM_PASSWORD -X POST '${REPO_BASE_URL}/v1/components?repository=${TARGET_REPO_NAME}' \
+    -F 'raw.directory=/PrismaCloud/${componentName}/latest/' \
+    -F 'raw.asset1=@${buildDir}/${componentName}-${componentVersion}-prisma-cloud-scan-results.json' \
+    -F 'raw.asset1.filename=${componentName}-latest-prisma-cloud-scan-results.json'
+    """
+    sh(latestPublishCommand)
 }
 
 def scanAndCopyResults(String image, String resultsFileName) {
@@ -100,7 +106,9 @@ pipeline {
         stage('Build Image') {
             steps {
                 script {
-                    runSafely("docker build -t docker-nexus3:${params.DOCKER_IMAGE_TAG} .")
+                    runSafely("docker build -t docker-nexus3:${params.IMAGE_VERSION} .")
+                    // Tag the latest version
+                    runSafely("docker tag docker-nexus3:${params.IMAGE_VERSION} docker-nexus3:latest")
                 }
             }
         }
@@ -109,19 +117,19 @@ pipeline {
                 script {
                     sh "mkdir -p ${env.buildDir}/spdx && mkdir -p ${env.buildDir}/cyclonedx"
                     echo "Analyzing docker-nexus3 image with Prisma Cloud"
-                    scanAndCopyResults("docker-nexus3:${params.DOCKER_IMAGE_TAG}", "docker-nexus3-prisma-cloud-scan-results.json")
+                    scanAndCopyResults("docker-nexus3:${params.IMAGE_VERSION}", "docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json")
 
                     def ubiImage = "registry.access.redhat.com/ubi8/ubi-minimal:${params.UBI_IMAGE_TAG}"
                     sh "docker pull ${ubiImage}"
                     echo "Analyzing UBI image with Prisma Cloud"
-                    scanAndCopyResults(ubiImage, "ubi-minimal-prisma-cloud-scan-results.json")
+                    scanAndCopyResults(ubiImage, "ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json")
                 }
             }
         }
         stage('Publish Scan Results') {
             steps {
                 script {
-                    publishComponent(env.buildDir, "docker-nexus3", params.DOCKER_IMAGE_TAG)
+                    publishComponent(env.buildDir, "docker-nexus3", params.IMAGE_VERSION)
                     publishComponent(env.buildDir, "ubi-minimal", params.UBI_IMAGE_TAG)
                 }
             }
@@ -129,13 +137,13 @@ pipeline {
     }
     post {
         always {
-            prismaCloudPublish resultsFilePattern: "${env.buildDir}/docker-nexus3-prisma-cloud-scan-results.json"
-            prismaCloudPublish resultsFilePattern: "${env.buildDir}/ubi-minimal-prisma-cloud-scan-results.json"
+            prismaCloudPublish resultsFilePattern: "${env.buildDir}/docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json"
+            prismaCloudPublish resultsFilePattern: "${env.buildDir}/ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json"
 
-            prismaCloudPublish resultsFilePattern: 'docker-nexus3-prisma-cloud-scan-results.json'
-            prismaCloudPublish resultsFilePattern: 'ubi-minimal-prisma-cloud-scan-results.json'
-            archiveArtifacts artifacts: "docker-nexus3-prisma-cloud-scan-results.json", fingerprint: true
-            archiveArtifacts artifacts: "ubi-minimal-prisma-cloud-scan-results.json", fingerprint: true
+            prismaCloudPublish resultsFilePattern: "docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json"
+            prismaCloudPublish resultsFilePattern: "ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json"
+            archiveArtifacts artifacts: "docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json", fingerprint: true
+            archiveArtifacts artifacts: "ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json", fingerprint: true
 
             script {
                 OsTools.runSafe(this, "rm -rf '${env.buildDir}'")
