@@ -15,7 +15,7 @@ properties([
         string(name: 'IMAGE_VERSION', defaultValue: '',
             description: 'Version for the Docker image and NXRM. The result SBOMs will be tagged with this version.'),
         string(name: 'UBI_IMAGE_TAG', defaultValue: '',
-            description: 'Tag of the UBI image to be scanned. ('https://catalog.redhat.com/software/containers/ubi8/ubi-minimal/')
+            description: 'Tag of the UBI image to be scanned. Visit 'https://catalog.redhat.com/software/containers/ubi8/ubi-minimal/')
     ])
 ])
 
