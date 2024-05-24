@@ -75,7 +75,7 @@ node('ubuntu-zion') {
       def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
       def baseImageReferenceStr = baseImageReference.getReference()
-      def hash = OsTools.runSafe(this, "docker build --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
+      def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
     }
     if (params.scan_for_policy_violations) {
