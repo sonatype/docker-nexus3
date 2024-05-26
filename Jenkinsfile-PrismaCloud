@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2024-present Sonatype, Inc. All rights reserved.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
+
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 
 import com.sonatype.jenkins.pipeline.OsTools
