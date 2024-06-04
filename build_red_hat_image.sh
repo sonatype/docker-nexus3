@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017-present Sonatype, Inc.
+# Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+# Includes the third-party code listed at http://links.sonatype.com/products/nxrm/attributions.
+# "Sonatype" is a trademark of Sonatype, Inc.
 #
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,6 +23,8 @@
 #   * https://github.com/redhat-openshift-ecosystem/openshift-preflight
 #   * https://podman.io/
 # * environment variables:
+#   * DOCKERFILE to be built
+#   * BASE_IMG_REF to add as a label to the image
 #   * VERSION of the docker image  to build for the red hat registry
 #   * REGISTRY_LOGIN from Red Hat config page for image
 #   * REGISTRY_PASSWORD from Red Hat config page for image
@@ -31,26 +36,22 @@ set -e # stop execution on the first failed command
 
 JAVA_8="java8"
 
-DOCKERFILE="Dockerfile.rh.ubi"
-
 # from config/scanning page at red hat
 CERT_PROJECT_ID=5e61d90a38776799eb517bd2
 
 REPOSITORY="quay.io"
 IMAGE_LATEST="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:latest"
 IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}"
-DOCKER_TAG_CMD="${IMAGE_TAG} ${IMAGE_LATEST}"
 
 if [[ $JAVA_VERSION != $JAVA_8 ]]; then
-  DOCKERFILE="Dockerfile.rh.ubi.${JAVA_VERSION}"
+  DOCKERFILE="${DOCKERFILE}.${JAVA_VERSION}"
   IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${JAVA_VERSION}"
-  DOCKER_TAG_CMD="${IMAGE_TAG}"
 fi
 
 AUTHFILE="${HOME}/.docker/config.json"
 
-docker build -f "${DOCKERFILE}" -t "${IMAGE_TAG}" .
-docker tag "${DOCKER_TAG_CMD}"
+docker build -f "${DOCKERFILE}" --label base-image-ref=${BASE_IMG_REF} -t "${IMAGE_TAG}" .
+docker tag "${IMAGE_TAG}" "${IMAGE_LATEST}"
 
 docker login "${REPOSITORY}" \
        -u "${REGISTRY_LOGIN}" \
