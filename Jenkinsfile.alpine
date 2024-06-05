@@ -1,0 +1,162 @@
+/*
+ * Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/nexus/attributions.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
+
+@Library(['private-pipeline-library', 'jenkins-shared']) _
+import com.sonatype.jenkins.pipeline.OsTools
+
+String OPENJDK8 = 'OpenJDK 8'
+
+properties([
+    parameters([
+        string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
+        string(defaultValue: '', description: 'New Nexus Repository Manager URL (Optional)', name: 'nexus_repository_manager_url'),
+        booleanParam(defaultValue: false, description: 'Optional scan for policy violations', name: 'scan_for_policy_violations')
+    ])
+])
+
+node('ubuntu-zion') {
+  def commitId, commitDate, version, imageId, branch
+  def imageName = 'sonatype/nexus3',
+      archiveName = 'docker-nexus3'
+
+  def JAVA_8 = 'java8'
+
+  def DOCKERFILE_JAVA_8 = 'Dockerfile.alpine'
+
+  try {
+    stage('Preparation') {
+      deleteDir()
+      OsTools.runSafe(this, "docker system prune -a -f")
+
+      def checkoutDetails = checkout scm
+
+      branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
+      commitId = checkoutDetails.GIT_COMMIT
+      commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
+
+      OsTools.runSafe(this, 'git config --global user.email sonatype-ci@sonatype.com')
+      OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
+
+      version = readVersion()
+
+      if (params.nexus_repository_manager_version) {
+        stage('Update Repository Manager Version') {
+          OsTools.runSafe(this, "git checkout ${branch}")
+          updateRepositoryManagerVersion("${pwd()}/${DOCKERFILE_JAVA_8}", JAVA_8)
+          version = getShortVersion(params.nexus_repository_manager_version)
+        }
+      }
+    }
+    stage('Build') {
+      def dockerfilePath = DOCKERFILE_JAVA_8
+      def baseImage = extractBaseImage(dockerfilePath)
+      def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
+      def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
+      def baseImageReferenceStr = baseImageReference.getReference()
+      def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
+      imageId = hash.split(':')[1]
+    }
+    if (params.scan_for_policy_violations) {
+      stage('Evaluate Policies') {
+        runEvaluation({ stage ->
+          nexusPolicyEvaluation(
+              iqStage: stage,
+              iqApplication: 'docker-nexus3',
+              iqScanPatterns: [[scanPattern: "container:${imageName}"]],
+              failBuildOnNetworkError: true,
+          )}, 'release')
+      }
+    }
+    if (currentBuild.result == 'FAILURE') {
+      return
+    }
+    stage('Archive') {
+      dir('build/target') {
+        OsTools.runSafe(this, "docker save ${imageName} | gzip > ${archiveName}.tar.gz")
+        archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
+      }
+    }
+    if (branch == 'main') {
+      stage('Push image to RSC') {
+        withSonatypeDockerRegistry() {
+          def tags = ["${version}-java8-alpine", "${version}-alpine"]
+          tags.each { tag ->
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${tag}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${tag}"
+          }
+        }
+      }
+    }
+  } finally {
+    OsTools.runSafe(this, "docker logout")
+    OsTools.runSafe(this, "docker system prune -a -f")
+    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
+  }
+}
+
+def readVersion() {
+  def content = readFile 'Dockerfile.alpine'
+  for (line in content.split('\n')) {
+    if (line.startsWith('ARG NEXUS_VERSION=')) {
+      return getShortVersion(line.substring(18))
+    }
+  }
+  error 'Could not determine version.'
+}
+
+def getShortVersion(version) {
+  return version.split('-')[0]
+}
+
+def updateRepositoryManagerVersion(dockerFileLocation, javaVersion) {
+  def dockerFile = readFile(file: dockerFileLocation)
+
+  def metaVersionRegex = /(version=")(\d\.\d{1,3}\.\d\-\d{2})(" \\)/
+  def metaShortVersionRegex = /(release=")(\d\.\d{1,3}\.\d)(" \\)/
+
+  def versionRegex = /(ARG NEXUS_VERSION=)(\d\.\d{1,3}\.\d\-\d{2})/
+  def shaRegex = /(ARG NEXUS_DOWNLOAD_SHA256_HASH=)([A-Fa-f0-9]{64})/
+
+  dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
+  dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
+      "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
+  dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
+
+  def nexusUrlRegex = /(ARG NEXUS_DOWNLOAD_URL=)(.*)/
+  def nexusUrl = params.nexus_repository_manager_url
+  if (params.nexus_repository_manager_url) {
+    dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${params.nexus_repository_manager_url}")
+  }
+  else {
+    // default URL
+    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-unix\.tar\.gz/
+    dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${defaultUrl}")
+
+    def normalizedUrl = "a".replaceAll(/./, "${defaultUrl}")
+    nexusUrl = normalizedUrl.replace("\${NEXUS_VERSION}", params.nexus_repository_manager_version)
+  }
+  def sha = getSha(nexusUrl)
+
+  dockerFile = dockerFile.replaceAll(shaRegex, "\$1${sha}")
+
+  writeFile(file: dockerFileLocation, text: dockerFile)
+}
+
+def getSha(url) {
+  def sha = sh (
+      script: "curl -s -L ${url} | shasum -a 256 | cut -d' ' -f1",
+      returnStdout: true
+  ).trim()
+  return sha
+}
+
+def extractBaseImage (dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+  def baseImageRegex = "FROM\\s+([^\\s]+)"
+  def usedImages = dockerFile =~ baseImageRegex
+
+  return usedImages[0][1]
+}
