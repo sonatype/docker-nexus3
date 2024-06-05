@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/nexus/attributions.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
+
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.OsTools
 
@@ -76,12 +82,11 @@ node('ubuntu-zion') {
     if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
-          def javaVersionSuffix = JAVA_8
-
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          def tags = ["${version}-java8-alpine", "${version}-alpine"]
+          tags.each { tag ->
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${tag}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${tag}"
+          }
         }
       }
     }
@@ -155,3 +160,4 @@ def extractBaseImage (dockerFileLocation) {
 
   return usedImages[0][1]
 }
+
