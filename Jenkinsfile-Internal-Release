@@ -36,6 +36,12 @@ node('ubuntu-zion') {
   def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine.java11'
   def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
 
+  def dockerfileMap = [
+    (OPENJDK8) : [DOCKERFILE_JAVA_8, DOCKERFILE_ALPINE_JAVA_8],
+    (OPENJDK11): [DOCKERFILE_JAVA_11, DOCKERFILE_ALPINE_JAVA_11],
+    (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
+  ]
+
   try {
     stage('Preparation') {
       deleteDir()
@@ -50,19 +56,13 @@ node('ubuntu-zion') {
       OsTools.runSafe(this, 'git config --global user.email sonatype-ci@sonatype.com')
       OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
 
-      version = readVersion(DOCKERFILE_JAVA_8)
+      version = readVersion()
 
       if (params.nexus_repository_manager_version) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
 
-          def javaVersionsDockerfilesMap = [
-            (OPENJDK8) : [DOCKERFILE_JAVA_8, DOCKERFILE_ALPINE_JAVA_8],
-            (OPENJDK11): [DOCKERFILE_JAVA_11, DOCKERFILE_ALPINE_JAVA_11],
-            (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
-          ]
-
-          javaVersionsDockerfilesMap.each { javaVersion, dockerfiles ->
+          dockerfileMap.each { javaVersion, dockerfiles ->
             dockerfiles.each { dockerfile ->
               updateRepositoryManagerVersion("${pwd()}/${dockerfile}", javaVersion)
             }
@@ -73,8 +73,8 @@ node('ubuntu-zion') {
       }
     }
 
-    def dockerfilePath = javaVersionsDockerfilesMap[params.java_version][0]
-    def alpineDockerfilePath = javaVersionsDockerfilesMap[params.java_version][1]
+    def dockerfilePath = dockerfileMap[params.java_version][0]
+    def alpineDockerfilePath = dockerfileMap[params.java_version][1]
 
     stage('Build UBI Image') {
       def baseImage = extractBaseImage(dockerfilePath)
@@ -148,8 +148,8 @@ node('ubuntu-zion') {
   }
 }
 
-def readVersion(dockerfilePath) {
-  def content = readFile dockerfilePath
+def readVersion() {
+  def content = readFile 'Dockerfile'
   for (line in content.split('\n')) {
     if (line.startsWith('ARG NEXUS_VERSION=')) {
       return getShortVersion(line.substring(18))
@@ -212,4 +212,3 @@ def extractBaseImage(dockerFileLocation) {
 
   return usedImages[0][1]
 }
-
