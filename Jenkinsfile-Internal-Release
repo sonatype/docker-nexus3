@@ -36,12 +36,6 @@ node('ubuntu-zion') {
   def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine.java11'
   def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
 
-  def dockerfileMap = [
-    (OPENJDK8) : [DOCKERFILE_JAVA_8, DOCKERFILE_ALPINE_JAVA_8],
-    (OPENJDK11): [DOCKERFILE_JAVA_11, DOCKERFILE_ALPINE_JAVA_11],
-    (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
-  ]
-
   try {
     stage('Preparation') {
       deleteDir()
@@ -62,7 +56,13 @@ node('ubuntu-zion') {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
 
-          dockerfileMap.each { javaVersion, dockerfiles ->
+          def javaVersionsDockerfilesMap = [
+            (OPENJDK8) : [DOCKERFILE_JAVA_8, DOCKERFILE_ALPINE_JAVA_8],
+            (OPENJDK11): [DOCKERFILE_JAVA_11, DOCKERFILE_ALPINE_JAVA_11],
+            (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
+          ]
+
+          javaVersionsDockerfilesMap.each { javaVersion, dockerfiles ->
             dockerfiles.each { dockerfile ->
               updateRepositoryManagerVersion("${pwd()}/${dockerfile}", javaVersion)
             }
@@ -73,8 +73,8 @@ node('ubuntu-zion') {
       }
     }
 
-    def dockerfilePath = dockerfileMap[params.java_version][0]
-    def alpineDockerfilePath = dockerfileMap[params.java_version][1]
+    def dockerfilePath = javaVersionsDockerfilesMap[params.java_version][0]
+    def alpineDockerfilePath = javaVersionsDockerfilesMap[params.java_version][1]
 
     stage('Build UBI Image') {
       def baseImage = extractBaseImage(dockerfilePath)
