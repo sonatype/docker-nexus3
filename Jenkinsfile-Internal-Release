@@ -121,32 +121,33 @@ node('ubuntu-zion') {
     }
 
     if (branch == 'main') {
-      stage('Push image to RSC') {
-        withSonatypeDockerRegistry() {
-        def repoUrl = 'docker-all.repo.sonatype.com/sonatype-internal/nexus3'
-        def imageVariants = [
-        [imageId: imageId, suffix: 'ubi'],
-        [imageId: alpineImageId, suffix: 'alpine']
-        ]
-        def javaVersions = ['java8', 'java11', 'java17']
+  stage('Push image to RSC') {
+    withSonatypeDockerRegistry() {
+      def tags = [
+        [imageId, 'ubi', ''],
+        [imageId, 'ubi', 'java8'],
+        [imageId, 'ubi', 'java11'],
+        [imageId, 'ubi', 'java17'],
+        [alpineImageId, 'alpine', ''],
+        [alpineImageId, 'alpine', 'java8'],
+        [alpineImageId, 'alpine', 'java11'],
+        [alpineImageId, 'alpine', 'java17']
+      ]
 
-        imageVariants.each { variant ->
-        def imageTag = "${repoUrl}:${version}-${variant.suffix}"
-        sh "docker tag ${variant.imageId} ${imageTag}"
-        sh "docker push ${imageTag}"
-
-        javaVersions.each { javaVersion ->
-          def javaImageTag = "${repoUrl}:${version}-${javaVersion}-${variant.suffix}"
-          sh "docker tag ${variant.imageId} ${javaImageTag}"
-          sh "docker push ${javaImageTag}"
-        }
+      tags.each { tag ->
+        def (imgId, suffix, javaVersion) = tag
+        def fullTag = javaVersion ? "${version}-${javaVersion}-${suffix}" : "${version}-${suffix}"
+        sh "docker tag ${imgId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
+        sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
       }
+
       // Push default tag (UBI minimal with Java 8)
-      sh "docker tag ${imageId} ${repoUrl}:${version}"
-      sh "docker push ${repoUrl}:${version}"
+      sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+      sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
     }
   }
 }
+
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
