@@ -36,6 +36,12 @@ node('ubuntu-zion') {
   def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine.java11'
   def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
 
+  def dockerfileMap = [
+    (OPENJDK8) : [DOCKERFILE_JAVA_8, DOCKERFILE_ALPINE_JAVA_8],
+    (OPENJDK11): [DOCKERFILE_JAVA_11, DOCKERFILE_ALPINE_JAVA_11],
+    (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
+  ]
+
   try {
     stage('Preparation') {
       deleteDir()
@@ -56,12 +62,6 @@ node('ubuntu-zion') {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
 
-          def dockerfileMap = [
-            (JAVA_8): [DOCKERFILE_JAVA_8, DOCKERFILE_ALPINE_JAVA_8],
-            (JAVA_11): [DOCKERFILE_JAVA_11, DOCKERFILE_ALPINE_JAVA_11],
-            (JAVA_17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
-          ]
-
           dockerfileMap.each { javaVersion, dockerfiles ->
             dockerfiles.each { dockerfile ->
               updateRepositoryManagerVersion("${pwd()}/${dockerfile}", javaVersion)
@@ -73,14 +73,8 @@ node('ubuntu-zion') {
       }
     }
 
-    def dockerfileMap = [
-      (OPENJDK8) : DOCKERFILE_JAVA_8,
-      (OPENJDK11): DOCKERFILE_JAVA_11,
-      (OPENJDK17): DOCKERFILE_JAVA_17
-    ]
-
-    def dockerfilePath = dockerfileMap[params.java_version]
-    def alpineDockerfilePath = dockerfilePath.replace('Dockerfile', 'Dockerfile.alpine')
+    def dockerfilePath = dockerfileMap[params.java_version][0]
+    def alpineDockerfilePath = dockerfileMap[params.java_version][1]
 
     stage('Build UBI Image') {
       def baseImage = extractBaseImage(dockerfilePath)
@@ -121,33 +115,32 @@ node('ubuntu-zion') {
     }
 
     if (branch == 'main') {
-  stage('Push image to RSC') {
-    withSonatypeDockerRegistry() {
-      def tags = [
-        [imageId, 'ubi', ''],
-        [imageId, 'ubi', 'java8'],
-        [imageId, 'ubi', 'java11'],
-        [imageId, 'ubi', 'java17'],
-        [alpineImageId, 'alpine', ''],
-        [alpineImageId, 'alpine', 'java8'],
-        [alpineImageId, 'alpine', 'java11'],
-        [alpineImageId, 'alpine', 'java17']
-      ]
+      stage('Push image to RSC') {
+        withSonatypeDockerRegistry() {
+          def tags = [
+            [imageId, 'ubi', ''],
+            [imageId, 'ubi', 'java8'],
+            [imageId, 'ubi', 'java11'],
+            [imageId, 'ubi', 'java17'],
+            [alpineImageId, 'alpine', ''],
+            [alpineImageId, 'alpine', 'java8'],
+            [alpineImageId, 'alpine', 'java11'],
+            [alpineImageId, 'alpine', 'java17']
+          ]
 
-      tags.each { tag ->
-        def (imgId, suffix, javaVersion) = tag
-        def fullTag = javaVersion ? "${version}-${javaVersion}-${suffix}" : "${version}-${suffix}"
-        sh "docker tag ${imgId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
-        sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
+          tags.each { tag ->
+            def (imgId, suffix, javaVersion) = tag
+            def fullTag = javaVersion ? "${version}-${javaVersion}-${suffix}" : "${version}-${suffix}"
+            sh "docker tag ${imgId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
+          }
+
+          // Push default tag (UBI minimal with Java 8)
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+        }
       }
-
-      // Push default tag (UBI minimal with Java 8)
-      sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-      sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
     }
-  }
-}
-
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
@@ -219,3 +212,4 @@ def extractBaseImage(dockerFileLocation) {
 
   return usedImages[0][1]
 }
+
