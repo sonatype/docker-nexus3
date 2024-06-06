@@ -123,35 +123,30 @@ node('ubuntu-zion') {
     if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
-          def alpineSuffix = 'alpine'
-          def ubiSuffix = 'ubi'
+        def repoUrl = 'docker-all.repo.sonatype.com/sonatype-internal/nexus3'
+        def imageVariants = [
+        [imageId: imageId, suffix: 'ubi'],
+        [imageId: alpineImageId, suffix: 'alpine']
+        ]
+        def javaVersions = ['java8', 'java11', 'java17']
 
-          // Push UBI tags
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${ubiSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${ubiSuffix}"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8-${ubiSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8-${ubiSuffix}"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11-${ubiSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11-${ubiSuffix}"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-${ubiSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-${ubiSuffix}"
+        imageVariants.each { variant ->
+        def imageTag = "${repoUrl}:${version}-${variant.suffix}"
+        sh "docker tag ${variant.imageId} ${imageTag}"
+        sh "docker push ${imageTag}"
 
-          // Push Alpine tags
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${alpineSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${alpineSuffix}"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8-${alpineSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8-${alpineSuffix}"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11-${alpineSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11-${alpineSuffix}"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-${alpineSuffix}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-${alpineSuffix}"
-
-          // Push default tag (UBI minimal with Java 8)
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+        javaVersions.each { javaVersion ->
+          def javaImageTag = "${repoUrl}:${version}-${javaVersion}-${variant.suffix}"
+          sh "docker tag ${variant.imageId} ${javaImageTag}"
+          sh "docker push ${javaImageTag}"
         }
       }
+      // Push default tag (UBI minimal with Java 8)
+      sh "docker tag ${imageId} ${repoUrl}:${version}"
+      sh "docker push ${repoUrl}:${version}"
     }
+  }
+}
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
