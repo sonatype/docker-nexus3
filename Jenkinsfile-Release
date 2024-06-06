@@ -25,7 +25,7 @@ properties([
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId, branch, dockerFileLocations, dockerJava11FileLocations, dockerJava17FileLocations, dockerAlpineJava11FileLocations, dockerAlpineJava17FileLocations
+  def commitId, commitDate, version, imageId, branch, dockerFileLocations, dockerJava11FileLocations, dockerJava17FileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
       credentialsId = 'jenkins-github',
@@ -239,8 +239,21 @@ node('ubuntu-zion') {
 
           // push to internal repos
           withSonatypeDockerRegistry() {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+            def dockerTags = [
+              "${organization}/${dockerHubRepository}:${version}-alpine",
+              "${organization}/${dockerHubRepository}:${version}-java8-alpine",
+              "${organization}/${dockerHubRepository}:${version}-java11-alpine",
+              "${organization}/${dockerHubRepository}:${version}-java17-alpine",
+              "${organization}/${dockerHubRepository}:${version}-ubi",
+              "${organization}/${dockerHubRepository}:${version}-java8-ubi",
+              "${organization}/${dockerHubRepository}:${version}-java11-ubi",
+              "${organization}/${dockerHubRepository}:${version}-java17-ubi"
+            ]
+
+            dockerTags.each { tag ->
+              sh "docker tag ${imageId} ${tag}"
+              sh "docker push ${tag}"
+            }
 
             if (params.java_version == OPENJDK8) {
               sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
