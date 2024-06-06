@@ -51,7 +51,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 # Install Java & tar
 RUN apk add openjdk8 tar procps gzip curl shadow \
     && apk cache clean \
-    && groupadd --gid 201 -r nexus \
+    && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
 WORKDIR ${SONATYPE_DIR}
