@@ -44,3 +44,12 @@ jobs:
                   platforms: linux/arm64,linux/amd64
                   push: true
                   tags: sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}-java11
+
+            - name: Build and push Java 17
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: ./Dockerfile.java17
+                  platforms: linux/arm64,linux/amd64
+                  push: true
+                  tags: sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}-java17
