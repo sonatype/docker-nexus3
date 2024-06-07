@@ -38,7 +38,7 @@ LABEL name="Nexus Repository Manager" \
 
 ARG NEXUS_VERSION=3.69.0-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=4161a1bb43d92ad8ca6185fa0da2c0f02dfd62280c5b6e4ac4419df4aecaf55f
+ARG NEXUS_DOWNLOAD_SHA256_HASH=4a22cd3f2a2bd3fef46e2f13b57abfcca9e6244c36cee8c2aac226a333524c07
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
