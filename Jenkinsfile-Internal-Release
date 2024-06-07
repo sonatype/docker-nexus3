@@ -118,19 +118,19 @@ node('ubuntu-zion') {
           def javaVersionSuffix = javaVersionSuffixesMap.get(params.java_version)
 
           // Push UBI image
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-${javaVersionSuffix}-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-${javaVersionSuffix}-ubi"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-ubi"
           if (params.java_version == OPENJDK8) {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-ubi"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-ubi"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-ubi"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-ubi"
           }
 
           // Push Alpine image
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-${javaVersionSuffix}-alpine"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-${javaVersionSuffix}-alpine"
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-alpine"
           if (params.java_version == OPENJDK8) {
-            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-alpine"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419:${version}-alpine"
+            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-alpine"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-alpine"
           }
         }
       }
