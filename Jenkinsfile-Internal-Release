@@ -115,7 +115,7 @@ node('ubuntu-zion') {
       }
     }
 
-    if (branch == 'main') {
+    if (branch == 'NEXUS-42419-Alpine') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           def tags = [
@@ -132,13 +132,13 @@ node('ubuntu-zion') {
           tags.each { tag ->
             def (imgId, suffix, javaVersion) = tag
             def fullTag = javaVersion ? "${version}-${javaVersion}-${suffix}" : "${version}-${suffix}"
-            sh "docker tag ${imgId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${fullTag}"
+            sh "docker tag ${imgId} docker-all.repo.sonatype.com/sonatype-internal/NEXUS-42419:${fullTag}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/NEXUS-42419:${fullTag}"
           }
 
           // Push default tag (UBI minimal with Java 8)
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/NEXUS-42419:${version}"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/NEXUS-42419:${version}"
         }
       }
     }
