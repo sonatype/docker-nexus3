@@ -27,8 +27,8 @@ node('ubuntu-zion') {
   def DOCKERFILE_JAVA_8 = 'Dockerfile'
   def DOCKERFILE_JAVA_11 = 'Dockerfile.java11'
   def DOCKERFILE_JAVA_17 = 'Dockerfile.java17'
-  def DOCKERFILE_ALPINE_JAVA_8 = 'Dockerfile.alpine'
-  def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine.java11'
+  def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine' 
+  def DOCKERFILE_ALPINE_JAVA_8 = 'Dockerfile.alpine.java8'
   def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
 
   def dockerfileMap = [
@@ -119,20 +119,20 @@ node('ubuntu-zion') {
           ]
           def javaVersionSuffix = javaVersionSuffixesMap.get(params.java_version)
 
-          // Push UBI image
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-ubi"
+          // Push UBI images
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-${javaVersionSuffix}-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-${javaVersionSuffix}-ubi"
           if (params.java_version == OPENJDK8) {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-ubi"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-ubi"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-ubi"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-ubi"
           }
 
-          // Push Alpine image
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-alpine"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-${javaVersionSuffix}-alpine"
-          if (params.java_version == OPENJDK8) {
-            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-alpine"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/1:${version}-alpine"
+          // Push Alpine images
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-${javaVersionSuffix}-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-${javaVersionSuffix}-alpine"
+          if (params.java_version == OPENJDK11) {
+            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-alpine"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/2:${version}-alpine"
           }
         }
       }
@@ -184,6 +184,7 @@ def updateRepositoryManagerVersion(dockerFileLocation, javaVersion) {
 
     def normalizedUrl = "a".replaceAll(/./, "${defaultUrl}")
     nexusUrl = normalizedUrl.replace("\${NEXUS_VERSION}", params.nexus_repository_manager_version)
+    nexusUrl = nexusUrl.replace("\${JAVA_VERSION}", javaVersion)
   }
   def sha = getSha(nexusUrl)
 
@@ -207,4 +208,5 @@ def extractBaseImage(dockerFileLocation) {
 
   return usedImages[0][1]
 }
+
 
