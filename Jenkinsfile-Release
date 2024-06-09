@@ -45,7 +45,6 @@ node('ubuntu-zion') {
 
       def checkoutDetails = checkout scm
 
-      // Regular Dockerfile Locations
       dockerFileLocations = [
         "${pwd()}/Dockerfile",
         "${pwd()}/Dockerfile.rh.centos",
@@ -54,14 +53,12 @@ node('ubuntu-zion') {
         "${pwd()}/Dockerfile.alpine.java8"
       ]
 
-      // Java 11 Dockerfile Locations
       dockerJava11FileLocations = [
           "${pwd()}/Dockerfile.java11",
           "${pwd()}/Dockerfile.rh.ubi.java11",
           "${pwd()}/Dockerfile.alpine.java11"
       ]
 
-      // Java 17 Dockerfile Locations
       dockerJava17FileLocations = [
           "${pwd()}/Dockerfile.java17",
           "${pwd()}/Dockerfile.rh.ubi.java17",
