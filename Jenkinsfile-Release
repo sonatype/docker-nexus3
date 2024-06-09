@@ -25,7 +25,7 @@ properties([
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId, branch, dockerFileLocations, dockerJava11FileLocations, dockerJava17FileLocations
+  def commitId, commitDate, version, imageId, alpineImageId, branch, dockerFileLocations, dockerJava11FileLocations, dockerJava17FileLocations
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
       credentialsId = 'jenkins-github',
@@ -45,21 +45,27 @@ node('ubuntu-zion') {
 
       def checkoutDetails = checkout scm
 
+      // Regular Dockerfile Locations
       dockerFileLocations = [
         "${pwd()}/Dockerfile",
         "${pwd()}/Dockerfile.rh.centos",
         "${pwd()}/Dockerfile.rh.el",
-        "${pwd()}/Dockerfile.rh.ubi"
+        "${pwd()}/Dockerfile.rh.ubi",
+        "${pwd()}/Dockerfile.alpine.java8"
       ]
 
+      // Java 11 Dockerfile Locations
       dockerJava11FileLocations = [
           "${pwd()}/Dockerfile.java11",
-          "${pwd()}/Dockerfile.rh.ubi.java11"
+          "${pwd()}/Dockerfile.rh.ubi.java11",
+          "${pwd()}/Dockerfile.alpine.java11"
       ]
 
+      // Java 17 Dockerfile Locations
       dockerJava17FileLocations = [
           "${pwd()}/Dockerfile.java17",
-          "${pwd()}/Dockerfile.rh.ubi.java17"
+          "${pwd()}/Dockerfile.rh.ubi.java17",
+          "${pwd()}/Dockerfile.alpine.java17"
       ]
 
       branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
@@ -115,6 +121,11 @@ node('ubuntu-zion') {
       def baseImageReferenceStr = baseImageReference.getReference()
       def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
+
+      // Build Alpine Image
+      def alpineDockerfilePath = dockerfilePath.replace("Dockerfile", "Dockerfile.alpine")
+      def alpineHash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
+      alpineImageId = alpineHash.split(':')[1]
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
@@ -198,9 +209,10 @@ node('ubuntu-zion') {
           ]
           def javaVersionSuffix = javaVersionSuffixesMap.get(params.java_version)
 
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}")
+          // Push UBI image
+          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-ubi")
           if (params.java_version == OPENJDK8) {
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-ubi")
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
           }
 
@@ -210,12 +222,27 @@ node('ubuntu-zion') {
 
           def dockerPushCmdsMap = [
               (OPENJDK8): "docker push --all-tags ${organization}/${dockerHubRepository}",
-              (OPENJDK11): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_11}",
-              (OPENJDK17): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_17}"
+              (OPENJDK11): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_11}-ubi",
+              (OPENJDK17): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_17}-ubi"
           ]
           def dockerPushCmd = dockerPushCmdsMap.get(params.java_version)
 
           OsTools.runSafe(this, dockerPushCmd)
+
+          // Push Alpine image
+          OsTools.runSafe(this, "docker tag ${alpineImageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-alpine")
+          if (params.java_version == OPENJDK11) {
+            OsTools.runSafe(this, "docker tag ${alpineImageId} ${organization}/${dockerHubRepository}:${version}-alpine")
+          }
+
+          def alpineDockerPushCmdsMap = [
+              (OPENJDK8): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_8}-alpine",
+              (OPENJDK11): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_11}-alpine",
+              (OPENJDK17): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_17}-alpine"
+          ]
+          def alpineDockerPushCmd = alpineDockerPushCmdsMap.get(params.java_version)
+
+          OsTools.runSafe(this, alpineDockerPushCmd)
 
           response = OsTools.runSafe(this, """
             curl -X POST https://hub.docker.com/v2/users/login/ \
