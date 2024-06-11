@@ -64,7 +64,7 @@ node('ubuntu-zion') {
         runEvaluation({ stage ->
           nexusPolicyEvaluation(
               iqStage: stage,
-              iqApplication: 'docker-nexus3',
+              iqApplication: 'docker-nexus3-alpine',
               iqScanPatterns: [[scanPattern: "container:${imageName}"]],
               failBuildOnNetworkError: true,
           )}, 'release')
