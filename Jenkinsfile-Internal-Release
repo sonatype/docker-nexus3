@@ -32,7 +32,7 @@ node('ubuntu-zion') {
   def DOCKERFILE_JAVA_8 = 'Dockerfile'
   def DOCKERFILE_JAVA_11 = 'Dockerfile.java11'
   def DOCKERFILE_JAVA_17 = 'Dockerfile.java17'
-  def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine'
+  def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine.java11'
   def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
 
   def dockerfileMap = [
