@@ -151,19 +151,19 @@ node('ubuntu-zion') {
     }
 
     stage('Evaluate Policies') {
-      runEvaluation({ stage ->
-        def isAlpine = dockerfilePath.contains('alpine')
-        def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
-        def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
+          runEvaluation({ stage ->
+            def isAlpine = alpineDockerfilePath.contains('alpine')
+            def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
+            def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
 
-        nexusPolicyEvaluation(
-          iqStage: stage,
-          iqApplication: iqApplicationName,
-          iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
-          failBuildOnNetworkError: true,
-        )
-      }, 'release')
-    }
+            nexusPolicyEvaluation(
+              iqStage: stage,
+              iqApplication: iqApplicationName,
+              iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
+              failBuildOnNetworkError: true,
+            )
+          }, 'release')
+        }
 
     if (currentBuild.result == 'FAILURE') {
       return
@@ -338,7 +338,7 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
 
   dockerFile = dockerFile.replaceAll(metaVersionRegex, "\$1${params.nexus_repository_manager_version}\$3")
   dockerFile = dockerFile.replaceAll(metaShortVersionRegex,
-    "\\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
+    "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
   dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
 
