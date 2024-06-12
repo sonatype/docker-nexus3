@@ -32,11 +32,12 @@ node('ubuntu-zion') {
   def DOCKERFILE_JAVA_8 = 'Dockerfile'
   def DOCKERFILE_JAVA_11 = 'Dockerfile.java11'
   def DOCKERFILE_JAVA_17 = 'Dockerfile.java17'
-  def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine.java11'
+  def DOCKERFILE_ALPINE_JAVA_11 = 'Dockerfile.alpine'
+  def DOCKERFILE_ALPINE_JAVA_8 = 'Dockerfile.alpine.java8'
   def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
 
   def dockerfileMap = [
-    (OPENJDK8) : [DOCKERFILE_JAVA_8],
+    (OPENJDK8) : [DOCKERFILE_JAVA_8, DOCKERFILE_ALPINE_JAVA_8],
     (OPENJDK11): [DOCKERFILE_JAVA_11, DOCKERFILE_ALPINE_JAVA_11],
     (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
   ]
@@ -70,7 +71,7 @@ node('ubuntu-zion') {
       }
     }
     def dockerfilePath = dockerfileMap[params.java_version][0]
-    def alpineDockerfilePath = params.java_version == OPENJDK8 ? null : dockerfileMap[params.java_version][1]
+    def alpineDockerfilePath = dockerfileMap[params.java_version][1]
 
     stage('Build UBI Image') {
       def baseImage = extractBaseImage(dockerfilePath)
@@ -80,21 +81,24 @@ node('ubuntu-zion') {
       def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
     }
-    if (params.java_version != OPENJDK8) {
-      stage('Build Alpine Image') {
-        def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
-        alpineImageId = hash.split(':')[1]
-      }
+    stage('Build Alpine Image') {
+      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
+      alpineImageId = hash.split(':')[1]
     }
     if (params.scan_for_policy_violations) {
       stage('Evaluate Policies') {
         runEvaluation({ stage ->
+          def isAlpine = alpineDockerfilePath.contains('alpine')
+          def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
+          def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
+
           nexusPolicyEvaluation(
-              iqStage: stage,
-              iqApplication: 'docker-nexus3',
-              iqScanPatterns: [[scanPattern: "container:${imageName}"]],
-              failBuildOnNetworkError: true,
-          )}, 'release')
+            iqStage: stage,
+            iqApplication: iqApplicationName,
+            iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
+            failBuildOnNetworkError: true,
+          )
+        }, 'release')
       }
     }
     if (currentBuild.result == 'FAILURE') {
@@ -125,13 +129,11 @@ node('ubuntu-zion') {
           }
 
           // Push Alpine images
-          if (params.java_version != OPENJDK8) {
-            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
-            if (params.java_version == OPENJDK11) {
-              sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
-            }
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
+          if (params.java_version == OPENJDK11) {
+            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
           }
         }
       }
