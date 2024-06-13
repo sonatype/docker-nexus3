@@ -152,7 +152,7 @@ node('ubuntu-zion') {
 
     stage('Evaluate Policies') {
           runEvaluation({ stage ->
-            def isAlpine = alpineDockerfilePath.contains('alpine')
+            def isAlpine = alpineDockerfilePath != null && alpineDockerfilePath.contains('alpine')
             def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
             def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
 
