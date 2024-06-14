@@ -115,9 +115,9 @@ The Alpine-based container image includes minimal dependencies and uses an ENTRY
 
 The Alpine-based container image is available from Docker Hub and can be pulled using the following tags:
 
-- 'sonatype/nexus3:3.XX.y-alpine' (runs Java 11)
-- 'sonatype/nexus3:3.XX.y-java11-alpine'
-- 'sonatype/nexus3:3.XX.y-java17-alpine'
+- sonatype/nexus3:3.XX.y-alpine (runs Java 11)
+- sonatype/nexus3:3.XX.y-java11-alpine
+- sonatype/nexus3:3.XX.y-java17-alpine
 
 ## Notes
 
