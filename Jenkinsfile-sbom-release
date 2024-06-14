@@ -7,14 +7,22 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 
 import groovy.json.JsonSlurper
+import groovy.json.JsonBuilder
 
 IQ_URL_BASE = "https://sonatype.sonatype.app/platform"
 REPO_BASE_URL = "https://repo.sonatype.com/service/rest"
-TARGET_REPO_NAME = "sonatype-sboms"
+TARGET_REPO_NAME = "sonatype-sboms-test"
+SBOM_DEPLOYER_CREDENTIALS = "sonatype-sbom-deployer-test"
 REDHAT_SBOM_REPO_URL_BASE = "https://access.redhat.com/security/data/sbom/beta"
 REDHAT_CONTAINER_API_URL_BASE = "https://catalog.redhat.com/api/containers/v1"
 CYCLONEDX_VERSION = "1.5"
 SPDXMERGE_VERSION_TAG = "v0.2.0"
+NEXUS3_REPORT_BY_TAG = [
+  "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?-alpine\$" : "docker-nexus3-alpine",
+  "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?(-ubi)?\$" : "docker-nexus3"
+]
+DOCKER_NEXUS_IMAGE_NAME = "docker-all.repo.sonatype.com/sonatype-internal/nexus-42419"
+DEFAULT_NEXUS3_REPORT = "docker-nexus3"
 
 properties([
     parameters([
@@ -72,12 +80,12 @@ def getComponentInfo(String componentName) {
   }
 }
 
-def publishComponent(String buildDir, String componentName, String componentVersion, boolean cyclonedxAvailable = true) {
+def publishComponentSbom(String buildDir, String componentName, String componentVersion, boolean cyclonedxAvailable = true) {
   def publishCommand = "curl -v -s -w 'Status: %{http_code}' -u \$NXRM_USER:\$NXRM_PASSWORD -X POST '${REPO_BASE_URL}/v1/components?repository=${TARGET_REPO_NAME}' \
     -F 'raw.directory=/${componentName}/${componentVersion}/' \
     -F 'raw.asset1=@${buildDir}/spdx/${componentName}-${componentVersion}-spdx.json' \
     -F 'raw.asset1.filename=${componentName}-${componentVersion}-spdx.json'"
-
+  
   if (cyclonedxAvailable) {
     publishCommand = "${publishCommand} \
       -F 'raw.asset2=@${buildDir}/cyclonedx/${componentName}-${componentVersion}-cyclonedx.json' \
@@ -86,11 +94,15 @@ def publishComponent(String buildDir, String componentName, String componentVers
 
   withCredentials([
       usernamePassword(
-          credentialsId: 'sonatype-sbom-deployer',
+          credentialsId: SBOM_DEPLOYER_CREDENTIALS,
           usernameVariable: 'NXRM_USER',
           passwordVariable: 'NXRM_PASSWORD')
   ]) {
-    sh(publishCommand)
+    def publishStatus = sh(script: publishCommand, returnStdout: true).trim()
+
+    if( !(publishStatus ==~ "Status: 2\\d\\d") ) {
+      error "Could not publish SBOM of component ${componentName}:${componentVersion}"
+    }
   }
 }
 
@@ -125,34 +137,43 @@ def mergeSpdxComponents(String buildDir, String finalComponentName, String final
     """
 }
 
+def getNexusReportName(String tag) {
+  for(entry in NEXUS3_REPORT_BY_TAG) {
+    if(tag ==~ entry.key) {
+      return entry.value
+    }
+  }
+  return DEFAULT_NEXUS3_REPORT
+}
+
 dockerizedRunPipeline(
     skipVulnerabilityScan: true,
     pathToDockerfile: "./build-images/Dockerfile.sbom-deployer",
     prepare: {
       withSonatypeDockerRegistry() {
-        sh "docker pull sonatype/nexus3:${params.docker_nexus3_tag}"
-        env['nexusVersion'] = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
+        sh "docker pull ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag}"
+  
+        def nexusVersion = sh(script: "docker inspect ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag} \
             | jq -r '.[0].Config.Labels.version' ",
           returnStdout: true).trim()
-        env['dockerImageVersion'] = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
+        def dockerImageVersion = sh(script: "docker inspect ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag} \
             | jq -r '.[0].Config.Labels.release' ",
           returnStdout: true).trim()
-        env['ubiImageId'] = sh(script: "docker inspect sonatype/nexus3:${params.docker_nexus3_tag} \
+        def ubiImageId = sh(script: "docker inspect ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag} \
             | jq -r '.[0].Config.Labels.\"base-image-ref\"' \
             | sed -En 's/^.+image=(.+)\$/\\1/p'",
           returnStdout: true).trim()
+        
+        env['imageTag'] = params.docker_nexus3_tag
+        env['nexusVersion'] = nexusVersion
+        env['dockerImageVersion'] = dockerImageVersion
+        env['ubiImageId'] = ubiImageId
       }
     },
     run: {
-      def buildDir = "./.sbom-build/job-${env.BUILD_NUMBER}"
-      def ubiImageName = sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${env.ubiImageId}' -H 'accept: application/json' \
-          | jq -r '.brew.build' \
-          | sed -En 's/(ubi[0-9]+-minimal)-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1-\\2/p'",
-          returnStdout: true).trim()
-      def ubiImageVersion = sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${env.ubiImageId}' -H 'accept: application/json' \
-          | jq -r '.brew.build' \
-          | sed -En 's/ubi[0-9]+-minimal-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1/p'",
-          returnStdout: true).trim()
+      def buildDir = "./.sbom-build/job-${env.BUILD_NUMBER}/v${env.imageTag}"
+      def jsonSlurper = new JsonSlurper()
+      def nexusReportName = getNexusReportName(env.imageTag)
 
       // Download SBOMs
       sh "mkdir -p ${buildDir}/spdx && mkdir -p ${buildDir}/cyclonedx"
@@ -161,26 +182,36 @@ dockerizedRunPipeline(
       getComponentSbom(buildDir, "nexus-internal", env.nexusVersion)
       // Get nxrm-db-migrator SBOM
       getComponentSbom(buildDir, "nxrm-db-migrator", env.nexusVersion)
-      // Get docker-nexus3 SBOM
-      getComponentSbom(buildDir, "docker-nexus3", env.dockerImageVersion)
+      // Get we SBOM
+      getComponentSbom(buildDir, nexusReportName, env.dockerImageVersion)
+
       // Get UBI Minimal SBOM
-      def ubiSbomAvailable = getUbiImageSbom(buildDir, ubiImageName, ubiImageVersion)
+      boolean ubiSbomAvailable = env.ubiImageId?.trim() ? true : false
+      def ubiImageName = ubiSbomAvailable ? sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${env.ubiImageId}' -H 'accept: application/json' \
+          | jq -r '.brew.build' \
+          | sed -En 's/(ubi[0-9]+-minimal)-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1-\\2/p'",
+          returnStdout: true).trim() : ""
+      def ubiImageVersion = ubiSbomAvailable ? sh(script: "curl -s -X 'GET' '${REDHAT_CONTAINER_API_URL_BASE}/images/id/${env.ubiImageId}' -H 'accept: application/json' \
+          | jq -r '.brew.build' \
+          | sed -En 's/ubi[0-9]+-minimal-container-([0-9]+\\.[0-9]+-[0-9]+\\.?[0-9]*)/\\1/p'",
+          returnStdout: true).trim() : ""
+      ubiSbomAvailable = ubiSbomAvailable ? getUbiImageSbom(buildDir, ubiImageName, ubiImageVersion) : false
 
       sh "echo 'Available SPDX SBOMS' && ls ${buildDir}/spdx"
       sh "echo 'Available CycloneDx SBOMS' && ls ${buildDir}/cyclonedx"
 
       // Merge supported sboms
-      def dockerImageNamespace = sh(script: "cat ${buildDir}/spdx/docker-nexus3-${env.dockerImageVersion}-spdx.json | jq -r '.documentNamespace'", returnStdout: true).trim()
-      mergeSpdxComponents(buildDir, "docker-nexus3-aggregate", env.dockerImageVersion, dockerImageNamespace)
+      def dockerImageNamespace = sh(script: "cat ${buildDir}/spdx/${nexusReportName}-${env.dockerImageVersion}-spdx.json | jq -r '.documentNamespace'", returnStdout: true).trim()
+      mergeSpdxComponents(buildDir, "${nexusReportName}-aggregate", env.dockerImageVersion, dockerImageNamespace)
 
       // Publish SBOMs
       if (ubiSbomAvailable) {
         publishComponent(buildDir, "ubi-minimal", ubiImageVersion, false)
       }
-      publishComponent(buildDir, "nexus-internal", env.nexusVersion)
-      publishComponent(buildDir, "nxrm-db-migrator", env.nexusVersion)
-      publishComponent(buildDir, "docker-nexus3", env.dockerImageVersion)
-      publishComponent(buildDir, "docker-nexus3-aggregate", env.dockerImageVersion, false)
+      publishComponentSbom(buildDir, "nexus-internal", env.nexusVersion)
+      publishComponentSbom(buildDir, "nxrm-db-migrator", env.nexusVersion)
+      publishComponentSbom(buildDir, nexusReportName, env.dockerImageVersion)
+      publishComponentSbom(buildDir, "${nexusReportName}-aggregate", env.dockerImageVersion, false)
 
       sh "rm -rf '${buildDir}'"
     }
