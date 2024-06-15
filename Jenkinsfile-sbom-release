@@ -165,7 +165,7 @@ dockerizedRunPipeline(
           returnStdout: true).trim()
         
         env['imageTag'] = params.docker_nexus3_tag
-        env['nexusVersion'] = nexusVersion
+        env['nexusVersion'] = dockerInspect('version')
         env['dockerImageVersion'] = dockerImageVersion
         env['ubiImageId'] = ubiImageId
       }
