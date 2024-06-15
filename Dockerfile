@@ -57,6 +57,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
     java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
+    && microdnf upgrade -y ca-certificates dbus-libs dbus-common dbus-daemon \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
