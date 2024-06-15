@@ -166,8 +166,10 @@ dockerizedRunPipeline(
         
         env['imageTag'] = params.docker_nexus3_tag
         env['nexusVersion'] = dockerInspect('version')
-        env['dockerImageVersion'] = dockerImageVersion
-        env['ubiImageId'] = ubiImageId
+        env['dockerImageVersion'] = dockerInspect('release')
+        
+        def baseImageRef = dockerInspect('base-image-ref')
+        env['ubiImageId'] = baseImageRef.contains("image=") ? baseImageRef.split("image=")[1] : ""
       }
     },
     run: {
