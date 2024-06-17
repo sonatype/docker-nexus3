@@ -146,28 +146,23 @@ def getNexusReportName(String tag) {
   return DEFAULT_NEXUS3_REPORT
 }
 
+def dockerInspectLabel(String image, String tag, String label) {
+  sh(script: "docker inspect ${image}:${tag} | jq -r '.[0].Config.Labels[\"${label}\"]'", returnStdout: true).trim()
+}
+
 dockerizedRunPipeline(
     skipVulnerabilityScan: true,
     pathToDockerfile: "./build-images/Dockerfile.sbom-deployer",
     prepare: {
       withSonatypeDockerRegistry() {
         sh "docker pull ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag}"
-  
-        def nexusVersion = sh(script: "docker inspect ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag} \
-            | jq -r '.[0].Config.Labels.version' ",
-          returnStdout: true).trim()
-        def dockerImageVersion = sh(script: "docker inspect ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag} \
-            | jq -r '.[0].Config.Labels.release' ",
-          returnStdout: true).trim()
-        def ubiImageId = sh(script: "docker inspect ${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag} \
-            | jq -r '.[0].Config.Labels.\"base-image-ref\"' \
-            | sed -En 's/^.+image=(.+)\$/\\1/p'",
-          returnStdout: true).trim()
+
+        def baseImageRef = dockerInspectLabel(DOCKER_NEXUS_IMAGE_NAME, params.docker_nexus3_tag, "base-image-ref")
         
         env['imageTag'] = params.docker_nexus3_tag
-        env['nexusVersion'] = nexusVersion
-        env['dockerImageVersion'] = dockerImageVersion
-        env['ubiImageId'] = ubiImageId
+        env['nexusVersion'] = dockerInspectLabel(DOCKER_NEXUS_IMAGE_NAME, params.docker_nexus3_tag, "version")
+        env['dockerImageVersion'] = dockerInspectLabel(DOCKER_NEXUS_IMAGE_NAME, params.docker_nexus3_tag, "release")
+        env['ubiImageId'] = baseImageRef.contains("image=") ? baseImageRef.split("image=")[1] : ""
       }
     },
     run: {
