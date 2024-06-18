@@ -21,7 +21,7 @@ NEXUS3_REPORT_BY_TAG = [
   "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?-alpine\$" : "docker-nexus3-alpine",
   "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?(-ubi)?\$" : "docker-nexus3"
 ]
-DOCKER_NEXUS_IMAGE_NAME = "docker-all.repo.sonatype.com/sonatype-internal/nexus-42419"
+DOCKER_NEXUS_IMAGE_NAME = "docker-all.repo.sonatype.com/sonatype/nexus3"
 DEFAULT_NEXUS3_REPORT = "docker-nexus3"
 
 properties([
