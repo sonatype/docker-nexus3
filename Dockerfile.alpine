@@ -38,7 +38,7 @@ LABEL name="Nexus Repository Manager" \
 
 ARG NEXUS_VERSION=3.69.0-02
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=4161a1bb43d92ad8ca6185fa0da2c0f02dfd62280c5b6e4ac4419df4aecaf55f
+ARG NEXUS_DOWNLOAD_SHA256_HASH=eec80b3ee33dde61443e54dddea258f851951c4aef81c4c6256c1205ca818162
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -69,9 +69,6 @@ RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-unix.tar.gz \
 
 # Removing java memory settings from nexus.vmoptions since now we use INSTALL4J_ADD_VM_PARAMS
 RUN sed -i '/^-Xms/d;/^-Xmx/d;/^-XX:MaxDirectMemorySize/d' $NEXUS_HOME/bin/nexus.vmoptions
-
-# Removing the line not applicable to jdk9+alpine
-RUN sed -i ';/^-Djava.endorsed/d;/# comment out/d' $NEXUS_HOME/bin/nexus.vmoptions
 
 RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
