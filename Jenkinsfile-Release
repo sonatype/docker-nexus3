@@ -37,6 +37,7 @@ node('ubuntu-zion') {
   def JAVA_8 = 'java8'
   def JAVA_11 = 'java11'
   def JAVA_17 = 'java17'
+  def alpineDockerfilePath
 
   try {
     stage('Preparation') {
@@ -120,7 +121,7 @@ node('ubuntu-zion') {
 
       // Build Alpine Image if not Java 8
       if (params.java_version != OPENJDK8) {
-        def alpineDockerfilePath = dockerfilePath.replace("Dockerfile", "Dockerfile.alpine")
+        alpineDockerfilePath = dockerfilePath.replace("Dockerfile", "Dockerfile.alpine")
         def alpineHash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
         alpineImageId = alpineHash.split(':')[1]
       }
@@ -151,19 +152,19 @@ node('ubuntu-zion') {
     }
 
     stage('Evaluate Policies') {
-          runEvaluation({ stage ->
-            def isAlpine = alpineDockerfilePath != null && alpineDockerfilePath.contains('alpine')
-            def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
-            def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
+      runEvaluation({ stage ->
+        def isAlpine = alpineDockerfilePath != null && alpineDockerfilePath.contains('alpine')
+        def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
+        def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
 
-            nexusPolicyEvaluation(
-              iqStage: stage,
-              iqApplication: iqApplicationName,
-              iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
-              failBuildOnNetworkError: true,
-            )
-          }, 'release')
-        }
+        nexusPolicyEvaluation(
+          iqStage: stage,
+          iqApplication: iqApplicationName,
+          iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
+          failBuildOnNetworkError: true,
+        )
+      }, 'release')
+    }
 
     if (currentBuild.result == 'FAILURE') {
       return
