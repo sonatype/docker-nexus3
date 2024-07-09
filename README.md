@@ -106,6 +106,18 @@ In addition to the Universal Base Image, we can build images based on:
 * Red Hat Enterprise Linux: [Dockerfile.rh.el](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.el)
 * CentOS: [Dockerfile.rh.centos](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.centos)
 
+## Alpine Image
+
+An Alpine-based container image can be created using [Dockerfile.alpine.java11](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java11) This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
+
+The Alpine-based container image includes minimal dependencies and uses an ENTRYPOINT script to ensure the application runs with the necessary permissions. It is optimized for rapid deployment and efficient resource usage.
+
+The Alpine-based container image is available from Docker Hub and can be pulled using the following tags:
+
+- sonatype/nexus3:3.XX.y-alpine (runs Java 11)
+- sonatype/nexus3:3.XX.y-java11-alpine
+- sonatype/nexus3:3.XX.y-java17-alpine
+
 ## Notes
 
 * Our [system requirements](https://help.sonatype.com/display/NXRM3/System+Requirements) should be taken into account when provisioning the Docker container.
