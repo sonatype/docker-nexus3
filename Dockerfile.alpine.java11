@@ -55,6 +55,9 @@ RUN apk add openjdk11 tar procps gzip curl shadow \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
+RUN apk del --no-cache openssl || true
+RUN apk update && apk add --no-cache openssl
+
 WORKDIR ${SONATYPE_DIR}
 
 # Download nexus & setup directories
