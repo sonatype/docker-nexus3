@@ -111,7 +111,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'main') {
+    if (branch == 'origin/NEXUS-43520-dockerTags') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           def javaVersionSuffixesMap = [
