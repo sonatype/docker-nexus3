@@ -217,8 +217,8 @@ node('ubuntu-zion') {
           OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-ubi")
           if (params.java_version == OPENJDK8) {
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-ubi")
+            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
-            OsTools.runSafe(this, "docker tag ${organization}/${dockerHubRepository}:${version}-ubi ${organization}/${dockerHubRepository}:${version}")
             }
           }
 
@@ -276,8 +276,6 @@ node('ubuntu-zion') {
             if (params.java_version == OPENJDK8) {
               sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
               sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:latest"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:latest"
             }
           }
         }
