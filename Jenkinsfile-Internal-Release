@@ -127,6 +127,9 @@ node('ubuntu-zion') {
           if (params.java_version == OPENJDK8) {
             sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
+            // Create alias for the UBI image without the suffix
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
           }
 
           // Push Alpine images
