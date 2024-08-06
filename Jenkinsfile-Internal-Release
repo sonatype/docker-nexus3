@@ -103,22 +103,22 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'origin/NEXUS-43823-java17') {
+    if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           // Tag Images
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-ubi"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-ubi"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-alpine"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-alpine"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
 
           // Push Images
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-alpine"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
         }
       }
     }
