@@ -213,17 +213,17 @@ node('ubuntu-zion') {
 
           // push to internal repos
           withSonatypeDockerRegistry() {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-ubi"
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-ubi"
-            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-alpine"
-            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-alpine"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-ubi"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-java17-ubi"
+            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-alpine"
+            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-java17-alpine"
 
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-ubi"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-ubi"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-alpine"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-alpine"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-ubi"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-java17-ubi"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-alpine"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/${dockerHubRepository}:${version}-java17-alpine"
           }
         }
       }
