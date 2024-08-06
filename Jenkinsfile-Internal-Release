@@ -119,7 +119,6 @@ node('ubuntu-zion') {
           sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-ubi"
           sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-alpine"
           sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-alpine"
-          }
         }
       }
     }
