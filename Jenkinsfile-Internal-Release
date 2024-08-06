@@ -71,6 +71,7 @@ node('ubuntu-zion') {
       def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
       alpineImageId = hash.split(':')[1]
     }
+
     if (params.scan_for_policy_violations) {
       stage('Evaluate Policies') {
 
