@@ -73,22 +73,16 @@ node('ubuntu-zion') {
     }
     if (params.scan_for_policy_violations) {
       stage('Evaluate Policies') {
-        runEvaluation({ stage ->
-          def iqApplicationName = 'docker-nexus3'
-          def imageToScan = imageName
 
-          nexusPolicyEvaluation(
-            iqStage: stage,
-            iqApplication: iqApplicationName,
-            iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
-            failBuildOnNetworkError: true,
-          )
-        }, 'release')
+        def imagesToScan = [
+          [name: 'docker-nexus3', image: imageName],
+          [name: 'docker-nexus3-alpine', image: "${imageName}-alpine"]
+        ]
 
-        // Evaluate Alpine Image
+        imagesToScan.each { imageConfig ->
         runEvaluation({ stage ->
-          def iqApplicationName = 'docker-nexus3-alpine'
-          def imageToScan = "${imageName}-alpine"
+          def iqApplicationName = imageConfig.name
+          def imageToScan = imageConfig.image
 
           nexusPolicyEvaluation(
             iqStage: stage,
@@ -112,18 +106,18 @@ node('ubuntu-zion') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           // Tag Images
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-ubi"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-ubi"
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-alpine"
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-alpine"
 
           // Push Images
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}-java17-alpine"
         }
       }
     }

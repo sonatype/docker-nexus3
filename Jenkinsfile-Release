@@ -23,7 +23,7 @@ properties([
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId, alpineImageId, branch, dockerFileLocations, dockerJava11FileLocations, dockerJava17FileLocations
+  def commitId, commitDate, version, imageId, alpineImageId, branch
   def organization = 'sonatype',
       gitHubRepository = 'docker-nexus3',
       credentialsId = 'jenkins-github',
@@ -33,20 +33,16 @@ node('ubuntu-zion') {
   GitHub gitHub
 
   def JAVA_17 = 'java17'
-  def alpineDockerfilePath
-
+  dockerFileLocations = [
+    "${pwd()}/Dockerfile.java17",
+    "${pwd()}/Dockerfile.rh.ubi.java17",
+    "${pwd()}/Dockerfile.alpine.java17"
+  ]
   try {
     stage('Preparation') {
       deleteDir()
       OsTools.runSafe(this, "docker system prune -a -f")
-
       def checkoutDetails = checkout scm
-
-      dockerFileLocations = [
-        "${pwd()}/Dockerfile.java17",
-        "${pwd()}/Dockerfile.rh.ubi.java17",
-        "${pwd()}/Dockerfile.alpine.java17"
-      ]
 
       branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
       commitId = checkoutDetails.GIT_COMMIT
@@ -69,18 +65,19 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          chosenDockerfileLocations.each { updateRepositoryManagerVersion(it) }
+          dockerFileLocations.each { updateRepositoryManagerVersion(it) }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
       if (params.nexus_repository_manager_cookbook_version) {
         stage('Update Repository Manager Cookbook Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          chosenDockerfileLocations.each { updateRepositoryCookbookVersion(it) }
+          dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
         }
       }
     }
-    stage('Build') {
+
+    stage('Build UBI Image') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
       def dockerfilePath = 'Dockerfile.java17'
       def baseImage = extractBaseImage(dockerfilePath)
@@ -91,7 +88,7 @@ node('ubuntu-zion') {
       imageId = hash.split(':')[1]
 
       // Build Alpine Image
-      alpineDockerfilePath = 'Dockerfile.java17'
+      def alpineDockerfilePath = 'Dockerfile.alpine.java17'
       def alpineHash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
       alpineImageId = alpineHash.split(':')[1]
 
@@ -102,16 +99,15 @@ node('ubuntu-zion') {
         gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
       }
     }
+
     stage('Test') {
       gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
-
       validateExpectations([
         new Expectation('Has user nexus in group nexus present',
             'id', '-ng nexus', 'nexus'),
         new Expectation('Has nexus user java process present',
             'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
       ])
-
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
         return
@@ -121,23 +117,29 @@ node('ubuntu-zion') {
     }
 
     stage('Evaluate Policies') {
-      runEvaluation({ stage ->
-        def isAlpine = alpineDockerfilePath != null && alpineDockerfilePath.contains('alpine')
-        def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
-        def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
+      def imagesToScan = [
+          [name: 'docker-nexus3', image: imageName],
+          [name: 'docker-nexus3-alpine', image: "${imageName}-alpine"]
+      ]
 
-        nexusPolicyEvaluation(
-          iqStage: stage,
-          iqApplication: iqApplicationName,
-          iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
-          failBuildOnNetworkError: true,
-        )
-      }, 'release')
+      imagesToScan.each { imageConfig ->
+        runEvaluation({ stage ->
+          def iqApplicationName = imageConfig.name
+          def imageToScan = imageConfig.image
+
+          nexusPolicyEvaluation(
+            iqStage: stage,
+            iqApplication: iqApplicationName,
+            iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
+            failBuildOnNetworkError: true,
+          )
+        }, 'release')
+      }
     }
-
     if (currentBuild.result == 'FAILURE') {
-      return
+          return
     }
+
     if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha
           || params.nexus_repository_manager_cookbook_version) {
       stage('Commit Automated Code Update') {
@@ -262,7 +264,7 @@ node('ubuntu-zion') {
 }
 
 def readVersion() {
-  def content = readFile 'Dockerfile'
+  def content = readFile 'Dockerfile.java17'
   for (line in content.split('\n')) {
     if (line.startsWith('ARG NEXUS_VERSION=')) {
       return getShortVersion(line.substring(18))
