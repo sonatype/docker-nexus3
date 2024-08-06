@@ -168,7 +168,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
+    if (branch == 'origin/NEXUS-43823-java17' && !params.skip_push && !params.update_latest_only) {
       input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken

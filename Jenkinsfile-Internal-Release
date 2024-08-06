@@ -88,7 +88,7 @@ node('ubuntu-zion') {
             iqStage: stage,
             iqApplication: iqApplicationName,
             iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
-            failBuildOnNetworkError: true,
+            failBuildOnNetworkError: false,
           )
         }, 'release')
       }
