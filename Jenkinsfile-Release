@@ -8,10 +8,8 @@ import com.sonatype.jenkins.pipeline.GitHub
 import com.sonatype.jenkins.pipeline.OsTools
 import com.sonatype.jenkins.shared.Expectation
 
-String OPENJDK8 = 'OpenJDK 8'
-String OPENJDK11 = 'OpenJDK 11'
 String OPENJDK17 = 'OpenJDK 17'
-List<String> javaVersions = [OPENJDK17, OPENJDK11, OPENJDK8]
+List<String> javaVersions = [OPENJDK17]
 
 properties([
   parameters([
@@ -34,8 +32,6 @@ node('ubuntu-zion') {
       dockerHubRepository = 'nexus3'
   GitHub gitHub
 
-  def JAVA_8 = 'java8'
-  def JAVA_11 = 'java11'
   def JAVA_17 = 'java17'
   def alpineDockerfilePath
 
@@ -47,22 +43,9 @@ node('ubuntu-zion') {
       def checkoutDetails = checkout scm
 
       dockerFileLocations = [
-        "${pwd()}/Dockerfile",
-        "${pwd()}/Dockerfile.rh.centos",
-        "${pwd()}/Dockerfile.rh.el",
-        "${pwd()}/Dockerfile.rh.ubi"
-      ]
-
-      dockerJava11FileLocations = [
-          "${pwd()}/Dockerfile.java11",
-          "${pwd()}/Dockerfile.rh.ubi.java11",
-          "${pwd()}/Dockerfile.alpine.java11"
-      ]
-
-      dockerJava17FileLocations = [
-          "${pwd()}/Dockerfile.java17",
-          "${pwd()}/Dockerfile.rh.ubi.java17",
-          "${pwd()}/Dockerfile.alpine.java17"
+        "${pwd()}/Dockerfile.java17",
+        "${pwd()}/Dockerfile.rh.ubi.java17",
+        "${pwd()}/Dockerfile.alpine.java17"
       ]
 
       branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
@@ -83,13 +66,6 @@ node('ubuntu-zion') {
       }
       gitHub = new GitHub(this, "${organization}/${gitHubRepository}", apiToken)
 
-      def dockerfileLocationsMap = [
-          (OPENJDK8): dockerFileLocations,
-          (OPENJDK11): dockerJava11FileLocations,
-          (OPENJDK17): dockerJava17FileLocations
-      ]
-      def chosenDockerfileLocations = dockerfileLocationsMap.get(params.java_version)
-
       if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
@@ -106,12 +82,7 @@ node('ubuntu-zion') {
     }
     stage('Build') {
       gitHub.statusUpdate commitId, 'pending', 'build', 'Build is running'
-      def dockerfilesMap = [
-          (OPENJDK8): 'Dockerfile',
-          (OPENJDK11): 'Dockerfile.java11',
-          (OPENJDK17): 'Dockerfile.java17'
-      ]
-      def dockerfilePath = dockerfilesMap.get(params.java_version)
+      def dockerfilePath = 'Dockerfile.java17'
       def baseImage = extractBaseImage(dockerfilePath)
       def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
@@ -119,12 +90,10 @@ node('ubuntu-zion') {
       def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
 
-      // Build Alpine Image if not Java 8
-      if (params.java_version != OPENJDK8) {
-        alpineDockerfilePath = dockerfilePath.replace("Dockerfile", "Dockerfile.alpine")
-        def alpineHash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
-        alpineImageId = alpineHash.split(':')[1]
-      }
+      // Build Alpine Image
+      alpineDockerfilePath = 'Dockerfile.java17'
+      def alpineHash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
+      alpineImageId = alpineHash.split(':')[1]
 
       if (currentBuild.result == 'FAILURE') {
         gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
@@ -206,49 +175,22 @@ node('ubuntu-zion') {
                           credentialsId: 'docker-hub-credentials',
                           usernameVariable: 'DOCKERHUB_API_USERNAME',
                           passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-          def javaVersionSuffixesMap = [
-              (OPENJDK8): JAVA_8,
-              (OPENJDK11): JAVA_11,
-              (OPENJDK17): JAVA_17
-          ]
-          def javaVersionSuffix = javaVersionSuffixesMap.get(params.java_version)
 
           // Push UBI image
-          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-ubi")
-          if (params.java_version == OPENJDK17) {
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-ubi")
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
-            OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
-          }
+          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
+          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-ubi")
+          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-java17-ubi")
+          OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
+
+          // Push Alpine Image
+          OsTools.runSafe(this, "docker tag ${alpineImageId} ${organization}/${dockerHubRepository}:${version}-alpine")
+          OsTools.runSafe(this, "docker tag ${alpineImageId} ${organization}/${dockerHubRepository}:${version}-java17-alpine")
 
           OsTools.runSafe(this, """
             docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
           """)
 
-          def dockerPushCmdsMap = [
-              (OPENJDK8): "docker push --all-tags ${organization}/${dockerHubRepository}",
-              (OPENJDK11): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_11}-ubi",
-              (OPENJDK17): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_17}-ubi"
-          ]
-          def dockerPushCmd = dockerPushCmdsMap.get(params.java_version)
-
-          OsTools.runSafe(this, dockerPushCmd)
-
-          // Push Alpine image if not Java 8
-          if (params.java_version != OPENJDK8) {
-            OsTools.runSafe(this, "docker tag ${alpineImageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-alpine")
-            if (params.java_version == OPENJDK11) {
-              OsTools.runSafe(this, "docker tag ${alpineImageId} ${organization}/${dockerHubRepository}:${version}-alpine")
-            }
-
-            def alpineDockerPushCmdsMap = [
-                (OPENJDK11): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_11}-alpine",
-                (OPENJDK17): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_17}-alpine"
-            ]
-            def alpineDockerPushCmd = alpineDockerPushCmdsMap.get(params.java_version)
-
-            OsTools.runSafe(this, alpineDockerPushCmd)
-          }
+          OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
 
           response = OsTools.runSafe(this, """
             curl -X POST https://hub.docker.com/v2/users/login/ \
@@ -269,13 +211,17 @@ node('ubuntu-zion') {
 
           // push to internal repos
           withSonatypeDockerRegistry() {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-ubi"
+            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-ubi"
+            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-alpine"
+            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-alpine"
 
-            if (params.java_version == OPENJDK17) {
-              sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-            }
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-ubi"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-ubi"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-alpine"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-alpine"
           }
         }
       }
