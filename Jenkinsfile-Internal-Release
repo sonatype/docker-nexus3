@@ -105,6 +105,7 @@ node('ubuntu-zion') {
     }
     if (branch == 'origin/NEXUS-43823-java17') {
       stage('Push image to RSC') {
+        echo "Pushing images to RSC registry"
         withSonatypeDockerRegistry() {
           // Tag Images
           sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus-42419/16:${version}"
