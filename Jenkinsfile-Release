@@ -11,7 +11,7 @@ import com.sonatype.jenkins.shared.Expectation
 String OPENJDK8 = 'OpenJDK 8'
 String OPENJDK11 = 'OpenJDK 11'
 String OPENJDK17 = 'OpenJDK 17'
-List<String> javaVersions = [OPENJDK8, OPENJDK11, OPENJDK17]
+List<String> javaVersions = [OPENJDK17, OPENJDK11, OPENJDK8]
 
 properties([
   parameters([
@@ -215,7 +215,7 @@ node('ubuntu-zion') {
 
           // Push UBI image
           OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-ubi")
-          if (params.java_version == OPENJDK8) {
+          if (params.java_version == OPENJDK17) {
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}-ubi")
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:${version}")
             OsTools.runSafe(this, "docker tag ${imageId} ${organization}/${dockerHubRepository}:latest")
@@ -272,7 +272,7 @@ node('ubuntu-zion') {
             sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
 
-            if (params.java_version == OPENJDK8) {
+            if (params.java_version == OPENJDK17) {
               sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
               sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
             }
