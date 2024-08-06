@@ -89,10 +89,10 @@ node('ubuntu-zion') {
             iqApplication: iqApplicationName,
             iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
             failBuildOnNetworkError: false,
-          )
-        }, 'release')
+            )
+          }, 'release')
+        }
       }
-    }
     }
     if (currentBuild.result == 'FAILURE') {
       return
