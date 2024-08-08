@@ -219,7 +219,7 @@ node('ubuntu-zion') {
 
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-ubi"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal${dockerHubRepository}:${version}-java17-ubi"
+            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-ubi"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-alpine"
             sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-java17-alpine"
           }
