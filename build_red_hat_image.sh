@@ -29,12 +29,9 @@
 #   * REGISTRY_LOGIN from Red Hat config page for image
 #   * REGISTRY_PASSWORD from Red Hat config page for image
 #   * API_TOKEN from red hat token/account page for API access
-#   * JAVA_VERSION java version to version docker images (e.g.: "java8", "java11", "java17")
 
 set -x # log commands as they execute
 set -e # stop execution on the first failed command
-
-JAVA_8="java8"
 
 # from config/scanning page at red hat
 CERT_PROJECT_ID=5e61d90a38776799eb517bd2
@@ -42,11 +39,6 @@ CERT_PROJECT_ID=5e61d90a38776799eb517bd2
 REPOSITORY="quay.io"
 IMAGE_LATEST="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:latest"
 IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}"
-
-if [[ $JAVA_VERSION != $JAVA_8 ]]; then
-  DOCKERFILE="${DOCKERFILE}.${JAVA_VERSION}"
-  IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${JAVA_VERSION}"
-fi
 
 AUTHFILE="${HOME}/.docker/config.json"
 
@@ -58,10 +50,7 @@ docker login "${REPOSITORY}" \
        --password "${REGISTRY_PASSWORD}"
 
 docker push "${IMAGE_TAG}"
-
-if [[ $JAVA_VERSION == $JAVA_8 ]]; then
-  docker push "${IMAGE_LATEST}"
-fi
+docker push "${IMAGE_LATEST}"
 
 preflight check container \
           "${IMAGE_TAG}" \
