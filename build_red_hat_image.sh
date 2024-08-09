@@ -43,11 +43,6 @@ REPOSITORY="quay.io"
 IMAGE_LATEST="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:latest"
 IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}"
 
-if [[ $JAVA_VERSION != $JAVA_8 ]]; then
-  DOCKERFILE="${DOCKERFILE}.${JAVA_VERSION}"
-  IMAGE_TAG="${REPOSITORY}/redhat-isv-containers/${CERT_PROJECT_ID}:${VERSION}-${JAVA_VERSION}"
-fi
-
 AUTHFILE="${HOME}/.docker/config.json"
 
 docker build -f "${DOCKERFILE}" --label base-image-ref=${BASE_IMG_REF} -t "${IMAGE_TAG}" .
@@ -58,10 +53,6 @@ docker login "${REPOSITORY}" \
        --password "${REGISTRY_PASSWORD}"
 
 docker push "${IMAGE_TAG}"
-
-if [[ $JAVA_VERSION == $JAVA_8 ]]; then
-  docker push "${IMAGE_LATEST}"
-fi
 
 preflight check container \
           "${IMAGE_TAG}" \
