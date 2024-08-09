@@ -5,29 +5,17 @@
  */
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 
-String OPENJDK8 = 'OpenJDK 8'
-String OPENJDK11 = 'OpenJDK 11'
-String OPENJDK17 = 'OpenJDK 17'
-List<String> javaVersions = [OPENJDK8, OPENJDK11, OPENJDK17]
-
 properties([
   parameters([
     string(name: 'version', description: 'Version tag to apply to the image, like 3.41.0-ubi-1.'),
-    choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager')
   ]),
 ])
 
 node('ubuntu-zion') {
-  def JAVA_8 = 'java8'
-  def JAVA_11 = 'java11'
-  def JAVA_17 = 'java17'
-
   try {
     stage('Preparation') {
       deleteDir()
-
       checkout scm
-
       sh 'docker system prune -a -f'
       sh '''
         wget -q -O preflight \
@@ -45,13 +33,7 @@ node('ubuntu-zion') {
             credentialsId: 'red-hat-api-token',
             variable: 'API_TOKEN')
       ]) {
-        def javaVersionsMap = [
-            (OPENJDK8): JAVA_8,
-            (OPENJDK11): JAVA_11,
-            (OPENJDK17): JAVA_17
-        ]
-        def javaVersion = javaVersionsMap.get(params.java_version)
-        def dockerfilePath = 'Dockerfile.rh.ubi'
+        def dockerfilePath = 'Dockerfile.rh.ubi.java17'
 
         def baseImage = extractBaseImage(dockerfilePath)
         def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
@@ -59,7 +41,6 @@ node('ubuntu-zion') {
         def baseImageReferenceStr = baseImageReference.getReference()
 
         def buildRedhatImageShCmd = 'PATH="$PATH:." VERSION=$version ' +
-            "JAVA_VERSION=${javaVersion} " +
             "DOCKERFILE='${dockerfilePath}' " +
             "BASE_IMG_REF='${baseImageReferenceStr}' " +
             './build_red_hat_image.sh'
@@ -77,6 +58,5 @@ def extractBaseImage (dockerFileLocation) {
   def dockerFile = readFile(file: dockerFileLocation)
   def baseImageRegex = "FROM\\s+([^\\s]+)"
   def usedImages = dockerFile =~ baseImageRegex
-
   return usedImages[0][1]
 }
