@@ -90,7 +90,7 @@ node('ubuntu-zion') {
       stage('Evaluate Policies') {
         runEvaluation({ stage ->
           def isAlpine = alpineDockerfilePath != null && alpineDockerfilePath.contains('alpine')
-          def iqApplicationName = isAlpine ? 'docker-nexus3-alpine' : 'docker-nexus3'
+          def iqApplicationName = isAlpine ? 'docker-nexus3-orientdb-alpine' : 'docker-nexus3-orientdb'
           def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
 
           nexusPolicyEvaluation(
@@ -111,7 +111,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'main') {
+    if (branch == 'internal-release-orientdb-fork') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           def javaVersionSuffixesMap = [
