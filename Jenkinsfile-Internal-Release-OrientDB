@@ -111,7 +111,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'internal-release-orientdb-fork') {
+    if (branch.startsWith('release-3.70')) {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
           def javaVersionSuffixesMap = [
