@@ -205,7 +205,7 @@ node('ubuntu-zion') {
           """)
 
           def dockerPushCmdsMap = [
-              (OPENJDK8): "docker push --all-tags ${organization}/${dockerHubRepository}",
+              (OPENJDK8): "docker push ${organization}/${dockerHubRepository}",
               (OPENJDK11): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_11}-ubi",
               (OPENJDK17): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_17}-ubi"
           ]
