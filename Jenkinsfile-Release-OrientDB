@@ -117,6 +117,7 @@ node('ubuntu-zion') {
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
       def baseImageReferenceStr = baseImageReference.getReference()
       def hash = OsTools.runSafe(this, "docker build --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
+      echo "hash is ${hash}"
       imageId = hash.split(':')[1]
 
       // Build Alpine Image if not Java 8
