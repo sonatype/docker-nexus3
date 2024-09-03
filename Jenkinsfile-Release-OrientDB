@@ -217,9 +217,9 @@ node('ubuntu-zion') {
 
           // Push Alpine image if not Java 8
           if (params.java_version != OPENJDK8) {
-            OsTools.runSafe(this, "docker tag ${alpineImageName} ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-alpine")
+            OsTools.runSafe(this, "docker tag ${imageName}-alpine ${organization}/${dockerHubRepository}:${version}-${javaVersionSuffix}-alpine")
             if (params.java_version == OPENJDK11) {
-              OsTools.runSafe(this, "docker tag ${alpineImageName} ${organization}/${dockerHubRepository}:${version}-alpine")
+              OsTools.runSafe(this, "docker tag ${imageName}-alpine ${organization}/${dockerHubRepository}:${version}-alpine")
             }
 
             def alpineDockerPushCmdsMap = [
