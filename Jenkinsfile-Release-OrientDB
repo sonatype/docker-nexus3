@@ -197,7 +197,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
+    if (!params.skip_push && !params.update_latest_only) {
       input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
@@ -311,7 +311,6 @@ node('ubuntu-zion') {
   } finally {
     OsTools.runSafe(this, "docker logout")
     OsTools.runSafe(this, "docker system prune -a -f")
-    OsTools.runSafe(this, 'git clean -f && git reset --hard origin/main')
   }
 }
 
