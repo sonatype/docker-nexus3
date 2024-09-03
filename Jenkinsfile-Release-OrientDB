@@ -20,7 +20,6 @@ properties([
     string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
     choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager'),
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
-    booleanParam(defaultValue: false, description: 'Only update the latest tag', name: 'update_latest_only')
   ])
 ])
 
@@ -162,13 +161,13 @@ node('ubuntu-zion') {
                 "Update Repository Manager Cookbook to ${params.nexus_repository_manager_cookbook_version}." : ""
           ].findAll({ it }).join(' ')
 
-          if (!params.update_latest_only) {
+
             OsTools.runSafe(this, """
               git add .
               git commit -m '${commitMessage}'
               git push https://${env.GITHUB_API_USERNAME}:${env.GITHUB_API_PASSWORD}@github.com/${organization}/${gitHubRepository}.git ${branch}
             """)
-          }
+
         }
       }
     }
@@ -178,7 +177,7 @@ node('ubuntu-zion') {
         archiveArtifacts artifacts: "${archiveName}.tar.gz", onlyIfSuccessful: true
       }
     }
-    if (!params.skip_push && !params.update_latest_only) {
+    if (!params.skip_push) {
       input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
@@ -199,7 +198,6 @@ node('ubuntu-zion') {
           if (params.java_version == OPENJDK8) {
             OsTools.runSafe(this, "docker tag ${imageName} ${organization}/${dockerHubRepository}:${version}-ubi")
             OsTools.runSafe(this, "docker tag ${imageName} ${organization}/${dockerHubRepository}:${version}")
-            OsTools.runSafe(this, "docker tag ${imageName} ${organization}/${dockerHubRepository}:latest")
           }
 
           OsTools.runSafe(this, """
@@ -273,20 +271,6 @@ node('ubuntu-zion') {
           """)
         }
         OsTools.runSafe(this, "git tag -d ${version}")
-      }
-    }
-    else if(params.update_latest_only) {
-      stage('Push tags') {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                          credentialsId: 'docker-hub-credentials',
-                          usernameVariable: 'DOCKERHUB_API_USERNAME',
-                          passwordVariable: 'DOCKERHUB_API_PASSWORD']]) {
-          OsTools.runSafe(this, "docker tag ${imageName} ${organization}/${dockerHubRepository}:latest")
-          OsTools.runSafe(this, """
-            docker login --username ${env.DOCKERHUB_API_USERNAME} --password ${env.DOCKERHUB_API_PASSWORD}
-          """)
-          OsTools.runSafe(this, "docker push --all-tags ${organization}/${dockerHubRepository}")
-        }
       }
     }
   } finally {
