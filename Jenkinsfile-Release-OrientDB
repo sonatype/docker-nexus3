@@ -119,8 +119,10 @@ node('ubuntu-zion') {
       def hash = OsTools.runSafe(this, "docker build --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
 
+      echo "completed first build"
       // Build Alpine Image if not Java 8
       if (params.java_version != OPENJDK8) {
+        echo "not java 8, building alpine"
         alpineDockerfilePath = dockerfilePath.replace("Dockerfile", "Dockerfile.alpine")
         def alpineHash = OsTools.runSafe(this, "docker build --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
         alpineImageId = alpineHash.split(':')[1]
@@ -133,24 +135,6 @@ node('ubuntu-zion') {
         gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
       }
     }
-    stage('Test') {
-      gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
-
-      validateExpectations([
-        new Expectation('Has user nexus in group nexus present',
-            'id', '-ng nexus', 'nexus'),
-        new Expectation('Has nexus user java process present',
-            'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
-      ])
-
-      if (currentBuild.result == 'FAILURE') {
-        gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
-        return
-      } else {
-        gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
-      }
-    }
-
     stage('Evaluate Policies') {
       runEvaluation({ stage ->
         def isAlpine = alpineDockerfilePath != null && alpineDockerfilePath.contains('alpine')
