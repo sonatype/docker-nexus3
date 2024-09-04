@@ -138,7 +138,6 @@ node('ubuntu-zion') {
       }
     }
     if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
-      input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
 
