@@ -19,7 +19,7 @@ node('ubuntu-zion') {
       sh 'docker system prune -a -f'
       sh '''
         wget -q -O preflight \
-          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.9.4/preflight-linux-amd64
+          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.10.0/preflight-linux-amd64
         chmod 755 preflight
       '''
     }
