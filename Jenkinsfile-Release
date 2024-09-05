@@ -14,7 +14,6 @@ properties([
   parameters([
     string(defaultValue: '', description: 'New Nexus Repository Manager Version', name: 'nexus_repository_manager_version'),
     string(defaultValue: '', description: 'New Nexus Repository Manager Version Sha256', name: 'nexus_repository_manager_version_sha'),
-    string(defaultValue: '', description: 'New Nexus Repository Manager Cookbook Version', name: 'nexus_repository_manager_cookbook_version'),
     booleanParam(defaultValue: false, description: 'Skip Pushing of Docker Image and Tags', name: 'skip_push'),
     booleanParam(defaultValue: false, description: 'Only update the latest tag', name: 'update_latest_only')
   ])
@@ -67,12 +66,6 @@ node('ubuntu-zion') {
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
-      if (params.nexus_repository_manager_cookbook_version) {
-        stage('Update Repository Manager Cookbook Version') {
-          OsTools.runSafe(this, "git checkout ${branch}")
-          dockerFileLocations.each { updateRepositoryCookbookVersion(it) }
-        }
-      }
     }
 
     stage('Build Images') {
@@ -95,22 +88,6 @@ node('ubuntu-zion') {
         return
       } else {
         gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
-      }
-    }
-
-    stage('Test') {
-      gitHub.statusUpdate commitId, 'pending', 'test', 'Tests are running'
-      validateExpectations([
-        new Expectation('Has user nexus in group nexus present',
-            'id', '-ng nexus', 'nexus'),
-        new Expectation('Has nexus user java process present',
-            'ps', '-e -o command,user | grep -q ^/usr/lib/jvm/java.*nexus$ | echo $?', '0')
-      ])
-      if (currentBuild.result == 'FAILURE') {
-        gitHub.statusUpdate commitId, 'failure', 'test', 'Tests failed'
-        return
-      } else {
-        gitHub.statusUpdate commitId, 'success', 'test', 'Tests succeeded'
       }
     }
 
@@ -138,17 +115,11 @@ node('ubuntu-zion') {
           return
     }
 
-    if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha
-          || params.nexus_repository_manager_cookbook_version) {
+    if (params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha) {
       stage('Commit Automated Code Update') {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-github',
                         usernameVariable: 'GITHUB_API_USERNAME', passwordVariable: 'GITHUB_API_PASSWORD']]) {
-          def commitMessage = [
-            params.nexus_repository_manager_version && params.nexus_repository_manager_version_sha ?
-                "Update Repository Manager to ${params.nexus_repository_manager_version}." : "",
-            params.nexus_repository_manager_cookbook_version ?
-                "Update Repository Manager Cookbook to ${params.nexus_repository_manager_cookbook_version}." : ""
-          ].findAll({ it }).join(' ')
+          def commitMessage = "Update Repository Manager to ${params.nexus_repository_manager_version}."
 
           if (!params.update_latest_only) {
             OsTools.runSafe(this, """
@@ -167,7 +138,6 @@ node('ubuntu-zion') {
       }
     }
     if (branch == 'main' && !params.skip_push && !params.update_latest_only) {
-      input 'Push image and tags?'
       stage('Push image') {
         def dockerhubApiToken
 
@@ -289,16 +259,6 @@ def updateRepositoryManagerVersion(dockerFileLocation) {
     "\$1${params.nexus_repository_manager_version.substring(0, params.nexus_repository_manager_version.indexOf('-'))}\$3")
   dockerFile = dockerFile.replaceAll(versionRegex, "\$1${params.nexus_repository_manager_version}")
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${params.nexus_repository_manager_version_sha}")
-
-  writeFile(file: dockerFileLocation, text: dockerFile)
-}
-
-def updateRepositoryCookbookVersion(dockerFileLocation) {
-  def dockerFile = readFile(file: dockerFileLocation)
-
-  def cookbookVersionRegex = /(ARG NEXUS_REPOSITORY_MANAGER_COOKBOOK_VERSION=")(release-\d\.\d\.\d{8}\-\d{6}\.[a-z0-9]{7})(")/
-
-  dockerFile = dockerFile.replaceAll(cookbookVersionRegex, "\$1${params.nexus_repository_manager_cookbook_version}\$3")
 
   writeFile(file: dockerFileLocation, text: dockerFile)
 }
