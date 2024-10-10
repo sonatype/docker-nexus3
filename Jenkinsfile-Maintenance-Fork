@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/nexus/attributions.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
+@Library(['private-pipeline-library', 'jenkins-shared']) _
+
+pipeline {
+  agent { label 'ubuntu-zion' }
+
+  options { buildDiscarder(logRotator(numToKeepStr: '10')) }
+
+  stages {
+    stage('docker tag') {
+       steps {
+       withSonatypeDockerRegistry() {
+         sh 'docker pull docker-internal.repo.sonatype.com/sonatype-internal/nexus3:3.70.3'
+         sh 'docker pull docker-internal.repo.sonatype.com/sonatype-internal/nexus3:3.70.3-ubi'
+         sh 'docker pull docker-internal.repo.sonatype.com/sonatype-internal/nexus3:3.70.3-java8-ubi'
+       }
+
+        withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+          sh 'docker login --username $USERNAME --password $PASSWORD'
+          sh 'docker tag docker-internal.repo.sonatype.com/sonatype-internal/nexus3:3.70.3 sonatype/nexus3:3.70.3'
+          sh 'docker tag docker-internal.repo.sonatype.com/sonatype-internal/nexus3:3.70.3-ubi sonatype/nexus3:3.70.3-ubi'
+          sh 'docker tag docker-internal.repo.sonatype.com/sonatype-internal/nexus3:3.70.3-java8-ubi sonatype/nexus3:3.70.3-java8-ubi'
+          sh 'docker push sonatype/nexus3:3.70.3'
+          sh 'docker push sonatype/nexus3:3.70.3-ubi'
+          sh 'docker push sonatype/nexus3:3.70.3-java8-ubi'
+          sh 'docker logout'
+        }
+       }
+    }
+  }
+}
