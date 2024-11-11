@@ -6,9 +6,8 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.OsTools
 
-String OPENJDK8 = 'OpenJDK 8'
-String OPENJDK11 = 'OpenJDK 11'
-List<String> javaVersions = [OPENJDK8, OPENJDK11]
+String OPENJDK17 = 'OpenJDK 17'
+List<String> javaVersions = [OPENJDK17]
 
 properties([
     parameters([
@@ -20,10 +19,17 @@ properties([
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, imageId, branch
+  def commitId, commitDate, version, imageId, alpineImageId, branch
   def imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3'
 
+  def JAVA_17 = 'java17'
+  def DOCKERFILE_JAVA_17 = 'Dockerfile.java17'
+  def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
+
+  def dockerfileMap = [
+    (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
+  ]
   try {
     stage('Preparation') {
       deleteDir()
@@ -43,29 +49,49 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          updateRepositoryManagerVersion("${pwd()}/Dockerfile", 'java8')
-          updateRepositoryManagerVersion("${pwd()}/Dockerfile.java11", 'java11')
+          dockerfileMap[OPENJDK17].each { dockerfile ->
+            updateRepositoryManagerVersion("${pwd()}/${dockerfile}", JAVA_17)
+            }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
     }
-    stage('Build') {
-      def dockerfilePath = 'Dockerfile'
-      if (params.java_version == OPENJDK11) {
-        dockerfilePath = 'Dockerfile.java11'
-      }
-      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName} . -f ${dockerfilePath}")
+    def dockerfilePath = dockerfileMap[OPENJDK17][0]
+    def alpineDockerfilePath = dockerfileMap[OPENJDK17][1]
+
+    stage('Build UBI Image') {
+      def baseImage = extractBaseImage(dockerfilePath)
+      def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
+      def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
+      def baseImageReferenceStr = baseImageReference.getReference()
+      def hash = OsTools.runSafe(this, "docker build --quiet --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
     }
+    stage('Build Alpine Image') {
+      def hash = OsTools.runSafe(this, "docker build --quiet --no-cache --tag ${imageName}-alpine . -f ${alpineDockerfilePath}")
+      alpineImageId = hash.split(':')[1]
+    }
+
     if (params.scan_for_policy_violations) {
       stage('Evaluate Policies') {
+        def imagesToScan = [
+          [name: 'docker-nexus3', image: imageName],
+          [name: 'docker-nexus3-alpine', image: "${imageName}-alpine"]
+        ]
+
+        imagesToScan.each { imageConfig ->
         runEvaluation({ stage ->
+          def iqApplicationName = imageConfig.name
+          def imageToScan = imageConfig.image
+
           nexusPolicyEvaluation(
-              iqStage: stage,
-              iqApplication: 'docker-nexus3',
-              iqScanPatterns: [[scanPattern: "container:${imageName}"]],
-              failBuildOnNetworkError: true,
-          )}, 'release')
+            iqStage: stage,
+            iqApplication: iqApplicationName,
+            iqScanPatterns: [[scanPattern: "container:${imageToScan}"]],
+            failBuildOnNetworkError: false,
+            )
+          }, 'release')
+        }
       }
     }
     if (currentBuild.result == 'FAILURE') {
@@ -80,15 +106,19 @@ node('ubuntu-zion') {
     if (branch == 'main') {
       stage('Push image to RSC') {
         withSonatypeDockerRegistry() {
-          if (params.java_version == OPENJDK11) {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java11"
-          } else {
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-            sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java8"
-          }
+          // Tag Images
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
+          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
+
+          // Push Images
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
         }
       }
     }
@@ -100,7 +130,7 @@ node('ubuntu-zion') {
 }
 
 def readVersion() {
-  def content = readFile 'Dockerfile'
+  def content = readFile 'Dockerfile.java17'
   for (line in content.split('\n')) {
     if (line.startsWith('ARG NEXUS_VERSION=')) {
       return getShortVersion(line.substring(18))
@@ -134,7 +164,7 @@ def updateRepositoryManagerVersion(dockerFileLocation, javaVersion) {
   }
   else {
     // default URL
-    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-\$\{JAVA_VERSION\}-unix\.tar\.gz/
+    def defaultUrl = /https:\/\/download-staging.sonatype.com\/nexus\/3\/nexus-\$\{NEXUS_VERSION\}-unix\.tar\.gz/
     dockerFile = dockerFile.replaceAll(nexusUrlRegex, "\$1${defaultUrl}")
 
     def normalizedUrl = "a".replaceAll(/./, "${defaultUrl}")
@@ -146,7 +176,6 @@ def updateRepositoryManagerVersion(dockerFileLocation, javaVersion) {
   dockerFile = dockerFile.replaceAll(shaRegex, "\$1${sha}")
 
   writeFile(file: dockerFileLocation, text: dockerFile)
-
 }
 
 def getSha(url) {
@@ -155,4 +184,12 @@ def getSha(url) {
       returnStdout: true
   ).trim()
   return sha
+}
+
+def extractBaseImage(dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+  def baseImageRegex = "FROM\\s+([^\\s]+)"
+  def usedImages = dockerFile =~ baseImageRegex
+
+  return usedImages[0][1]
 }

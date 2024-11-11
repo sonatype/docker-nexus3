@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+FROM alpine
 
 LABEL name="Nexus Repository Manager" \
-      vendor=Sonatype \
       maintainer="Sonatype <support@sonatype.com>" \
+      vendor=Sonatype \
       version="3.70.1-02" \
       release="3.70.1" \
       url="https://sonatype.com" \
@@ -47,25 +47,16 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_DATA=/nexus-data \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
-    DOCKER_TYPE='rh-docker'
+    DOCKER_TYPE='alpine'
 
-# Install java & setup user
-RUN microdnf update -y \
-    && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-11-openjdk-headless tar procps shadow-utils gzip \
-    && microdnf clean all \
+# Install Java & tar
+RUN apk add openjdk11 tar procps gzip curl shadow \
+    && apk cache clean \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
-# Red Hat Certified Container commands
-COPY rh-docker /
-RUN usermod -a -G root nexus \
-    && chmod -R 0755 /licenses \
-    && chmod 0755 /help.1 \
-    && chmod 0755 /uid_entrypoint.sh \
-    && chmod 0755 /uid_template.sh \
-    && bash /uid_template.sh \
-    && chmod 0664 /etc/passwd
+RUN apk del --no-cache openssl || true
+RUN apk update && apk add --no-cache openssl
 
 WORKDIR ${SONATYPE_DIR}
 
@@ -73,7 +64,7 @@ WORKDIR ${SONATYPE_DIR}
 RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz \
     && echo "${NEXUS_DOWNLOAD_SHA256_HASH} nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz" > nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
     && sha256sum -c nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
-    && tar -xvf nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz \
+    && tar xvf nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz \
     && rm -f nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
     && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
     && chown -R nexus:nexus ${SONATYPE_WORK} \
@@ -83,15 +74,13 @@ RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-${JAVA_VERSION
 # Removing java memory settings from nexus.vmoptions since now we use INSTALL4J_ADD_VM_PARAMS
 RUN sed -i '/^-Xms/d;/^-Xmx/d;/^-XX:MaxDirectMemorySize/d' $NEXUS_HOME/bin/nexus.vmoptions
 
-# Legacy start script
 RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-# Cleanup
-RUN microdnf remove -y gzip shadow-utils
+RUN apk del gzip shadow
 
 VOLUME ${NEXUS_DATA}
 
@@ -100,5 +89,4 @@ USER nexus
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
-ENTRYPOINT ["/uid_entrypoint.sh"]
 CMD ["/opt/sonatype/nexus/bin/nexus", "run"]

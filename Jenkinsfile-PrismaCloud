@@ -1,0 +1,158 @@
+/*
+ * Copyright (c) 2024-present Sonatype, Inc. All rights reserved.
+ * "Sonatype" is a trademark of Sonatype, Inc.
+ */
+
+@Library(['private-pipeline-library', 'jenkins-shared']) _
+
+import com.sonatype.jenkins.pipeline.OsTools
+import groovy.json.JsonSlurper
+
+IQ_URL_BASE = "https://sonatype.sonatype.app/platform"
+REPO_BASE_URL = "https://repo.sonatype.com/service/rest"
+TARGET_REPO_NAME = "sonatype-sboms"
+CYCLONEDX_VERSION = "1.5"
+
+properties([
+    parameters([
+        string(name: 'BRANCH_TO_BUILD', defaultValue: '',
+            description: 'Branch the script will be loaded from'),
+        string(name: 'IMAGE_VERSION', defaultValue: '',
+            description: 'Version for the Docker image and NXRM. The result SBOMs will be tagged with this version.'),
+        string(name: 'UBI_IMAGE_TAG', defaultValue: '',
+            description: 'Tag of the UBI image to be scanned. Visit https://catalog.redhat.com/software/containers/ubi8/ubi-minimal/5c359a62bed8bd75a2c3fba8')
+    ])
+])
+
+def getComponentSbom(String buildDir, String componentName, String componentVersion) {
+    def componentId = getComponentInfo(componentName).applications[0].id
+    withCredentials([usernamePassword(credentialsId: 'jenkins-saas-service-acct', usernameVariable: 'IQ_USER', passwordVariable: 'IQ_PASSWORD')]) {
+        def formats = ['spdx', 'cyclonedx']
+        formats.each { format ->
+            def urlPath = format == 'spdx' ? "spdx/${componentId}/stages/release?format=json" : "cycloneDx/${CYCLONEDX_VERSION}/${componentId}/stages/release"
+            sh "curl -s -L -u \$IQ_USER:\$IQ_PASSWORD -o '${buildDir}/${format}/${componentName}-${componentVersion}-${format}.json' -X GET -H 'Accept: application/json' '${IQ_URL_BASE}/api/v2/${urlPath}'"
+            sh "jq . ${buildDir}/${format}/${componentName}-${componentVersion}-${format}.json > ${buildDir}/${format}/${componentName}-${componentVersion}-${format}-formatted.json"
+            sh "mv ${buildDir}/${format}/${componentName}-${componentVersion}-${format}-formatted.json ${buildDir}/${format}/${componentName}-${componentVersion}-${format}.json"
+        }
+    }
+}
+
+def getComponentInfo(String componentName) {
+    def jsonSlurper = new JsonSlurper()
+    def response = null
+
+    withCredentials([
+        usernamePassword(
+            credentialsId: 'jenkins-saas-service-acct',
+            usernameVariable: 'IQ_USER',
+            passwordVariable: 'IQ_PASSWORD')
+    ]) {
+        def rawResponse = sh(returnStdout: true, script: "curl -s -u \$IQ_USER:\$IQ_PASSWORD -X GET '${IQ_URL_BASE}/api/v2/applications?publicId=${componentName}'")
+        response = jsonSlurper.parseText(rawResponse)
+    }
+    return response
+}
+
+def publishComponent(String buildDir, String componentName, String componentVersion) {
+    def publishCommand = """
+    curl -v -u \$NXRM_USER:\$NXRM_PASSWORD -X POST '${REPO_BASE_URL}/v1/components?repository=${TARGET_REPO_NAME}' \
+    -F 'raw.directory=/PrismaCloud/${componentName}/${componentVersion}/' \
+    -F 'raw.asset1=@${buildDir}/${componentName}-${componentVersion}-prisma-cloud-scan-results.json' \
+    -F 'raw.asset1.filename=${componentName}-${componentVersion}-prisma-cloud-scan-results.json'
+    """
+    withCredentials([
+        usernamePassword(
+            credentialsId: 'sonatype-sbom-deployer',
+            usernameVariable: 'NXRM_USER',
+            passwordVariable: 'NXRM_PASSWORD')
+    ]) {
+        sh(publishCommand)
+    }
+    // Publish the latest version tag
+    def latestPublishCommand = """
+    curl -v -u \$NXRM_USER:\$NXRM_PASSWORD -X POST '${REPO_BASE_URL}/v1/components?repository=${TARGET_REPO_NAME}' \
+    -F 'raw.directory=/PrismaCloud/${componentName}/latest/' \
+    -F 'raw.asset1=@${buildDir}/${componentName}-${componentVersion}-prisma-cloud-scan-results.json' \
+    -F 'raw.asset1.filename=${componentName}-latest-prisma-cloud-scan-results.json'
+    """
+    sh(latestPublishCommand)
+}
+
+def scanAndCopyResults(String image, String resultsFileName) {
+    prismaCloudScanImage(
+        ca: '',
+        cert: '',
+        dockerAddress: 'unix:///var/run/docker.sock',
+        ignoreImageBuildTime: true,
+        image: image,
+        key: '',
+        logLevel: 'debug',
+        podmanPath: '',
+        project: '',
+        resultsFile: "${env.buildDir}/${resultsFileName}"
+    )
+    sh "jq . ${env.buildDir}/${resultsFileName} > ${env.buildDir}/${resultsFileName}-formatted.json"
+    sh "mv ${env.buildDir}/${resultsFileName}-formatted.json ${env.buildDir}/${resultsFileName}"
+    sh "cp ${env.buildDir}/${resultsFileName} ${resultsFileName}"
+    sh "ls -la ${env.buildDir}"
+}
+
+pipeline {
+    agent any
+    environment {
+        buildDir = "./.sbom-build/job-${env.BUILD_NUMBER}"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: params.BRANCH_TO_BUILD, url: 'https://github.com/sonatype/docker-nexus3.git'
+            }
+        }
+        stage('Build Image') {
+            steps {
+                script {
+                    runSafely("docker build -t docker-nexus3:${params.IMAGE_VERSION} .")
+                    // Tag the latest version
+                    runSafely("docker tag docker-nexus3:${params.IMAGE_VERSION} docker-nexus3:latest")
+                }
+            }
+        }
+        stage('Analyze Images with Prisma Cloud') {
+            steps {
+                script {
+                    sh "mkdir -p ${env.buildDir}/spdx && mkdir -p ${env.buildDir}/cyclonedx"
+                    echo "Analyzing docker-nexus3 image with Prisma Cloud"
+                    scanAndCopyResults("docker-nexus3:${params.IMAGE_VERSION}", "docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json")
+
+                    def ubiImage = "registry.access.redhat.com/ubi8/ubi-minimal:${params.UBI_IMAGE_TAG}"
+                    sh "docker pull ${ubiImage}"
+                    echo "Analyzing UBI image with Prisma Cloud"
+                    scanAndCopyResults(ubiImage, "ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json")
+                }
+            }
+        }
+        stage('Publish Scan Results') {
+            steps {
+                script {
+                    publishComponent(env.buildDir, "docker-nexus3", params.IMAGE_VERSION)
+                    publishComponent(env.buildDir, "ubi-minimal", params.UBI_IMAGE_TAG)
+                }
+            }
+        }
+    }
+    post {
+        always {
+            prismaCloudPublish resultsFilePattern: "${env.buildDir}/docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json"
+            prismaCloudPublish resultsFilePattern: "${env.buildDir}/ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json"
+
+            prismaCloudPublish resultsFilePattern: "docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json"
+            prismaCloudPublish resultsFilePattern: "ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json"
+            archiveArtifacts artifacts: "docker-nexus3-${params.IMAGE_VERSION}-prisma-cloud-scan-results.json", fingerprint: true
+            archiveArtifacts artifacts: "ubi-minimal-${params.UBI_IMAGE_TAG}-prisma-cloud-scan-results.json", fingerprint: true
+
+            script {
+                OsTools.runSafe(this, "rm -rf '${env.buildDir}'")
+            }
+        }
+    }
+}

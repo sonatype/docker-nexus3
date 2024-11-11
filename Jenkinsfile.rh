@@ -5,14 +5,9 @@
  */
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 
-String OPENJDK8 = 'OpenJDK 8'
-String OPENJDK11 = 'OpenJDK 11'
-List<String> javaVersions = [OPENJDK8, OPENJDK11]
-
 properties([
   parameters([
     string(name: 'version', description: 'Version tag to apply to the image, like 3.41.0-ubi-1.'),
-    choice(name: 'java_version', choices: javaVersions, description: 'Java version to run Nexus Repository Manager')
   ]),
 ])
 
@@ -20,13 +15,11 @@ node('ubuntu-zion') {
   try {
     stage('Preparation') {
       deleteDir()
-
       checkout scm
-
       sh 'docker system prune -a -f'
       sh '''
         wget -q -O preflight \
-          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.4.1/preflight-linux-amd64
+          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.10.2/preflight-linux-amd64
         chmod 755 preflight
       '''
     }
@@ -40,11 +33,18 @@ node('ubuntu-zion') {
             credentialsId: 'red-hat-api-token',
             variable: 'API_TOKEN')
       ]) {
-        if (params.java_version == OPENJDK11) {
-          sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image_for_java11.sh'
-        } else {
-          sh 'PATH="$PATH:." VERSION=$version ./build_red_hat_image.sh'
-        }
+        def dockerfilePath = 'Dockerfile.rh.ubi.java17'
+
+        def baseImage = extractBaseImage(dockerfilePath)
+        def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
+        def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
+        def baseImageReferenceStr = baseImageReference.getReference()
+
+        def buildRedhatImageShCmd = 'PATH="$PATH:." VERSION=$version ' +
+            "DOCKERFILE='${dockerfilePath}' " +
+            "BASE_IMG_REF='${baseImageReferenceStr}' " +
+            './build_red_hat_image.sh'
+        sh buildRedhatImageShCmd
       }
     }
   } finally {
@@ -52,4 +52,11 @@ node('ubuntu-zion') {
     sh 'docker system prune -a -f'
     sh 'git clean -f && git reset --hard origin/main'
   }
+}
+
+def extractBaseImage (dockerFileLocation) {
+  def dockerFile = readFile(file: dockerFileLocation)
+  def baseImageRegex = "FROM\\s+([^\\s]+)"
+  def usedImages = dockerFile =~ baseImageRegex
+  return usedImages[0][1]
 }

@@ -17,8 +17,8 @@ FROM registry.access.redhat.com/rhel7/rhel
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
       vendor=Sonatype \
-      version="3.67.1-01" \
-      release="3.67.1" \
+      version="3.70.1-02" \
+      release="3.70.1" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -36,10 +36,10 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.67.1-01
+ARG NEXUS_VERSION=3.70.1-02
 ARG JAVA_VERSION=java8
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=c1530ec125cb5078a6e16c5fcd52b6a830e7495566027aeb3fbe3ca1406c6273
+ARG NEXUS_DOWNLOAD_SHA256_HASH=29952f663982bd9781d5bc352471727826943452cfe8e9aa0e9b60ad01531d1b
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype

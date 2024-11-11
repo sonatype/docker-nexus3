@@ -1,7 +1,11 @@
 <!--
 
-  Copyright (c) 2016-present Sonatype, Inc.
+    Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+    Includes the third-party code listed at http://links.sonatype.com/products/nxrm/attributions.
+    "Sonatype" is a trademark of Sonatype, Inc.
 
+-->
+<!-- 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
@@ -15,7 +19,6 @@
   limitations under the License.
 
 -->
-
 # Sonatype Nexus Repository Docker: sonatype/nexus3
 
 [![Join the chat at https://gitter.im/sonatype/nexus-developers](https://badges.gitter.im/sonatype/nexus-developers.svg)](https://gitter.im/sonatype/nexus-developers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -102,6 +105,18 @@ and qualified accounts can pull it from registry.connect.redhat.com.
 In addition to the Universal Base Image, we can build images based on:
 * Red Hat Enterprise Linux: [Dockerfile.rh.el](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.el)
 * CentOS: [Dockerfile.rh.centos](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.centos)
+
+## Alpine Image
+
+An Alpine-based container image can be created using [Dockerfile.alpine.java11](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java11) This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
+
+The Alpine-based container image includes minimal dependencies and uses an ENTRYPOINT script to ensure the application runs with the necessary permissions. It is optimized for rapid deployment and efficient resource usage.
+
+The Alpine-based container image is available from Docker Hub and can be pulled using the following tags:
+
+- sonatype/nexus3:3.XX.y-alpine (runs Java 11)
+- sonatype/nexus3:3.XX.y-java11-alpine
+- sonatype/nexus3:3.XX.y-java17-alpine
 
 ## Notes
 

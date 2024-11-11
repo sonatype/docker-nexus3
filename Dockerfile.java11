@@ -17,8 +17,8 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
       vendor=Sonatype \
-      version="3.67.1-01" \
-      release="3.67.1" \
+      version="3.70.1-02" \
+      release="3.70.1" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -36,10 +36,10 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.67.1-01
+ARG NEXUS_VERSION=3.70.1-02
 ARG JAVA_VERSION=java11
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=c152a3082a71ab2ed9b370df6d41c757178ec024db31b81b79806cb2ac6a7a6d
+ARG NEXUS_DOWNLOAD_SHA256_HASH=38c6f81d78c2f6ae461f491d9321d36e98ff2e19eee365270d9bc92377d36588
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -52,7 +52,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 # Install Java & tar
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-11-openjdk-headless tar procps shadow-utils gzip \
+    java-11-openjdk-headless tar procps shadow-utils gzip \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
@@ -74,12 +74,12 @@ RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-${JAVA_VERSION
 RUN sed -i '/^-Xms/d;/^-Xmx/d;/^-XX:MaxDirectMemorySize/d' $NEXUS_HOME/bin/nexus.vmoptions
 
 RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
+    && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-RUN microdnf remove -y gzip shadow-utils
+RUN microdnf remove -y shadow-utils
 
 VOLUME ${NEXUS_DATA}
 
