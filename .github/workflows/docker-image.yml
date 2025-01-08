@@ -14,7 +14,7 @@ jobs:
             - uses: actions/checkout@v4
 
             - name: Determine Version
-              run: echo "NXRM_VERSION=$(grep release Dockerfile  | cut -d "=" -f2 | tr -d '" \')" >> $GITHUB_ENV
+              run: echo "NXRM_VERSION=$(grep release Dockerfile.java17 | cut -d "=" -f2 | tr -d '" \')" >> $GITHUB_ENV
 
             - run: echo "Building NXRM ${{ env.NXRM_VERSION }} for ARM"
 
@@ -27,20 +27,20 @@ jobs:
                   username: ${{ secrets.REGISTRY_USERNAME }}
                   password: ${{ secrets.REGISTRY_TOKEN }}
 
-            - name: Build and push Java 8
+            - name: Build and push Java 17
               uses: docker/build-push-action@v5
               with:
                   context: .
-                  file: ./Dockerfile
+                  file: ./Dockerfile.java17
                   platforms: linux/arm64,linux/amd64
                   push: true
-                  tags: sonatypecommunity/nexus3:latest , sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}
+                  tags: sonatypecommunity/nexus3:latest , sonatypecommunity/nexus3:${{ env.NXRM_VERSION }} , sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}-java17
 
-            - name: Build and push Java 11
+            - name: Build and push Java 17 (alpine)
               uses: docker/build-push-action@v5
               with:
                   context: .
-                  file: ./Dockerfile.java11
+                  file: ./Dockerfile.alpine.java17
                   platforms: linux/arm64,linux/amd64
                   push: true
-                  tags: sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}-java11
+                  tags: sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}-java17-alpine, sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}-alpine
