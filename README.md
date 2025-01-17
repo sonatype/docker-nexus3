@@ -195,4 +195,8 @@ Looking to contribute to our Docker image but need some help? There's a few ways
 
 ## License Disclaimer
 
-_Sonatype Nexus Repository OSS is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work._
+_Sonatype Nexus Repository Core is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work._
+
+_All use of and access to Sonatype Nexus Repository Community Edition is governed by [these terms and conditions](http://links.sonatype.com/products/nxrm/tos/ce)._
+
+_Copyright © 2008-present Sonatype, Inc._
