@@ -19,11 +19,15 @@
   limitations under the License.
 
 -->
-# Sonatype Nexus Repository Docker: sonatype/nexus3
+# Sonatype Nexus Repository
 
-[![Join the chat at https://gitter.im/sonatype/nexus-developers](https://badges.gitter.im/sonatype/nexus-developers.svg)](https://gitter.im/sonatype/nexus-developers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+Sonatype Nexus Repository is the single source of truth for all your internal and third-party binaries, components, and packages. Integrate all your development tools into a centralized binary repository manager so that you can choose the best open source components, optimize your build performance, and ship code quickly while increasing visibility across your SDLC.
 
-A Dockerfile for Sonatype Nexus Repository 3, starting with 3.18 the image is based on the [Red Hat Universal Base Image](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image) while earlier versions used CentOS.
+### Announcing Nexus Repository Community Edition  
+As of version 3.77.0, the free edition of Nexus Repository is now called **Sonatype Nexus Repository Community Edition**.
+
+Community Edition is designed to deliver robust repository management for individual users and small teams. Upgrading to 3.77.0 unlocks powerful new features, including access to previously Pro-only formats, seamless integration with containerized environments like Kubernetes, and more. Community Edition does also include some usage limitations. To learn more, see the Community Edition documentation.
+
 
 * [Contribution Guidlines](#contribution-guidelines)
 * [Running](#running)
@@ -185,13 +189,14 @@ for additional information.
   $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
   ```
 
-## Getting Help
+## Getting In Touch
+If you are using Nexus Repository Core or Community Edition and need to report an issue or request an enhancement, [open an issue here](https://github.com/sonatype/nexus-public/issues).
 
-Looking to contribute to our Docker image but need some help? There's a few ways to get information or our attention:
+For help with Nexus Repository Core or Community Edition, please join the [Sonatype Community](https://community.sonatype.com/) to get tips and tricks from other users.
 
-* Chat with us on [Gitter](https://gitter.im/sonatype/nexus-developers)
-* Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
-* Check out the [Sonatype Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
+To report a security vulnerability, please see https://www.sonatype.com/report-a-security-vulnerability
+
+Sonatype Nexus Repository Pro customers can contact our world-class support team at https://support.sonatype.com/.
 
 ## License Disclaimer
 
