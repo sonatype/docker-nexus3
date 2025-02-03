@@ -26,7 +26,7 @@ Sonatype Nexus Repository is the single source of truth for all your internal an
 ### Announcing Nexus Repository Community Edition  
 As of version 3.77.0, the free edition of Nexus Repository is now called **Sonatype Nexus Repository Community Edition**.
 
-Community Edition is designed to deliver robust repository management for individual users and small teams. Upgrading to 3.77.0 unlocks powerful new features, including access to previously Pro-only formats, seamless integration with containerized environments like Kubernetes, and more. Community Edition does also include some usage limitations. To learn more, see the Community Edition documentation.
+Community Edition is designed to deliver robust repository management for individual users and small teams. Upgrading to 3.77.0 unlocks powerful new features, including access to previously Pro-only formats, seamless integration with containerized environments like Kubernetes, and more. Community Edition does also include some usage limitations. To learn more, [see the Community Edition documentation](https://help.sonatype.com/en/ce-onboarding.html).
 
 
 * [Contribution Guidlines](#contribution-guidelines)
