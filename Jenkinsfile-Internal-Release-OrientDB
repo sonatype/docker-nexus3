@@ -129,6 +129,9 @@ node('ubuntu-zion') {
           // Create alias for the UBI image without the suffix
           sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
           sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          // Create latest-3.70.x tag
+          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:latest-3.70.x"
+          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:latest-3.70.x"
         }
 
         // Push Alpine images
