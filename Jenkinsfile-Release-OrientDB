@@ -30,7 +30,7 @@ node('ubuntu-zion') {
       credentialsId = 'jenkins-github',
       latestOrientReleaseTag = 'latest-3.70.x',
       imageName = "sonatype/nexus3:${latestOrientReleaseTag}",
-      archiveName = 'docker-nexus3',
+      archiveName = "docker-nexus3:${latestOrientReleaseTag}",
       dockerHubRepository = 'nexus3'
   GitHub gitHub
 
