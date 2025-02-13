@@ -198,6 +198,7 @@ node('ubuntu-zion') {
           if (params.java_version == OPENJDK8) {
             OsTools.runSafe(this, "docker tag ${imageName} ${organization}/${dockerHubRepository}:${version}-ubi")
             OsTools.runSafe(this, "docker tag ${imageName} ${organization}/${dockerHubRepository}:${version}")
+            OsTools.runSafe(this, "docker tag ${imageName} ${organization}/${dockerHubRepository}:latest-3.70.x")
           }
 
           OsTools.runSafe(this, """
@@ -205,13 +206,14 @@ node('ubuntu-zion') {
           """)
 
           def dockerPushCmdsMap = [
-              (OPENJDK8): "docker push ${organization}/${dockerHubRepository}",
+              (OPENJDK8): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_8}-ubi",
               (OPENJDK11): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_11}-ubi",
               (OPENJDK17): "docker push ${organization}/${dockerHubRepository}:${version}-${JAVA_17}-ubi"
           ]
           def dockerPushCmd = dockerPushCmdsMap.get(params.java_version)
-
+          // push the UBI tag
           OsTools.runSafe(this, dockerPushCmd)
+
 
           // Push Alpine image if not Java 8
           if (params.java_version != OPENJDK8) {
@@ -227,6 +229,10 @@ node('ubuntu-zion') {
             def alpineDockerPushCmd = alpineDockerPushCmdsMap.get(params.java_version)
 
             OsTools.runSafe(this, alpineDockerPushCmd)
+          } else {
+            // for java 8, we have two more tags to push, the plain version and the latest-3.70.x
+            OSTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:${version}")
+            OSTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:latest-3.70.x")
           }
 
           response = OsTools.runSafe(this, """
