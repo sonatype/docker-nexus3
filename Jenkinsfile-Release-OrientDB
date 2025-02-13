@@ -134,7 +134,7 @@ node('ubuntu-zion') {
     stage('Evaluate Policies') {
       runEvaluation({ stage ->
         def isAlpine = alpineDockerfilePath != null && alpineDockerfilePath.contains('alpine')
-        def iqApplicationName = isAlpine ? 'docker-nexus3-alpine-orientdb' : 'docker-nexus3-orientdb'
+        def iqApplicationName = isAlpine ? 'docker-nexus3-orientdb-alpine' : 'docker-nexus3-orientdb'
         def imageToScan = isAlpine ? "${imageName}-alpine" : imageName
 
         nexusPolicyEvaluation(
