@@ -179,7 +179,7 @@ node('ubuntu-zion') {
     }
     if (!params.skip_push) {
       input 'Push image and tags?'
-      stage('Push image') {
+      stage('Push image and tags to dockerhub') {
         def dockerhubApiToken
 
         withCredentials([[$class: 'UsernamePasswordMultiBinding',
@@ -213,7 +213,11 @@ node('ubuntu-zion') {
           def dockerPushCmd = dockerPushCmdsMap.get(params.java_version)
           // push the UBI tag
           OsTools.runSafe(this, dockerPushCmd)
-
+          if (params.java_version == OPENJDK8) {
+            // for java 8, we have two more tags to push, the plain version and the latest-3.70.x
+            OSTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:${version}")
+            OSTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:latest-3.70.x")
+          }
 
           // Push Alpine image if not Java 8
           if (params.java_version != OPENJDK8) {
@@ -229,28 +233,7 @@ node('ubuntu-zion') {
             def alpineDockerPushCmd = alpineDockerPushCmdsMap.get(params.java_version)
 
             OsTools.runSafe(this, alpineDockerPushCmd)
-          } else {
-            // for java 8, we have two more tags to push, the plain version and the latest-3.70.x
-            OSTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:${version}")
-            OSTools.runSafe(this, "docker push ${organization}/${dockerHubRepository}:latest-3.70.x")
           }
-
-          response = OsTools.runSafe(this, """
-            curl -X POST https://hub.docker.com/v2/users/login/ \
-              -H 'cache-control: no-cache' -H 'content-type: application/json' \
-              -d '{ "username": "${env.DOCKERHUB_API_USERNAME}", "password": "${env.DOCKERHUB_API_PASSWORD}" }'
-          """)
-          token = readJSON text: response
-          dockerhubApiToken = token.token
-
-          def readme = readFile file: 'README.md', encoding: 'UTF-8'
-          readme = readme.replaceAll("(?s)<!--.*?-->", "")
-          readme = readme.replace("\"", "\\\"")
-          readme = readme.replace("\n", "\\n")
-          response = httpRequest customHeaders: [[name: 'authorization', value: "JWT ${dockerhubApiToken}"]],
-              acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH',
-              requestBody: "{ \"full_description\": \"${readme}\" }",
-              url: "https://hub.docker.com/v2/repositories/${organization}/${dockerHubRepository}/"
 
           // push to internal repos
           withSonatypeDockerRegistry() {
@@ -264,7 +247,7 @@ node('ubuntu-zion') {
           }
         }
       }
-      stage('Push tags') {
+      stage('Push github tags') {
         withCredentials([[$class: 'UsernamePasswordMultiBinding',
                           credentialsId: credentialsId,
                           usernameVariable: 'GITHUB_API_USERNAME',
