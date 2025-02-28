@@ -36,9 +36,9 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.77.2-02
-ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=1075c1f0794ef78f5c758e3d7076c439975ad05b4d3816877a53a4543afe756d 
+ARG NEXUS_VERSION=3.78.0-13
+ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip
+ARG NEXUS_DOWNLOAD_SHA256_HASH=ecee4c732142934ee40bb08f4441d5da1639d9a1d50eed7a083b1c854ba11422
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -48,10 +48,10 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
-# Install Java & tar
+# Install Java, tar, and unzip
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-17-openjdk-headless tar procps shadow-utils gzip \
+          java-17-openjdk-headless tar procps shadow-utils gzip unzip \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
@@ -59,11 +59,11 @@ RUN microdnf update -y \
 WORKDIR ${SONATYPE_DIR}
 
 # Download nexus & setup directories
-RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz \
-    && echo "${NEXUS_DOWNLOAD_SHA256_HASH} nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz" > nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
-    && sha256sum -c nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
-    && tar -xvf nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz \
-    && rm -f nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz.sha256 \
+RUN curl -L ${NEXUS_DOWNLOAD_URL} --output sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip \
+    && echo "${NEXUS_DOWNLOAD_SHA256_HASH} sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip" > sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip.sha256 \
+    && sha256sum -c sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip.sha256 \
+    && unzip sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip \
+    && rm -f sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip.sha256 \
     && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
     && chown -R nexus:nexus ${SONATYPE_WORK} \
     && mv ${SONATYPE_WORK}/nexus3 ${NEXUS_DATA} \
