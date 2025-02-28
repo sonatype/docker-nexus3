@@ -48,8 +48,8 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='alpine'
 
-# Install Java
-RUN apk add openjdk17 procps curl shadow \
+# Install Java & tar
+RUN apk add openjdk17 tar procps gzip curl shadow \
     && apk cache clean \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
