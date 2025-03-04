@@ -75,7 +75,7 @@ node('ubuntu-zion') {
       def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
       def baseImageReferenceStr = baseImageReference.getReference()
-      OsTools.runSafe(this, ""docker buildx create --driver-opt=\"image=${sonatypeDockerRegistryId()}/moby/buildkit\" --use")
+      OsTools.runSafe(this, "docker buildx create --driver-opt=\"image=${sonatypeDockerRegistryId()}/moby/buildkit\" --use")
       def hash = OsTools.runSafe(this, "docker buildx build --platform linux/amd64,linux/arm64 --label base-image-ref='${baseImageReferenceStr}' --no-cache --tag ${imageName} . -f ${dockerfilePath}")
       imageId = hash.split(':')[1]
 
