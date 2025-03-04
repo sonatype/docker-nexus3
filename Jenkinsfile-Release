@@ -75,14 +75,15 @@ node('ubuntu-zion') {
       def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
       def baseImageReferenceStr = baseImageReference.getReference()
-      OsTools.runSafe(this, "docker buildx create --use")
-      def hash = OsTools.runSafe(this, "docker buildx build --platform linux/amd64,linux/arm64 --label base-image-ref='${baseImageReferenceStr}' --load --no-cache --tag ${imageName} -f ${dockerfilePath} .")
-      imageId = hash.split(':')[1]
+      withSonatypeDockerRegistry() {
+        OsTools.runSafe(this, "docker buildx create --driver-opt=\"image=${sonatypeDockerRegistryId()}/moby/buildkit\" --use")
+        def hash = OsTools.runSafe(this, "docker buildx build --platform linux/amd64,linux/arm64 --label base-image-ref='${baseImageReferenceStr}' --push --no-cache --tag ${imageName} -f ${dockerfilePath} .")
+        imageId = hash.split(':')[1]
 
-      // Build Alpine Image
-      def alpineDockerfilePath = 'Dockerfile.alpine.java17'
-      def alpineHash = OsTools.runSafe(this, "docker buildx build --platform linux/amd64,linux/arm64 --no-cache --tag ${imageName}-alpine --load -f ${alpineDockerfilePath} .")
-
+        // Build Alpine Image
+        def alpineDockerfilePath = 'Dockerfile.alpine.java17'
+        def alpineHash = OsTools.runSafe(this, "docker buildx build --platform linux/amd64,linux/arm64 --no-cache --tag ${imageName}-alpine --push -f ${alpineDockerfilePath} .")
+      }
       alpineImageId = alpineHash.split(':')[1]
 
       if (currentBuild.result == 'FAILURE') {
