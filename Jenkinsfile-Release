@@ -58,7 +58,7 @@ node('ubuntu-zion') {
               --tag ${organization}/${dockerHubRepository}:${version}-java17-ubi \
               """
         if(params.update_latest) {
-          buildUbiImage += "--tag ${organization}/${dockerHubRepository}:latest \"
+          buildUbiImage += "--tag ${organization}/${dockerHubRepository}:latest "
         }
         buildUbiImage += "-f ${dockerfilePath} ."
         def hash = OsTools.runSafe(this, buildUbiImage)
