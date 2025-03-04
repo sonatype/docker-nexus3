@@ -17,7 +17,7 @@ properties([
 ])
 
 node('ubuntu-zion') {
-  def commitId, commitDate, version, branch
+  def version
   def organization = 'sonatype',
       credentialsId = 'jenkins-github',
       dockerHubRepository = 'nexus3'
@@ -28,13 +28,6 @@ node('ubuntu-zion') {
       deleteDir()
       OsTools.runSafe(this, "docker system prune -a -f")
       def checkoutDetails = checkout scm
-
-      branch = checkoutDetails.GIT_BRANCH == 'origin/main' ? 'main' : checkoutDetails.GIT_BRANCH
-      commitId = checkoutDetails.GIT_COMMIT
-      commitDate = OsTools.runSafe(this, "git show -s --format=%cd --date=format:%Y%m%d-%H%M%S ${commitId}")
-
-      OsTools.runSafe(this, 'git config --global user.email sonatype-ci@sonatype.com')
-      OsTools.runSafe(this, 'git config --global user.name Sonatype CI')
 
       version = getShortVersion(params.nexus_repository_manager_version)
     }
@@ -80,13 +73,6 @@ node('ubuntu-zion') {
           --tag ${organization}/${dockerHubRepository}:${version}-java17-alpine \
           --tag ${organization}/${dockerHubRepository}:${version}-alpine \
           -f ${alpineDockerfilePath} .""")
-      }
-
-      if (currentBuild.result == 'FAILURE') {
-        gitHub.statusUpdate commitId, 'failure', 'build', 'Build failed'
-        return
-      } else {
-        gitHub.statusUpdate commitId, 'success', 'build', 'Build succeeded'
       }
     }
 
