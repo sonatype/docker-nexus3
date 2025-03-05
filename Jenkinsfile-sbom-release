@@ -163,6 +163,17 @@ dockerizedRunPipeline(
         env['nexusVersion'] = dockerInspectLabel(DOCKER_NEXUS_IMAGE_NAME, params.docker_nexus3_tag, "version")
         env['dockerImageVersion'] = dockerInspectLabel(DOCKER_NEXUS_IMAGE_NAME, params.docker_nexus3_tag, "release")
         env['ubiImageId'] = baseImageRef.contains("image=") ? baseImageRef.split("image=")[1] : ""
+
+        runEvaluation({ stage ->
+          def iqApplicationName = getNexusReportName(params.docker_nexus3_tag)
+
+          nexusPolicyEvaluation(
+            iqStage: stage,
+            iqApplication: iqApplicationName,
+            iqScanPatterns: [[scanPattern: "container:${DOCKER_NEXUS_IMAGE_NAME}:${params.docker_nexus3_tag}"]],
+            failBuildOnNetworkError: true,
+          )
+        }, 'release')
       }
     },
     run: {
