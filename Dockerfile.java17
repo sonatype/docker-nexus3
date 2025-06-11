@@ -17,8 +17,8 @@ FROM redhat/ubi9-minimal
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
       vendor=Sonatype \
-      version="3.81.0-08" \
-      release="3.81.0" \
+      version="3.81.1-01" \
+      release="3.81.1" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -36,9 +36,9 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.81.0-08
+ARG NEXUS_VERSION=3.81.1-01
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip
-ARG NEXUS_DOWNLOAD_SHA256_HASH=d7630f92ad1d4558d181c44d496a5538989e551e8e3bed728b5e02285aee4a71
+ARG NEXUS_DOWNLOAD_SHA256_HASH=88e0b313af161c8d5817aa6399e5a995755cde7e956a0c6468807b073d6e99c6
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
