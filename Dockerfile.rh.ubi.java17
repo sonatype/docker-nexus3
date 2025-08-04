@@ -51,7 +51,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 # Install Java, tar, and unzip
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-17-openjdk-headless tar procps shadow-utils gzip unzip \
+          java-17-openjdk-headless tar procps shadow-utils gzip unzip glibc-langpack-en \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
@@ -65,6 +65,9 @@ RUN usermod -a -G root nexus \
     && chmod 0755 /uid_template.sh \
     && bash /uid_template.sh \
     && chmod 0664 /etc/passwd
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR ${SONATYPE_DIR}
 
