@@ -51,10 +51,13 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 # Install Java, tar, and unzip
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-17-openjdk-headless tar procps shadow-utils gzip unzip \
+          java-17-openjdk-headless tar procps shadow-utils gzip unzip glibc-langpack-en \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR ${SONATYPE_DIR}
 
@@ -83,6 +86,6 @@ VOLUME ${NEXUS_DATA}
 EXPOSE 8081
 USER nexus
 
-ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
+ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs -Dfile.encoding=UTF-8"
 
 CMD ["/opt/sonatype/nexus/bin/nexus", "run"]
