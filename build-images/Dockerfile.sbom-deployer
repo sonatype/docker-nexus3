@@ -1,3 +1,3 @@
 FROM docker-all.repo.sonatype.com/python:3.13-alpine
 
-RUN apk update && apk add --no-cache jq curl bash
+RUN apk update && apk add --no-cache jq curl bash git
