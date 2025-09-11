@@ -88,7 +88,7 @@ RUN microdnf remove -y shadow-utils
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
-USER nexus
+USER 200
 
 ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 
