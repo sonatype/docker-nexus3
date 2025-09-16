@@ -81,7 +81,7 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
 
 # Remove dependencies added for extracting Nexus
 # Remove CUPS, ignore the fact openjdk depends on it
-RUN microdnf remove -y gzip shadow-utils
+RUN microdnf remove -y gzip shadow-utils \
    && rpm --erase --nodeps cups-libs
 
 VOLUME ${NEXUS_DATA}
