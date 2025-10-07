@@ -15,10 +15,10 @@
 FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 LABEL name="Nexus Repository Manager" \
-      vendor=Sonatype \
       maintainer="Sonatype <support@sonatype.com>" \
-      version="3.77.2-02" \
-      release="3.77.2" \
+      vendor=Sonatype \
+      version="3.85.0-03" \
+      release="3.85.0" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -36,9 +36,9 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.77.2-02
-ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=1075c1f0794ef78f5c758e3d7076c439975ad05b4d3816877a53a4543afe756d 
+ARG NEXUS_VERSION=3.85.0-03
+ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip
+ARG NEXUS_DOWNLOAD_SHA256_HASH=74ca3fa8f94a452ca3ecdf475b3cf901273bd802e7bdb13f53c45b4a50718639
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -48,10 +48,10 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
-# Install java & setup user
+# Install Java, tar, and unzip
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-17-openjdk-headless tar procps shadow-utils gzip \
+          java-17-openjdk-headless tar procps shadow-utils gzip unzip glibc-langpack-en \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
@@ -66,30 +66,29 @@ RUN usermod -a -G root nexus \
     && bash /uid_template.sh \
     && chmod 0664 /etc/passwd
 
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+
 WORKDIR ${SONATYPE_DIR}
 
 # Download nexus & setup directories
-RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-unix.tar.gz \
-    && echo "${NEXUS_DOWNLOAD_SHA256_HASH} nexus-${NEXUS_VERSION}-unix.tar.gz" > nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
-    && sha256sum -c nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
-    && tar -xvf nexus-${NEXUS_VERSION}-unix.tar.gz \
-    && rm -f nexus-${NEXUS_VERSION}-unix.tar.gz nexus-${NEXUS_VERSION}-unix.tar.gz.sha256 \
+RUN curl -L ${NEXUS_DOWNLOAD_URL} --output sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip \
+    && echo "${NEXUS_DOWNLOAD_SHA256_HASH} sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip" > sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip.sha256 \
+    && sha256sum -c sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip.sha256 \
+    && unzip sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip \
+    && rm -f sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip.sha256 \
     && mv nexus-${NEXUS_VERSION} $NEXUS_HOME \
     && chown -R nexus:nexus ${SONATYPE_WORK} \
     && mv ${SONATYPE_WORK}/nexus3 ${NEXUS_DATA} \
     && ln -s ${NEXUS_DATA} ${SONATYPE_WORK}/nexus3
 
-# Removing java memory settings from nexus.vmoptions since now we use INSTALL4J_ADD_VM_PARAMS
-RUN sed -i '/^-Xms/d;/^-Xmx/d;/^-XX:MaxDirectMemorySize/d' $NEXUS_HOME/bin/nexus.vmoptions
-
-# Legacy start script
 RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+   && chmod a+x ${SONATYPE_DIR}/nexus/bin/nexus \
    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-# Cleanup
 RUN microdnf remove -y gzip shadow-utils
 
 VOLUME ${NEXUS_DATA}
