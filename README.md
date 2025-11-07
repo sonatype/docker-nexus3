@@ -140,7 +140,7 @@ process, which runs as UID 200.
 
 * There is an environment variable that is being used to pass JVM arguments to the startup script
 
-  * `INSTALL4J_ADD_VM_PARAMS`, passed to the Install4J startup script. Defaults to `-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs`.
+  * `INSTALL4J_ADD_VM_PARAMS`, passed to the Install4J startup script. Defaults to `-Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs`.
 
   This can be adjusted at runtime:
 
@@ -148,10 +148,18 @@ process, which runs as UID 200.
   $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=/some-other-dir" sonatype/nexus3
   ```
 
+  **Java Memory Configuration Parameters:**
+
+  The example above demonstrates configuring Java memory parameters. Each parameter controls a specific aspect of memory allocation:
+
+  - `-Xms2703m`: Sets the initial heap size to 2703 MB
+  - `-Xmx2703m`: Sets the maximum heap size to 2703 MB
+  - `-XX:MaxDirectMemorySize=2703m`: Sets the maximum direct memory size to 2703 MB
+
+  These values should be adjusted based on your [memory requirements](https://help.sonatype.com/display/NXRM3/System+Requirements#SystemRequirements-MemoryRequirements). Setting `-Xms` and `-Xmx` to the same value prevents heap resizing and provides more predictable performance.
+
   Of particular note, `-Djava.util.prefs.userRoot=/some-other-dir` can be set to a persistent path, which will maintain
   the installed Sonatype Nexus Repository License if the container is restarted.
-  
-  Be sure to check the [memory requirements](https://help.sonatype.com/display/NXRM3/System+Requirements#SystemRequirements-MemoryRequirements) when deciding how much heap and direct memory to allocate.
 
 * Another environment variable can be used to control the Nexus Context Path
 
