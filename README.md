@@ -147,7 +147,7 @@ process, which runs as UID 200.
   This can be adjusted at runtime:
 
   ```
-  $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Djava.util.prefs.userRoot=/some-other-dir" sonatype/nexus3
+  $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=/some-other-dir" sonatype/nexus3
   ```
 
   Of particular note, `-Djava.util.prefs.userRoot=/some-other-dir` can be set to a persistent path, which will maintain
