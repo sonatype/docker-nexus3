@@ -17,8 +17,8 @@ FROM redhat/ubi9-minimal
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
       vendor=Sonatype \
-      version="3.86.0-08" \
-      release="3.86.0" \
+      version="3.86.2-01" \
+      release="3.86.2" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
