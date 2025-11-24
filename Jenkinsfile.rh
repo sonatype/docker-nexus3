@@ -33,7 +33,7 @@ node('ubuntu-zion') {
             credentialsId: 'red-hat-api-token',
             variable: 'API_TOKEN')
       ]) {
-        def dockerfilePath = 'Dockerfile.rh.ubi.java17'
+        def dockerfilePath = 'Dockerfile.rh.ubi'
 
         def baseImage = extractBaseImage(dockerfilePath)
         def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'

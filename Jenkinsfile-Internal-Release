@@ -6,8 +6,8 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.OsTools
 
-String OPENJDK17 = 'OpenJDK 17'
-List<String> javaVersions = [OPENJDK17]
+String OPENJDK21 = 'OpenJDK 21'
+List<String> javaVersions = [OPENJDK21]
 
 properties([
     parameters([
@@ -23,12 +23,12 @@ node('ubuntu-zion') {
   def imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3'
 
-  def JAVA_17 = 'java17'
-  def DOCKERFILE_JAVA_17 = 'Dockerfile.java17'
-  def DOCKERFILE_ALPINE_JAVA_17 = 'Dockerfile.alpine.java17'
+  def JAVA_21 = 'java21'
+  def DOCKERFILE_JAVA_21 = 'Dockerfile.java21'
+  def DOCKERFILE_ALPINE_JAVA_21 = 'Dockerfile.alpine.java21'
 
   def dockerfileMap = [
-    (OPENJDK17): [DOCKERFILE_JAVA_17, DOCKERFILE_ALPINE_JAVA_17]
+    (OPENJDK21): [DOCKERFILE_JAVA_21, DOCKERFILE_ALPINE_JAVA_21]
   ]
   try {
     stage('Preparation') {
@@ -49,15 +49,15 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerfileMap[OPENJDK17].each { dockerfile ->
-            updateRepositoryManagerVersion("${pwd()}/${dockerfile}", JAVA_17)
+          dockerfileMap[OPENJDK21].each { dockerfile ->
+            updateRepositoryManagerVersion("${pwd()}/${dockerfile}", JAVA_21)
             }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
     }
-    def dockerfilePath = dockerfileMap[OPENJDK17][0]
-    def alpineDockerfilePath = dockerfileMap[OPENJDK17][1]
+    def dockerfilePath = dockerfileMap[OPENJDK21][0]
+    def alpineDockerfilePath = dockerfileMap[OPENJDK21][1]
 
     stage('Build UBI Image') {
       def baseImage = extractBaseImage(dockerfilePath)
@@ -109,16 +109,12 @@ node('ubuntu-zion') {
           // Tag Images
           sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
           sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
           sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
 
           // Push Images
           sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
           sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-ubi"
           sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-java17-alpine"
         }
       }
     }
@@ -130,7 +126,7 @@ node('ubuntu-zion') {
 }
 
 def readVersion() {
-  def content = readFile 'Dockerfile.java17'
+  def content = readFile 'Dockerfile.java21'
   for (line in content.split('\n')) {
     if (line.startsWith('ARG NEXUS_VERSION=')) {
       return getShortVersion(line.substring(18))
