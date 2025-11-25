@@ -33,7 +33,7 @@ node('ubuntu-zion') {
     }
 
     stage('Build, Tag, and Push Images to dockerhub') {
-      def dockerfilePath = 'Dockerfile.java17'
+      def dockerfilePath = 'Dockerfile.java21'
       def baseImage = extractBaseImage(dockerfilePath)
       def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
@@ -55,7 +55,6 @@ node('ubuntu-zion') {
               --no-cache \
               --tag ${organization}/${dockerHubRepository}:${version} \
               --tag ${organization}/${dockerHubRepository}:${version}-ubi \
-              --tag ${organization}/${dockerHubRepository}:${version}-java17-ubi \
               """
         if(params.update_latest) {
           buildUbiImage += "--tag ${organization}/${dockerHubRepository}:latest "
@@ -64,13 +63,12 @@ node('ubuntu-zion') {
         def hash = OsTools.runSafe(this, buildUbiImage)
 
         // Build Alpine Image
-        def alpineDockerfilePath = 'Dockerfile.alpine.java17'
+        def alpineDockerfilePath = 'Dockerfile.alpine.java21'
         def alpineHash = OsTools.runSafe(this, """
         docker buildx build \
           --platform linux/amd64,linux/arm64 \
           --push \
           --no-cache \
-          --tag ${organization}/${dockerHubRepository}:${version}-java17-alpine \
           --tag ${organization}/${dockerHubRepository}:${version}-alpine \
           -f ${alpineDockerfilePath} .""")
       }

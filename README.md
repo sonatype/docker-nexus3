@@ -112,15 +112,13 @@ In addition to the Universal Base Image, we can build images based on:
 
 ## Alpine Image
 
-An Alpine-based container image can be created using [Dockerfile.alpine.java11](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java11) This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
+An Alpine-based container image can be created using [Dockerfile.alpine.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine) This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
 
 The Alpine-based container image includes minimal dependencies and uses an ENTRYPOINT script to ensure the application runs with the necessary permissions. It is optimized for rapid deployment and efficient resource usage.
 
 The Alpine-based container image is available from Docker Hub and can be pulled using the following tags:
 
-- sonatype/nexus3:3.XX.y-alpine (runs Java 11)
-- sonatype/nexus3:3.XX.y-java11-alpine
-- sonatype/nexus3:3.XX.y-java17-alpine
+- sonatype/nexus3:3.XX.y-alpine (runs Java 21)
 
 ## Notes
 

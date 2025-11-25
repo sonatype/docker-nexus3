@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine
+FROM redhat/ubi9-minimal
 
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
       vendor=Sonatype \
-      version="3.86.2-01" \
-      release="3.86.2" \
+      version="3.87.1-01" \
+      release="3.86&.1" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -36,7 +36,7 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.86.2-01
+ARG NEXUS_VERSION=3.87.1-01
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip
 ARG NEXUS_DOWNLOAD_SHA256_HASH=9b898ccb7c20f81cf172e25f52bf9f16272e7ba6a39ff62ee741cae312580eee
 
@@ -46,16 +46,18 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_DATA=/nexus-data \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
-    DOCKER_TYPE='alpine'
+    DOCKER_TYPE='rh-docker'
 
-# Install Java & tar
-RUN apk add openjdk17 tar procps gzip curl shadow \
-    && apk cache clean \
+# Install Java, tar, and unzip
+RUN microdnf update -y \
+    && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
+          java-21-openjdk-headless tar procps shadow-utils gzip unzip glibc-langpack-en \
+    && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
-RUN apk del --no-cache openssl || true
-RUN apk update && apk add --no-cache openssl
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR ${SONATYPE_DIR}
 
@@ -77,13 +79,18 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && chmod a+x ${SONATYPE_DIR}/nexus/bin/nexus \
    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-RUN apk del gzip shadow
+# Remove dependencies added for extracting Nexus
+# Remove CUPS, ignore the fact openjdk depends on it
+# Remove expat, nss-> crypto-policies-scripts -> python3 -> expat
+RUN microdnf remove -y gzip shadow-utils \
+   && rpm --erase --nodeps cups-libs \
+   && rpm --erase --nodeps expat
 
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
 USER nexus
 
-ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
+ENV INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs -Dfile.encoding=UTF-8"
 
 CMD ["/opt/sonatype/nexus/bin/nexus", "run"]
