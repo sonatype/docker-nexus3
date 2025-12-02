@@ -56,5 +56,5 @@ preflight check container \
           "${IMAGE_TAG}" \
           --docker-config="${AUTHFILE}" \
           --submit \
-          --certification-project-id="${CERT_PROJECT_ID}" \
+          --certification-component-id="${CERT_PROJECT_ID}" \
           --pyxis-api-token="${API_TOKEN}"
