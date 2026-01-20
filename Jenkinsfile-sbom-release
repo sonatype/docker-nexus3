@@ -184,10 +184,6 @@ dockerizedRunPipeline(
       // Download SBOMs
       sh "mkdir -p ${buildDir}/spdx && mkdir -p ${buildDir}/cyclonedx"
 
-      // Get nexus-internal SBOM
-      getComponentSbom(buildDir, "nexus-internal", env.nexusVersion)
-      // Get nxrm-db-migrator SBOM
-      getComponentSbom(buildDir, "nxrm-db-migrator", env.nexusVersion)
       // Get we SBOM
       getComponentSbom(buildDir, nexusReportName, env.dockerImageVersion)
 
@@ -214,8 +210,6 @@ dockerizedRunPipeline(
       if (ubiSbomAvailable) {
         publishComponent(buildDir, "ubi-minimal", ubiImageVersion, false)
       }
-      publishComponentSbom(buildDir, "nexus-internal", env.nexusVersion)
-      publishComponentSbom(buildDir, "nxrm-db-migrator", env.nexusVersion)
       publishComponentSbom(buildDir, nexusReportName, env.dockerImageVersion)
       publishComponentSbom(buildDir, "${nexusReportName}-aggregate", env.dockerImageVersion, false)
 
