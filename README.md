@@ -31,13 +31,14 @@ Community Edition is designed to deliver robust repository management for indivi
 
 * [Contribution Guidlines](#contribution-guidelines)
 * [Running](#running)
-* [Building the Sonatype Nexus Repository image](#building-the-nexus-repository-manager-image)
+* [Building the Sonatype Nexus Repository image](#building-the-sonatype-nexus-repository-image)
 * [Chef Solo for Runtime and Application](#chef-solo-for-runtime-and-application)
 * [Testing the Dockerfile](#testing-the-dockerfile)
 * [Red Hat Certified Image](#red-hat-certified-image)
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
-* [Getting Help](#getting-help)
+* [Getting In Touch](#getting-in-touch)
+* [License Disclaimer](#license-disclaimer)
 
 ## Contribution Guidelines
 
