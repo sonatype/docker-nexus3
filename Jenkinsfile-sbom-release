@@ -12,7 +12,7 @@ import groovy.json.JsonBuilder
 IQ_URL_BASE = "https://sonatype.sonatype.app/platform"
 REPO_BASE_URL = "https://sonatype.repo.sonatype.app/service/rest"
 TARGET_REPO_NAME = "sonatype-sboms"
-SBOM_DEPLOYER_CREDENTIALS = "sonatype-sbom-deployer"
+SBOM_DEPLOYER_CREDENTIALS = "smart-repository-ci-at-repo-cloud"
 REDHAT_SBOM_REPO_URL_BASE = "https://access.redhat.com/security/data/sbom/beta"
 REDHAT_CONTAINER_API_URL_BASE = "https://catalog.redhat.com/api/containers/v1"
 CYCLONEDX_VERSION = "1.5"
