@@ -117,8 +117,8 @@ def mergeSpdxComponents(String buildDir, String finalComponentName, String final
 
   sh """#!/bin/bash
     if mkdir -p '${pythonEnvDir}' && python3 -m venv '${pythonEnvDir}' && ls '${pythonEnvDir}' && . '${pythonEnvDir}/bin/activate'; then
-      if python3 -m pip install -r '${buildDir}/SPDXMerge/requirements.txt' \
-          && python3 -m pip install setuptools \
+      if python3 -m pip install setuptools \
+          && python3 -m pip install -r '${buildDir}/SPDXMerge/requirements.txt' \
           && python3 '${buildDir}/SPDXMerge/spdxmerge/SPDXMerge.py' --docpath '${buildDir}/spdx' --outpath '${buildDir}/' \
               --name "docker-nexus3-aggregate" --mergetype "1" --author "Sonatype Inc." --email "support@sonatype.com" \
               --docnamespace "${finalNamespace}" \
