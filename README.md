@@ -124,6 +124,14 @@ The Alpine-based container image is available from Docker Hub and can be pulled 
 
 * Our [system requirements](https://help.sonatype.com/display/NXRM3/System+Requirements) should be taken into account when provisioning the Docker container.
 * Default user is `admin` and the uniquely generated password can be found in the `admin.password` file inside the volume. See [Persistent Data](#user-content-persistent-data) for information about the volume.
+  
+  > You can print the generated admin password by running the following command after the container is finished running:
+  > 
+  > ```sh
+  > docker container exec -it $(docker ps -q --filter "name=nexus") cat /nexus-data/admin.password && echo
+  > ```
+  > Above command assumes you are running one container.
+
 
 * It can take some time (2-3 minutes) for the service to launch in a
 new container.  You can tail the log to determine once Nexus is ready:
