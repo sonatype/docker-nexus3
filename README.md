@@ -23,14 +23,14 @@
 
 [![Join the chat at https://gitter.im/sonatype/nexus-developers](https://badges.gitter.im/sonatype/nexus-developers.svg)](https://gitter.im/sonatype/nexus-developers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A Dockerfile for Sonatype Nexus Repository 3, starting with 3.18 the image is based on the [Red Hat Universal Base Image](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image) while earlier versions used CentOS.
+A Dockerfile for Sonatype Nexus Repository 3, based on the [Red Hat Universal Base Image](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image).
 
 * [Contribution Guidlines](#contribution-guidelines)
 * [Running](#running)
 * [Building the Sonatype Nexus Repository image](#building-the-nexus-repository-manager-image)
 * [Chef Solo for Runtime and Application](#chef-solo-for-runtime-and-application)
 * [Testing the Dockerfile](#testing-the-dockerfile)
-* [Red Hat Certified Image](#red-hat-certified-image)
+* [Alpine Image](#alpine-image)
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
 * [Getting Help](#getting-help)
@@ -88,23 +88,6 @@ We are using `rspec` as the test framework. `serverspec` provides a docker backe
  (e.g. yum, apt,...).
 
     rspec [--backtrace] spec/Dockerfile_spec.rb
-
-## Red Hat Certified Image
-
-A Red Hat certified container image can be created using [Dockerfile.rh.ubi](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.ubi) which is built to be compliant with Red Hat certification.
-The image includes additional meta data to comform with Kubernetes and OpenShift standards, a directory with the
-licenses applicable to the software and a man file for help on how to use the software. It also uses an ENTRYPOINT
-script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. 
-
-The Red Hat certified container image is available from the 
-[Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager)
-and qualified accounts can pull it from registry.connect.redhat.com.
-
-## Other Red Hat Images
-
-In addition to the Universal Base Image, we can build images based on:
-* Red Hat Enterprise Linux: [Dockerfile.rh.el](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.el)
-* CentOS: [Dockerfile.rh.centos](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.centos)
 
 ## Alpine Image
 
