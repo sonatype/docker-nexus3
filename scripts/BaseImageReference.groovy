@@ -31,78 +31,6 @@ class DefaultBaseImageReference
   }
 }
 
-class RedHatBaseImageReference
-    implements BaseImageReference
-{
-  final static RED_HAT_REGISTRY = "registry.access.redhat.com"
-
-  private String baseImage
-
-  private DockerImageHelper dockerImageHelper
-
-  private steps
-
-  RedHatBaseImageReference(String baseImage, DockerImageHelper dockerImageHelper, steps) {
-    this.baseImage = baseImage
-    this.dockerImageHelper = dockerImageHelper
-    this.steps = steps
-  }
-
-  String getReference(String registryName = RED_HAT_REGISTRY) {
-    def repoName = extractRedHatRepoName(baseImage, registryName)
-    def dockerImageId = dockerImageHelper.getImageId(baseImage)
-    if (repoName == null || dockerImageId == null) {
-      return null
-    }
-
-    def imageId = getRedHatImageId(dockerImageId)
-    def repoId = getRedHatRepoId(repoName, registryName)
-    if (imageId == null || repoId == null) {
-      def imageDigest = dockerImageHelper.getImageFirstRepoDigest(baseImage)
-      return imageDigest
-    }
-
-    def imageArch = dockerImageHelper.getImageArchitecture(baseImage)
-    if (imageArch != null) {
-      return "https://catalog.redhat.com/software/containers/${repoName}/${repoId}?architecture=${imageArch}&image=${imageId}"
-    }
-    else {
-      return "https://catalog.redhat.com/software/containers/${repoName}/${repoId}?image=${imageId}"
-    }
-  }
-
-  private static extractRedHatRepoName(baseImage, registryName) {
-    if (!baseImage.contains(registryName)) {
-      return null
-    }
-    def repositoryRegex = "${registryName}\\/(.*)"
-    def repository = (baseImage =~ repositoryRegex)[0][1]
-    return repository
-  }
-
-  private getRedHatImageId(dockerImageId) {
-    def imageSearchUrl =
-        "https://catalog.redhat.com/api/containers/v1/images?filter=docker_image_id==\"${dockerImageId}\""
-    def imageId = steps.sh(
-        script: "curl -s -L ${imageSearchUrl} | jq -r '.data[0]._id' ",
-        returnStdout: true
-    ).trim()
-
-    return imageId == "null" ? null : imageId
-  }
-
-  private getRedHatRepoId(repoName, registryName) {
-    def repoSearchUrl =
-        "https://catalog.redhat.com/api/containers/v1/repositories/registry/${registryName}/repository/${repoName}"
-    def repoId = steps.sh(
-        script: "curl -s -L ${repoSearchUrl} | jq -r '._id' ",
-        returnStdout: true
-    ).trim()
-
-    return repoId == "null" ? null : repoId
-  }
-}
-
 class DockerImageHelper
 {
   private steps
@@ -155,13 +83,7 @@ class DockerImageHelper
 
 static BaseImageReference build(steps, String baseImage) {
   def dockerHelper = new DockerImageHelper(steps)
-
-  if (baseImage.contains(RedHatBaseImageReference.RED_HAT_REGISTRY)) {
-    return new RedHatBaseImageReference(baseImage, dockerHelper, steps)
-  }
-  else {
-    return new DefaultBaseImageReference(baseImage, dockerHelper)
-  }
+  return new DefaultBaseImageReference(baseImage, dockerHelper)
 }
 
 return this

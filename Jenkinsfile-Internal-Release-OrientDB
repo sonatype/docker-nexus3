@@ -121,26 +121,26 @@ node('ubuntu-zion') {
         def javaVersionSuffix = javaVersionSuffixesMap.get(params.java_version)
 
         // Push UBI images
-        sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-ubi"
-        sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-ubi"
+        sh "docker tag ${imageId} sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-ubi"
+        sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-ubi"
         if (params.java_version == OPENJDK8) {
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-ubi"
+          sh "docker tag ${imageId} sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-ubi"
+          sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-ubi"
           // Create alias for the UBI image without the suffix
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}"
+          sh "docker tag ${imageId} sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}"
+          sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}"
           // Create latest-3.70.x tag
-          sh "docker tag ${imageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:latest-3.70.x"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:latest-3.70.x"
+          sh "docker tag ${imageId} sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:latest-3.70.x"
+          sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:latest-3.70.x"
         }
 
         // Push Alpine images
         if (params.java_version != OPENJDK8) {
-          sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
-          sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
+          sh "docker tag ${alpineImageId} sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
+          sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-${javaVersionSuffix}-alpine"
           if (params.java_version == OPENJDK11) {
-            sh "docker tag ${alpineImageId} docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/nexus3:${version}-alpine"
+            sh "docker tag ${alpineImageId} sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-alpine"
+            sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/nexus3:${version}-alpine"
           }
         }
       }
