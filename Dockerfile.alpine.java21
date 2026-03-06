@@ -17,8 +17,8 @@ FROM alpine
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
       vendor=Sonatype \
-      version="3.90.0-21" \
-      release="3.90.0" \
+      version="3.90.1-01" \
+      release="3.90.1" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -36,9 +36,9 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.90.0-21
+ARG NEXUS_VERSION=3.90.1-01
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/sonatype-nexus-repository-${NEXUS_VERSION}-assembly.zip
-ARG NEXUS_DOWNLOAD_SHA256_HASH=f0ad86fa9c6230ade1bbe7372236e432df748fc1dd8fe1f55a863a498ec00d63
+ARG NEXUS_DOWNLOAD_SHA256_HASH=b404cbf875a3c383f7b102be9544efb04bc3d6bce8f03ed57d38899b063de568
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
