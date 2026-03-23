@@ -237,12 +237,12 @@ node('ubuntu-zion') {
 
           // push to internal repos
           withSonatypeDockerRegistry() {
-            sh "docker tag ${imageName} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
-            sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+            sh "docker tag ${imageName} sonatype.repo.sonatype.app/docker-all/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
+            sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/${dockerHubRepository}:${version}-${javaVersionSuffix}"
 
             if (params.java_version == OPENJDK8) {
-              sh "docker tag ${imageName} docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
-              sh "docker push docker-all.repo.sonatype.com/sonatype-internal/${dockerHubRepository}:${version}"
+              sh "docker tag ${imageName} sonatype.repo.sonatype.app/docker-all/sonatype-internal/${dockerHubRepository}:${version}"
+              sh "docker push sonatype.repo.sonatype.app/docker-all/sonatype-internal/${dockerHubRepository}:${version}"
             }
           }
         }
