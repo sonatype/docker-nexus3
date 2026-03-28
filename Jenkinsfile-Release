@@ -53,24 +53,25 @@ node('ubuntu-zion') {
               --label base-image-ref='${baseImageReferenceStr}' \
               --push \
               --no-cache \
-              --tag ${organization}/${dockerHubRepository}:${version} \
               --tag ${organization}/${dockerHubRepository}:${version}-ubi \
-              """
-        if(params.update_latest) {
-          buildUbiImage += "--tag ${organization}/${dockerHubRepository}:latest "
-        }
-        buildUbiImage += "-f ${dockerfilePath} ."
+              -f ${dockerfilePath} ."""
         def hash = OsTools.runSafe(this, buildUbiImage)
 
         // Build Alpine Image
         def alpineDockerfilePath = 'Dockerfile.alpine.java21'
-        def alpineHash = OsTools.runSafe(this, """
+        def buildAlpineImage = """
         docker buildx build \
           --platform linux/amd64,linux/arm64 \
           --push \
           --no-cache \
+          --tag ${organization}/${dockerHubRepository}:${version} \
           --tag ${organization}/${dockerHubRepository}:${version}-alpine \
-          -f ${alpineDockerfilePath} .""")
+          """
+        if(params.update_latest) {
+          buildAlpineImage += "--tag ${organization}/${dockerHubRepository}:latest "
+        }
+        buildAlpineImage += "-f ${alpineDockerfilePath} ."
+        def alpineHash = OsTools.runSafe(this, buildAlpineImage)
       }
     }
 
