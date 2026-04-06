@@ -14,7 +14,7 @@ jobs:
             - uses: actions/checkout@v4
 
             - name: Determine Version
-              run: echo "NXRM_VERSION=$(grep release Dockerfile.java21 | cut -d "=" -f2 | tr -d '" \')" >> $GITHUB_ENV
+              run: echo "NXRM_VERSION=$(grep release Dockerfile.java25 | cut -d "=" -f2 | tr -d '" \')" >> $GITHUB_ENV
 
             - run: echo "Building NXRM ${{ env.NXRM_VERSION }} for ARM"
 
@@ -27,20 +27,20 @@ jobs:
                   username: ${{ secrets.REGISTRY_USERNAME }}
                   password: ${{ secrets.REGISTRY_TOKEN }}
 
-            - name: Build and push Java 21
+            - name: Build and push Java 25
               uses: docker/build-push-action@v5
               with:
                   context: .
-                  file: ./Dockerfile.java21
+                  file: ./Dockerfile.java25
                   platforms: linux/arm64,linux/amd64
                   push: true
                   tags: sonatypecommunity/nexus3:latest , sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}
 
-            - name: Build and push Java 21 (alpine)
+            - name: Build and push Java 25 (alpine)
               uses: docker/build-push-action@v5
               with:
                   context: .
-                  file: ./Dockerfile.alpine.java21
+                  file: ./Dockerfile.alpine.java25
                   platforms: linux/arm64,linux/amd64
                   push: true
                   tags: sonatypecommunity/nexus3:${{ env.NXRM_VERSION }}-alpine

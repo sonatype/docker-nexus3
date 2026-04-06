@@ -116,23 +116,23 @@ In addition to the Universal Base Image, we can build images based on:
 
 **As of version 3.91.0, the Alpine-based image is the default for Sonatype Nexus Repository.**
 
-The Alpine-based container image can be created using [Dockerfile.alpine.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java21). This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
+The Alpine-based container image can be created using [Dockerfile.alpine.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java25). This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
 
 The Alpine-based container image includes minimal dependencies and uses an ENTRYPOINT script to ensure the application runs with the necessary permissions. It is optimized for rapid deployment and efficient resource usage.
 
 The Alpine-based container image is available from Docker Hub and can be pulled using the following tags:
 
-- `sonatype/nexus3:latest` - Latest Alpine-based release (runs Java 21)
-- `sonatype/nexus3:3.XX.y` - Specific version, Alpine-based (runs Java 21)
-- `sonatype/nexus3:3.XX.y-alpine` - Explicit Alpine tag (runs Java 21)
+- `sonatype/nexus3:latest` - Latest Alpine-based release (runs Java 25)
+- `sonatype/nexus3:3.XX.y` - Specific version, Alpine-based (runs Java 25)
+- `sonatype/nexus3:3.XX.y-alpine` - Explicit Alpine tag (runs Java 25)
 
 ## UBI Image Variant
 
 For users who prefer Red Hat Universal Base Image (UBI), a UBI-based variant is available using the `-ubi` tag suffix:
 
-- `sonatype/nexus3:3.XX.y-ubi` - Specific version, UBI-based (runs Java 21)
+- `sonatype/nexus3:3.XX.y-ubi` - Specific version, UBI-based (runs Java 25)
 
-The UBI-based container image can be created using [Dockerfile.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.java21).
+The UBI-based container image can be created using [Dockerfile.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.java25).
 
 ## Notes
 
