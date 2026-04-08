@@ -97,7 +97,7 @@ We are using `rspec` as the test framework. `serverspec` provides a docker backe
 
 ## Red Hat Certified Image
 
-A Red Hat certified container image can be created using [Dockerfile.rh.ubi](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.ubi) which is built to be compliant with Red Hat certification.
+A Red Hat certified container image can be created using [Dockerfile.rh.ubi.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.ubi.java25) which is built to be compliant with Red Hat certification.
 The image includes additional meta data to comform with Kubernetes and OpenShift standards, a directory with the
 licenses applicable to the software and a man file for help on how to use the software. It also uses an ENTRYPOINT
 script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. 
