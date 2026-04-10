@@ -19,7 +19,7 @@ node('ubuntu-zion') {
       sh 'docker system prune -a -f'
       sh '''
         wget -q -O preflight \
-          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.14.1/preflight-linux-amd64
+          https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.17.0/preflight-linux-amd64
         chmod 755 preflight
       '''
     }
@@ -33,7 +33,7 @@ node('ubuntu-zion') {
             credentialsId: 'red-hat-api-token',
             variable: 'API_TOKEN')
       ]) {
-        def dockerfilePath = 'Dockerfile.rh.ubi'
+        def dockerfilePath = 'Dockerfile.rh.ubi.java21'
 
         def baseImage = extractBaseImage(dockerfilePath)
         def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
