@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine
+FROM redhat/ubi9-minimal
 
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
@@ -46,16 +46,18 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     NEXUS_DATA=/nexus-data \
     NEXUS_CONTEXT='' \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
-    DOCKER_TYPE='alpine'
+    DOCKER_TYPE='rh-docker'
 
-# Install Java & tar
-RUN apk add openjdk21 tar procps gzip curl shadow \
-    && apk cache clean \
+# Install Java, tar, and unzip
+RUN microdnf update -y \
+    && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
+          java-25-openjdk-headless tar procps shadow-utils gzip unzip glibc-langpack-en \
+    && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
-RUN apk del --no-cache openssl || true
-RUN apk update && apk add --no-cache openssl
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR ${SONATYPE_DIR}
 
@@ -77,13 +79,18 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && chmod a+x ${SONATYPE_DIR}/nexus/bin/nexus \
    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
-RUN apk del gzip shadow
+# Remove dependencies added for extracting Nexus
+# Remove CUPS, ignore the fact openjdk depends on it
+# Remove expat, nss-> crypto-policies-scripts -> python3 -> expat
+RUN microdnf remove -y gzip shadow-utils \
+   && rpm --erase --nodeps cups-libs \
+   && rpm --erase --nodeps expat
 
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
 USER nexus
 
-ENV INSTALL4J_ADD_VM_PARAMS="-Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
+ENV INSTALL4J_ADD_VM_PARAMS="-Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs -Dfile.encoding=UTF-8"
 
 CMD ["/opt/sonatype/nexus/bin/nexus", "run"]
