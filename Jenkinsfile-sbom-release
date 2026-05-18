@@ -17,12 +17,16 @@ REDHAT_SBOM_REPO_URL_BASE = "https://access.redhat.com/security/data/sbom/beta"
 REDHAT_CONTAINER_API_URL_BASE = "https://catalog.redhat.com/api/containers/v1"
 CYCLONEDX_VERSION = "1.5"
 SPDXMERGE_VERSION_TAG = "v0.2.0"
+// Tag → IQ application routing.
+// As of NEXUS-50546 (PR #275), the unsuffixed and `-alpine` tags both point at
+// the Alpine variant, while UBI is published only under the `-ubi` suffix.
+// See NEXUS-52723.
 NEXUS3_REPORT_BY_TAG = [
-  "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?-alpine\$" : "docker-nexus3-alpine",
-  "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?(-ubi)?\$" : "docker-nexus3"
+  "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?-ubi\$"          : "docker-nexus3",
+  "^(\\d+\\.\\d+\\.\\d+)(-java\\d+)?(-alpine)?\$"     : "docker-nexus3-alpine"
 ]
 DOCKER_NEXUS_IMAGE_NAME = "sonatype.repo.sonatype.app/docker-all/sonatype/nexus3"
-DEFAULT_NEXUS3_REPORT = "docker-nexus3"
+DEFAULT_NEXUS3_REPORT = "docker-nexus3-alpine"
 
 properties([
     parameters([
