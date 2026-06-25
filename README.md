@@ -49,7 +49,7 @@ we would like things to flow.
 To run, binding the exposed port 8081 to the host, use:
 
 ```
-$ docker run -d -p 8081:8081 --name nexus sonatype/nexus3
+docker run -d -p 8081:8081 --name nexus sonatype/nexus3
 ```
 
 **Note:** As of version 3.91.0, the default `sonatype/nexus3` image is based on Alpine Linux. See the [Alpine Image](#alpine-image) section below for more details. A UBI-based variant is also available using the `-ubi` tag suffix.
@@ -64,7 +64,7 @@ docker stop --time=120 <CONTAINER_NAME>
 To test:
 
 ```
-$ curl http://localhost:8081/
+curl http://localhost:8081/
 ```
 
 ## Building the Sonatype Nexus Repository image
@@ -72,7 +72,7 @@ $ curl http://localhost:8081/
 To build a docker image from the [Dockerfile](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile) you can use this command:
 
 ```
-$ docker build --rm=true --tag=sonatype/nexus3 .
+docker build --rm=true --tag=sonatype/nexus3 .
 ```
 
 The following optional variables can be used when building the image:
@@ -143,7 +143,7 @@ The UBI-based container image can be created using [Dockerfile.java21](https://g
 new container.  You can tail the log to determine once Nexus is ready:
 
 ```
-$ docker logs -f nexus
+docker logs -f nexus
 ```
 
 * Installation of Nexus is to `/opt/sonatype/nexus`.  
@@ -159,7 +159,7 @@ process, which runs as UID 200.
   This can be adjusted at runtime:
 
   ```
-  $ docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=/some-other-dir" sonatype/nexus3
+  docker run -d -p 8081:8081 --name nexus -e INSTALL4J_ADD_VM_PARAMS="-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m -Djava.util.prefs.userRoot=/some-other-dir" sonatype/nexus3
   ```
 
   **Java Memory Configuration Parameters:**
@@ -182,7 +182,7 @@ process, which runs as UID 200.
   This can be supplied at runtime:
 
   ```
-  $ docker run -d -p 8081:8081 --name nexus -e NEXUS_CONTEXT=nexus sonatype/nexus3
+  docker run -d -p 8081:8081 --name nexus -e NEXUS_CONTEXT=nexus sonatype/nexus3
   ```
 
 ### Persistent Data
@@ -195,8 +195,8 @@ for additional information.
   this purpose.  This is the recommended approach.  
 
   ```
-  $ docker volume create --name nexus-data
-  $ docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
+  docker volume create --name nexus-data
+  docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
   ```
 
   2. *Mount a host directory as the volume*.  This is not portable, as it
@@ -205,8 +205,8 @@ for additional information.
   to be assigned to certain specific underlying storage.  
 
   ```
-  $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
-  $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
+  mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
+  docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data sonatype/nexus3
   ```
 
 ## Getting In Touch
