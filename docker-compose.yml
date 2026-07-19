@@ -3,6 +3,8 @@ version: "2"
 services:
   nexus:
     image: sonatype/nexus3
+    restart: unless-stopped
+    container_name: nexus
     volumes:
       - "nexus-data:/nexus-data"
     ports:
