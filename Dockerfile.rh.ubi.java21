@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM redhat/ubi9-minimal
+# Pin the UBI 9 minimal base image by digest (instead of the floating :latest tag) for reproducible
+# builds and a stable image identity. This digest is redhat/ubi9-minimal:latest as of 2026-07-31;
+# update it deliberately when moving to a newer UBI build.
+FROM redhat/ubi9-minimal@sha256:17fd831ced9434de0a984d60b3fbe61008308261ba98bbc348d6fbdef05fa7c0
 
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
