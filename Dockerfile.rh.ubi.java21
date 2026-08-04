@@ -51,12 +51,17 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     SONATYPE_WORK=${SONATYPE_DIR}/sonatype-work \
     DOCKER_TYPE='rh-docker'
 
-# Install Java, tar, and unzip
+# Install Java, tar, and unzip.
+# Also drop jrt-fs.jar (the jrt: FileSystemProvider, jdk.internal.jrtfs): it is unused by the
+# classpath/Karaf-launched Nexus runtime, and IQ flags this unpublished JDK-internal jar as an
+# unknown component (NEXUS-54360; mirrors NEXUS-54299 alpine / NEXUS-54161 aws / FIRE-722).
+# In UBI it ships at /usr/lib/jvm/java-21-openjdk-<version>/lib/jrt-fs.jar.
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
           java-21-openjdk-headless tar procps shadow-utils gzip unzip glibc-langpack-en \
     && microdnf clean all \
     && find /usr/lib/jvm -maxdepth 2 -name demo -type d -exec rm -rf {} + \
+    && find /usr/lib/jvm -maxdepth 3 -name jrt-fs.jar -exec rm -f {} + \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
