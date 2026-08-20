@@ -7,6 +7,7 @@ services:
       - "nexus-data:/nexus-data"
     ports:
       - "8081:8081"
+    stop_grace_period: 2m
   
 volumes:
   nexus-data: {}
