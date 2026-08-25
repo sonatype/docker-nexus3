@@ -84,7 +84,8 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
 # Remove expat, nss-> crypto-policies-scripts -> python3 -> expat
 RUN microdnf remove -y gzip shadow-utils \
    && rpm --erase --nodeps cups-libs \
-   && rpm --erase --nodeps expat
+   && rpm --erase --nodeps expat \
+   && rpm --erase --nodeps openssl-fips-provider openssl-fips-provider-so
 
 VOLUME ${NEXUS_DATA}
 
