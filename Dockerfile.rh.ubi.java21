@@ -101,6 +101,15 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
 RUN microdnf remove -y gzip shadow-utils \
     && rpm --erase --nodeps openssl-fips-provider openssl-fips-provider-so
 
+# NEXUS-54361: Nexus runs headless and never prints, so the JDK's transitive printing
+# dependencies are unused. Force-remove them (java-21-openjdk-headless -> cups-libs ->
+# avahi-libs -> dbus-libs) to eliminate the dbus-libs License-Non Standard policy
+# violation (dual license '(GPLv2+ or AFL) and GPLv2+'; IQ picks the AFL-2.1 branch) and
+# shrink the image's attack surface. --nodeps is required because cups-libs is a hard rpm
+# dependency of the headless JDK; the resulting unsatisfied java -> cups-libs dependency is
+# cosmetic and does not affect a headless server at runtime.
+RUN rpm -e --nodeps cups-libs avahi-libs dbus-libs
+
 VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
