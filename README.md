@@ -23,6 +23,8 @@
 
 Sonatype Nexus Repository is the single source of truth for all your internal and third-party binaries, components, and packages. Integrate all your development tools into a centralized binary repository manager so that you can choose the best open source components, optimize your build performance, and ship code quickly while increasing visibility across your SDLC.
 
+> **Release process note (NEXUS-54848):** The customer Docker images and their SBOMs are now built during each release candidate in `nexus-internal` (`private/docker`) and promoted to Docker Hub by the `nxrm/nxrm3/promote-dockerhub` job. `Jenkinsfile-Release` and `Jenkinsfile-sbom-release` in this repo are retained only for reference and the Red Hat certification flow, and are no longer part of the monthly release.
+
 ### Announcing Nexus Repository Community Edition  
 As of version 3.77.0, the free edition of Nexus Repository is now called **Sonatype Nexus Repository Community Edition**.
 

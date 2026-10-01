@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# DEPRECATED (NEXUS-54848): the customer release image is now built from
+# nexus-internal/private/docker/Dockerfile.alpine and promoted to Docker Hub by the
+# nxrm/nxrm3/promote-dockerhub job. This file is retained only for reference / the
+# Red Hat certification flow and is no longer part of the monthly release.
 
 FROM alpine
 
