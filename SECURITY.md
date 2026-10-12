@@ -11,8 +11,6 @@
 
 First check [important advisories of known security vulnerabilities in Sonatype products](https://support.sonatype.com/hc/en-us/sections/203012668-Security-Advisories) to see if this has been previously reported.
 
-Duplicate reports for the same vulnerability will be deleted.
-
 ## How to report
 
 Sonatype utilizes the HackerOne platform for the Bug Bounty Program. If you do not have an HackerOne account, please send an email to [security@sonatype.com](mailto:security@sonatype.com) to receive an invitation.
