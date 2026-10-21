@@ -98,6 +98,18 @@ RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
    && chmod a+x ${SONATYPE_DIR}/nexus/bin/nexus \
    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
+# NEXUS-55999: block the roots behind the compromised eMudhra intermediate CAs (NEXUS-55978,
+# https://emudhra.we-have-a-problem.com/). RHEL/UBI9 has no fixed ca-certificates yet, so put the
+# roots in the system blocklist; update-ca-trust then regenerates both the OS PEM bundle and the
+# JVM cacerts (/etc/pki/java/cacerts). Remove this step once RHEL ships a fixed ca-certificates.
+RUN trust extract --overwrite --format=pem-bundle \
+        --filter='pkcs11:object=emSign%20ECC%20Root%20CA%20-%20G3;type=cert' \
+        /etc/pki/ca-trust/source/blocklist/emsign-ecc-root-ca-g3.pem \
+    && trust extract --overwrite --format=pem-bundle \
+        --filter='pkcs11:object=Comodo%20AAA%20Services%20root;type=cert' \
+        /etc/pki/ca-trust/source/blocklist/comodo-aaa-services-root.pem \
+    && update-ca-trust
+
 RUN microdnf remove -y gzip shadow-utils \
     && rpm --erase --nodeps openssl-fips-provider openssl-fips-provider-so
 
