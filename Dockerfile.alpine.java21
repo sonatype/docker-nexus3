@@ -65,6 +65,27 @@ RUN apk add openjdk21 tar procps gzip curl shadow \
 RUN apk del --no-cache openssl || true
 RUN apk update && apk add --no-cache openssl
 
+# Security: CA certificates that no longer trust the compromised eMudhra intermediate CAs
+# (https://emudhra.we-have-a-problem.com/, NEXUS-55997). Alpine fixed both packages in 20261020-r0.
+# ca-certificates-bundle is the OS bundle (openssl, curl). ca-certificates is what Java's cacerts is
+# built from (via java-cacerts), so it needs its own floor.
+# Floor, not an exact pin, so later Alpine CA updates are still picked up.
+RUN apk add --no-cache --upgrade "ca-certificates-bundle>=20261020-r0" "ca-certificates>=20261020-r0"
+
+# Security: block the compromised eMudhra intermediate CAs in the JVM (NEXUS-55997). Java has no fixed
+# release yet, so append their SHA-256 fingerprints to the JDK's blocked.certs. The JDK then rejects any
+# chain containing them, whichever trust store supplied it: cacerts, a -Djavax.net.ssl.trustStore file,
+# or the Nexus truststore. revoked-certs/ is shared with the UBI Dockerfiles (NEXUS-55998, NEXUS-55999).
+# Remove this once the JDK blocks these certificates itself.
+COPY revoked-certs/revoked-intermediates.sha256 /tmp/revoked-intermediates.sha256
+RUN set -e; \
+    f=$(readlink -f /usr/lib/jvm/default-jvm/lib/security/blocked.certs); \
+    [ -f "$f" ]; \
+    echo >> "$f"; \
+    grep -v '^#' /tmp/revoked-intermediates.sha256 >> "$f"; \
+    for h in $(grep -v '^#' /tmp/revoked-intermediates.sha256); do grep -qx "$h" "$f"; done; \
+    rm -f /tmp/revoked-intermediates.sha256
+
 WORKDIR ${SONATYPE_DIR}
 
 # Download nexus & setup directories
