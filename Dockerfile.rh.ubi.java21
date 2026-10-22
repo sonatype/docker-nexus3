@@ -90,6 +90,36 @@ RUN set -e; \
     && update-ca-trust extract \
     && rm -f /tmp/revoked-intermediates.sha256
 
+# Security: distrust the ROOTS behind the compromised eMudhra intermediates (the 4 roots in the advisory's roots.json,
+# NEXUS-56048). Blocking only the intermediates above is not enough: a holder of an intermediate's private key can
+# re-encode it (different bytes, still a valid signature), so its SHA-256 no longer matches blocked.certs. A root comes
+# from the local trust store, not from the server, so it cannot be re-encoded.
+# - OS: add the roots to the p11-kit blocklist and rebuild the system bundles (openssl/curl/git apply no blocklist to
+#   certificates a server sends, so the roots must be gone from the bundle).
+# - JVM: distrust-emudhra-roots.sh deletes the roots from cacerts and appends their fingerprints to blocked.certs.
+#   cacerts is a symlink to /etc/pki/java/cacerts here, so the real file is passed.
+# - Proof: the script's `check` and EmudhraChainCheck (this image's own JRE vs. the advisory's chains and re-encoded
+#   intermediates) fail the build unless every chain is rejected.
+# Runs after the last package install on purpose, so a later update cannot restore a root. Side effect: certificates
+# that chain only to emSign ECC Root CA - G3 or AAA Certificate Services stop validating (Alpine, Debian, RHEL accepted
+# the same). revoked-certs/ mirrors private/docker/revoked-certs in nexus-internal. Remove this once the JDK and OS
+# packages ship the fix themselves.
+COPY revoked-certs/ /tmp/emudhra-build/
+RUN set -e; \
+    cp /tmp/emudhra-build/emudhra/emudhra-roots.pem /etc/pki/ca-trust/source/blocklist/emudhra-roots.pem; \
+    update-ca-trust extract; \
+    for d in $(find /usr/lib/jvm -path '*/lib/security' \( -type d -o -type l \)); do \
+        jh=$(dirname "$(dirname "$d")"); \
+        d=$(readlink -f "$d"); \
+        sh /tmp/emudhra-build/distrust-emudhra-roots.sh jre "$jh" "$(readlink -f "$d/cacerts")"; \
+        "$jh/bin/java" /tmp/emudhra-build/emudhra/EmudhraChainCheck.java \
+            /tmp/emudhra-build/emudhra/chains /tmp/emudhra-build/emudhra/emudhra-roots.pem; \
+    done; \
+    jh=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")"); \
+    sh /tmp/emudhra-build/distrust-emudhra-roots.sh check "$jh" \
+        /etc/pki/tls/certs/ca-bundle.crt /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem; \
+    rm -rf /tmp/emudhra-build
+
 # Red Hat Certified Container commands
 COPY rh-docker /
 RUN usermod -a -G root nexus \
