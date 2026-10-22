@@ -75,7 +75,7 @@ RUN apk add --no-cache --upgrade "ca-certificates-bundle>=20261020-r0" "ca-certi
 # Security: block the compromised eMudhra intermediate CAs in the JVM (NEXUS-55997). Java has no fixed
 # release yet, so append their SHA-256 fingerprints to the JDK's blocked.certs. The JDK then rejects any
 # chain containing them, whichever trust store supplied it: cacerts, a -Djavax.net.ssl.trustStore file,
-# or the Nexus truststore. revoked-certs/ is shared with the UBI Dockerfiles (NEXUS-55998).
+# or the Nexus truststore. revoked-certs/ is shared with the UBI Dockerfiles (NEXUS-55998, NEXUS-55999).
 # Remove this once the JDK blocks these certificates itself.
 COPY revoked-certs/revoked-intermediates.sha256 /tmp/revoked-intermediates.sha256
 RUN set -e; \
