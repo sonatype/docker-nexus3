@@ -65,6 +65,31 @@ RUN microdnf update -y \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
 
+# Security: revoke the compromised eMudhra intermediate CAs (https://emudhra.we-have-a-problem.com/, NEXUS-55998)
+# - JVM: append their SHA-256 fingerprints to the JDK's blocked.certs (creating it if absent), which makes the JDK reject any
+#   certificate chain containing them, whichever trust store supplied it.
+# - OS: add them to the p11-kit blocklist and rebuild the system trust bundles.
+# revoked-certs/ (PEM bundle + SHA-256 fingerprints) is shared with the Alpine Dockerfile and mirrors
+# private/docker/revoked-certs in nexus-internal.
+# Remove the JVM part once the JDK blocks these certificates itself.
+COPY revoked-certs/revoked-intermediates.pem /etc/pki/ca-trust/source/blocklist/revoked-intermediates.pem
+COPY revoked-certs/revoked-intermediates.sha256 /tmp/revoked-intermediates.sha256
+# blocked.certs may not ship with the JDK package; create it (with its Algorithm header) when missing.
+RUN set -e; \
+    for d in $(find /usr/lib/jvm -path '*/lib/security' \( -type d -o -type l \)); do \
+        d=$(readlink -f "$d"); \
+        f="$d/blocked.certs"; \
+        if [ ! -s "$f" ]; then \
+            echo "Algorithm=SHA-256" > "$f"; \
+        else \
+            echo >> "$f"; \
+        fi; \
+        grep -v '^#' /tmp/revoked-intermediates.sha256 >> "$f"; \
+        for h in $(grep -v '^#' /tmp/revoked-intermediates.sha256); do grep -qi "^$h" "$f"; done; \
+    done \
+    && update-ca-trust extract \
+    && rm -f /tmp/revoked-intermediates.sha256
+
 # Red Hat Certified Container commands
 COPY rh-docker /
 RUN usermod -a -G root nexus \
