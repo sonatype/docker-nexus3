@@ -86,6 +86,27 @@ RUN set -e; \
     for h in $(grep -v '^#' /tmp/revoked-intermediates.sha256); do grep -qx "$h" "$f"; done; \
     rm -f /tmp/revoked-intermediates.sha256
 
+# Security: distrust the ROOTS behind the compromised eMudhra intermediates (the 4 roots in the advisory's roots.json,
+# NEXUS-56048). Blocking only the intermediates above is not enough: a holder of an intermediate's private key can
+# re-encode it (different bytes, still a valid signature), so its SHA-256 no longer matches blocked.certs. A root comes
+# from the local trust store, not from the server, so it cannot be re-encoded.
+# - JVM: distrust-emudhra-roots.sh deletes the roots from cacerts and appends their fingerprints to blocked.certs.
+#   cacerts is a symlink to /etc/ssl/certs/java/cacerts, so the real file is passed.
+# - OS: `check` fails the build if the Alpine PEM bundle still holds a root (the ca-certificates floor above).
+# - Proof: EmudhraChainCheck runs this image's own JRE against the advisory's chains and re-encoded intermediates, and
+#   fails the build unless every one is rejected.
+# Side effect: certificates that chain only to emSign ECC Root CA - G3 or AAA Certificate Services stop validating
+# (Alpine, Debian, RHEL accepted the same). revoked-certs/ mirrors private/docker/revoked-certs in nexus-internal.
+# Remove once the JDK blocks these roots itself.
+COPY revoked-certs/ /tmp/emudhra-build/
+RUN set -e; \
+    jh=/usr/lib/jvm/default-jvm; \
+    sh /tmp/emudhra-build/distrust-emudhra-roots.sh jre "$jh" "$(readlink -f $jh/lib/security/cacerts)"; \
+    sh /tmp/emudhra-build/distrust-emudhra-roots.sh check "$jh" /etc/ssl/certs/ca-certificates.crt; \
+    "$jh/bin/java" /tmp/emudhra-build/emudhra/EmudhraChainCheck.java \
+        /tmp/emudhra-build/emudhra/chains /tmp/emudhra-build/emudhra/emudhra-roots.pem; \
+    rm -rf /tmp/emudhra-build
+
 WORKDIR ${SONATYPE_DIR}
 
 # Download nexus & setup directories
