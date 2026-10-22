@@ -33,7 +33,6 @@ Community Edition is designed to deliver robust repository management for indivi
 * [Running](#running)
 * [Building the Sonatype Nexus Repository image](#building-the-nexus-repository-manager-image)
 * [Chef Solo for Runtime and Application](#chef-solo-for-runtime-and-application)
-* [Testing the Dockerfile](#testing-the-dockerfile)
 * [Red Hat Certified Image](#red-hat-certified-image)
 * [Notes](#notes)
   * [Persistent Data](#persistent-data)
@@ -69,10 +68,16 @@ curl http://localhost:8081/
 
 ## Building the Sonatype Nexus Repository image
 
-To build a docker image from the [Dockerfile](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile) you can use this command:
+To build the UBI-based image from [Dockerfile.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.java21) you can use this command:
 
 ```
-docker build --rm=true --tag=sonatype/nexus3 .
+docker build --rm=true --tag=sonatype/nexus3 -f Dockerfile.java21 .
+```
+
+To build the Alpine-based image, use [Dockerfile.alpine.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java21) instead:
+
+```
+docker build --rm=true --tag=sonatype/nexus3 -f Dockerfile.alpine.java21 .
 ```
 
 The following optional variables can be used when building the image:
@@ -86,14 +91,6 @@ The following optional variables can be used when building the image:
 
 Chef Solo is used to build out the runtime and application layers of the Docker image. The Chef cookbook being used is available
 on GitHub at [sonatype/chef-nexus-repository-manager](https://github.com/sonatype/chef-nexus-repository-manager).
-
-## Testing the Dockerfile
-
-We are using `rspec` as the test framework. `serverspec` provides a docker backend (see the method `set` in the test code)
- to run the tests inside the docker container, and abstracts away the difference between distributions in the tests
- (e.g. yum, apt,...).
-
-    rspec [--backtrace] spec/Dockerfile_spec.rb
 
 ## Red Hat Certified Image
 
