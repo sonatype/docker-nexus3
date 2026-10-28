@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# DEPRECATED: The official sonatype/nexus3 images (including the -ubi tag) are no
+# longer built from this file. They are built and promoted to Docker Hub by Sonatype's
+# internal pipeline. This file remains available for building your own image and for
+# this repository's own build and test automation.
 
 # Pin the UBI 9 minimal base image by digest (instead of the floating :latest tag) for reproducible
 # builds and a stable image identity. This digest is redhat/ubi9-minimal:latest as of 2026-07-31;
