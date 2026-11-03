@@ -54,7 +54,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
     DOCKER_TYPE='alpine'
 
 # Install Java & tar
-RUN apk add openjdk21 tar procps gzip curl shadow \
+RUN apk add openjdk25 tar procps gzip curl shadow \
     && apk cache clean \
     && find /usr/lib/jvm -maxdepth 2 -name demo -type d -exec rm -rf {} + \
     # drop jrt-fs.jar (the jrt: FileSystemProvider) -- unused by the classpath/Karaf-launched

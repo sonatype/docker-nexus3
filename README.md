@@ -68,16 +68,16 @@ curl http://localhost:8081/
 
 ## Building the Sonatype Nexus Repository image
 
-To build the UBI-based image from [Dockerfile.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.java21) you can use this command:
+To build the UBI-based image from [Dockerfile.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.java25) you can use this command:
 
 ```
-docker build --rm=true --tag=sonatype/nexus3 -f Dockerfile.java21 .
+docker build --rm=true --tag=sonatype/nexus3 -f Dockerfile.java25 .
 ```
 
-To build the Alpine-based image, use [Dockerfile.alpine.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java21) instead:
+To build the Alpine-based image, use [Dockerfile.alpine.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java25) instead:
 
 ```
-docker build --rm=true --tag=sonatype/nexus3 -f Dockerfile.alpine.java21 .
+docker build --rm=true --tag=sonatype/nexus3 -f Dockerfile.alpine.java25 .
 ```
 
 The following optional variables can be used when building the image:
@@ -94,7 +94,7 @@ on GitHub at [sonatype/chef-nexus-repository-manager](https://github.com/sonatyp
 
 ## Red Hat Certified Image
 
-A Red Hat certified container image can be created using [Dockerfile.rh.ubi.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.ubi.java21) which is built to be compliant with Red Hat certification.
+A Red Hat certified container image can be created using [Dockerfile.rh.ubi.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.rh.ubi.java25) which is built to be compliant with Red Hat certification.
 The image includes additional meta data to comform with Kubernetes and OpenShift standards, a directory with the
 licenses applicable to the software and a man file for help on how to use the software. It also uses an ENTRYPOINT
 script the ensure the running user has access to the appropriate permissions for OpenShift 'restricted' SCC. 
@@ -113,23 +113,23 @@ In addition to the Universal Base Image, we can build images based on:
 
 **As of version 3.91.0, the Alpine-based image is the default for Sonatype Nexus Repository.**
 
-The Alpine-based container image can be created using [Dockerfile.alpine.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java21). This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
+The Alpine-based container image can be created using [Dockerfile.alpine.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.alpine.java25). This Dockerfile is built to leverage the minimalistic and efficient nature of Alpine Linux, emphasizing fewer dependencies to achieve a cleaner SBOM (Software Bill of Materials) and a stronger security posture.
 
 The Alpine-based container image includes minimal dependencies and uses an ENTRYPOINT script to ensure the application runs with the necessary permissions. It is optimized for rapid deployment and efficient resource usage.
 
 The Alpine-based container image is available from Docker Hub and can be pulled using the following tags:
 
-- `sonatype/nexus3:latest` - Latest Alpine-based release (runs Java 21)
-- `sonatype/nexus3:3.XX.y` - Specific version, Alpine-based (runs Java 21)
-- `sonatype/nexus3:3.XX.y-alpine` - Explicit Alpine tag (runs Java 21)
+- `sonatype/nexus3:latest` - Latest Alpine-based release (runs Java 25)
+- `sonatype/nexus3:3.XX.y` - Specific version, Alpine-based (runs Java 25)
+- `sonatype/nexus3:3.XX.y-alpine` - Explicit Alpine tag (runs Java 25)
 
 ## UBI Image Variant
 
 For users who prefer Red Hat Universal Base Image (UBI), a UBI-based variant is available using the `-ubi` tag suffix:
 
-- `sonatype/nexus3:3.XX.y-ubi` - Specific version, UBI-based (runs Java 21)
+- `sonatype/nexus3:3.XX.y-ubi` - Specific version, UBI-based (runs Java 25)
 
-The UBI-based container image can be created using [Dockerfile.java21](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.java21).
+The UBI-based container image can be created using [Dockerfile.java25](https://github.com/sonatype/docker-nexus3/blob/main/Dockerfile.java25).
 
 ## Notes
 

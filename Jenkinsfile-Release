@@ -33,7 +33,7 @@ node('ubuntu-zion') {
     }
 
     stage('Build, Tag, and Push Images to dockerhub') {
-      def dockerfilePath = 'Dockerfile.java21'
+      def dockerfilePath = 'Dockerfile.java25'
       def baseImage = extractBaseImage(dockerfilePath)
       def baseImageRefFactory = load 'scripts/BaseImageReference.groovy'
       def baseImageReference = baseImageRefFactory.build(this, baseImage as String)
@@ -58,7 +58,7 @@ node('ubuntu-zion') {
         def hash = OsTools.runSafe(this, buildUbiImage)
 
         // Build Alpine Image
-        def alpineDockerfilePath = 'Dockerfile.alpine.java21'
+        def alpineDockerfilePath = 'Dockerfile.alpine.java25'
         def buildAlpineImage = """
         docker buildx build \
           --platform linux/amd64,linux/arm64 \
