@@ -6,8 +6,8 @@
 @Library(['private-pipeline-library', 'jenkins-shared']) _
 import com.sonatype.jenkins.pipeline.OsTools
 
-String OPENJDK21 = 'OpenJDK 21'
-List<String> javaVersions = [OPENJDK21]
+String OPENJDK25 = 'OpenJDK 25'
+List<String> javaVersions = [OPENJDK25]
 
 properties([
     parameters([
@@ -23,12 +23,12 @@ node('ubuntu-zion') {
   def imageName = 'sonatype/nexus3',
       archiveName = 'docker-nexus3'
 
-  def JAVA_21 = 'java21'
-  def DOCKERFILE_JAVA_21 = 'Dockerfile.java21'
-  def DOCKERFILE_ALPINE_JAVA_21 = 'Dockerfile.alpine.java21'
+  def JAVA_25 = 'java25'
+  def DOCKERFILE_JAVA_25 = 'Dockerfile.java25'
+  def DOCKERFILE_ALPINE_JAVA_25 = 'Dockerfile.alpine.java25'
 
   def dockerfileMap = [
-    (OPENJDK21): [DOCKERFILE_JAVA_21, DOCKERFILE_ALPINE_JAVA_21]
+    (OPENJDK25): [DOCKERFILE_JAVA_25, DOCKERFILE_ALPINE_JAVA_25]
   ]
   try {
     stage('Preparation') {
@@ -49,15 +49,15 @@ node('ubuntu-zion') {
       if (params.nexus_repository_manager_version) {
         stage('Update Repository Manager Version') {
           OsTools.runSafe(this, "git checkout ${branch}")
-          dockerfileMap[OPENJDK21].each { dockerfile ->
-            updateRepositoryManagerVersion("${pwd()}/${dockerfile}", JAVA_21)
+          dockerfileMap[OPENJDK25].each { dockerfile ->
+            updateRepositoryManagerVersion("${pwd()}/${dockerfile}", JAVA_25)
             }
           version = getShortVersion(params.nexus_repository_manager_version)
         }
       }
     }
-    def dockerfilePath = dockerfileMap[OPENJDK21][0]
-    def alpineDockerfilePath = dockerfileMap[OPENJDK21][1]
+    def dockerfilePath = dockerfileMap[OPENJDK25][0]
+    def alpineDockerfilePath = dockerfileMap[OPENJDK25][1]
 
     stage('Build UBI Image') {
       def baseImage = extractBaseImage(dockerfilePath)
@@ -126,7 +126,7 @@ node('ubuntu-zion') {
 }
 
 def readVersion() {
-  def content = readFile 'Dockerfile.java21'
+  def content = readFile 'Dockerfile.java25'
   for (line in content.split('\n')) {
     if (line.startsWith('ARG NEXUS_VERSION=')) {
       return getShortVersion(line.substring(18))
